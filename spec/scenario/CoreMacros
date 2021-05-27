@@ -1,0 +1,255 @@
+-- These are included in each scenario
+
+Macro Successfully
+    Invariant Success
+
+Macro AllowFailures
+    ClearInvariants Success
+
+Macro PricedCointroller closeFactor=0.1 maxAssets=20
+    Unitroller Deploy
+    PriceOracle Deploy Simple
+    CointrollerImpl Deploy ScenarioG1 ScenCointrollerG1
+    Unitroller SetPendingImpl ScenCointrollerG1
+    PriceOracleProxy Deploy Admin (PriceOracle Address) (Address Zero) (Address Zero) (Address Zero) (Address Zero) (Address Zero) -- if listing rBinance use ListedEtherToken to replace proxy
+    CointrollerImpl ScenCointrollerG1 BecomeG1 (PriceOracleProxy Address) closeFactor maxAssets
+    CointrollerImpl Deploy Scenario ScenCointroller
+    Unitroller SetPendingImpl ScenCointroller
+    CointrollerImpl ScenCointroller Become
+
+Macro NewCointroller price=1.0 closeFactor=0.1 maxAssets=20
+    --g1
+    Unitroller Deploy
+    PriceOracle Deploy Fixed price
+    CointrollerImpl Deploy ScenarioG1 ScenCointrollerG1
+    Unitroller SetPendingImpl ScenCointrollerG1
+    PriceOracleProxy Deploy Admin (PriceOracle Address) (Address Zero) (Address Zero) (Address Zero) (Address Zero) (Address Zero) -- if listing rBinance use ListedEtherToken to replace proxy
+    CointrollerImpl ScenCointrollerG1 BecomeG1 (PriceOracleProxy Address) closeFactor maxAssets
+    --g2
+    CointrollerImpl Deploy StandardG2 CointrollerG2
+    Unitroller SetPendingImpl CointrollerG2
+    CointrollerImpl CointrollerG2 BecomeG2
+    --g3
+    CointrollerImpl Deploy StandardG3 CointrollerG3
+    Unitroller SetPendingImpl CointrollerG3
+    CointrollerImpl CointrollerG3 BecomeG3 1e18 []
+    --g4
+    CointrollerImpl Deploy StandardG4 CointrollerG4
+    Unitroller SetPendingImpl CointrollerG4
+    CointrollerImpl CointrollerG4 BecomeG4
+    --g5
+    CointrollerImpl Deploy ScenarioG5 CointrollerG5
+    Unitroller SetPendingImpl CointrollerG5
+    CointrollerImpl CointrollerG5 BecomeG5
+    --g6
+    CointrollerImpl Deploy ScenarioG6 Cointroller
+    Unitroller SetPendingImpl Cointroller
+    CointrollerImpl Cointroller BecomeG6
+    --current
+    CointrollerImpl Deploy Scenario CointrollerScen
+    Unitroller SetPendingImpl CointrollerScen
+    CointrollerImpl CointrollerScen Become
+
+Macro NewRToken bep20 rToken borrowRate=0.000005 initialExchangeRate=2e9 decimals=8 tokenType=Standard delegatorType=RBep20DelegatorScenario rTokenType=RBep20DelegateScenario admin=Admin becomeImplementationData="0x0"
+    Bep20 Deploy tokenType bep20 bep20
+    InterestRateModel Deploy Fixed StdInterest borrowRate -- Note: interest rate model probably shouldn't be global
+    RTokenDelegate Deploy rTokenType rBep20Delegate
+    RToken Deploy delegatorType rToken rToken (Bep20 bep20 Address) (Cointroller Address) (InterestRateModel StdInterest Address) initialExchangeRate decimals admin (RTokenDelegate rBep20Delegate Address) becomeImplementationData
+
+-- Same as NewRToken but does not deploy an BEP20. Used for special BEP20s that are initialized differently
+Macro NewRTokenBringBEP20 bep20 rToken borrowRate=0.000005 initialExchangeRate=2e9 decimals=8 delegatorType=RBep20DelegatorScenario rTokenType=RBep20DelegateScenario admin=Admin becomeImplementationData="0x0"
+    InterestRateModel Deploy Fixed StdInterest borrowRate -- Note: interest rate model probably shouldn't be global
+    RTokenDelegate Deploy rTokenType rBep20Delegate
+    RToken Deploy delegatorType rToken rToken (Bep20 bep20 Address) (Cointroller Address) (InterestRateModel StdInterest Address) initialExchangeRate decimals admin (RTokenDelegate rBep20Delegate Address) becomeImplementationData
+
+Macro NewRTokenImmutable bep20 rToken borrowRate=0.000005 initialExchangeRate=2e9 decimals=8 tokenType=Standard rTokenType=Scenario admin=Admin
+    Bep20 Deploy tokenType bep20 bep20
+    InterestRateModel Deploy Fixed StdInterest borrowRate -- Note: interest rate model probably shouldn't be global
+    RToken Deploy rTokenType rToken rToken (Bep20 bep20 Address) (Cointroller Address) (InterestRateModel StdInterest Address) initialExchangeRate decimals admin
+
+Macro NewEtherToken rToken borrowRate=0.000005 initialExchangeRate=2e9 decimals=8 admin=Admin
+    InterestRateModel Deploy Fixed StdInterest borrowRate -- Note: interest rate model probably shouldn't be global
+    RToken Deploy RBinanceScenario rToken rToken (Cointroller Address) (InterestRateModel StdInterest Address) initialExchangeRate decimals admin
+
+Macro ListedRToken bep20 rToken borrowRate=0.000005 initialExchangeRate=2e9 decimals=8 tokenType=Standard delegatorType=RBep20DelegatorScenario rTokenType=RBep20DelegateScenario admin=Admin
+    NewRToken bep20 rToken borrowRate initialExchangeRate decimals tokenType delegatorType rTokenType admin
+    Cointroller SupportMarket rToken
+
+Macro ListedRTokenImmutable bep20 rToken borrowRate=0.000005 initialExchangeRate=2e9 decimals=8 tokenType=Standard rTokenType=Scenario admin=Admin
+    NewRTokenImmutable bep20 rToken borrowRate initialExchangeRate decimals tokenType rTokenType admin
+    Cointroller SupportMarket rToken
+
+Macro ListedEtherToken rToken borrowRate=0.000005 initialExchangeRate=2e9 decimals=8 admin=Admin
+    NewEtherToken rToken borrowRate initialExchangeRate decimals admin
+    Cointroller SupportMarket rToken
+    PriceOracleProxy Deploy Admin (PriceOracle Address) (Address rETH) (Address Zero) (Address Zero) (Address Zero) (Address Zero)
+    Cointroller SetPriceOracle (PriceOracleProxy Address)
+
+Macro ListedEtherTokenMinted rToken borrowRate=0.000005 initialExchangeRate=2e9 decimals=8 admin=Admin
+    NewEtherToken rToken borrowRate initialExchangeRate decimals admin
+    Cointroller SupportMarket rToken
+    CallMintEth Root 1e18 rToken
+
+Macro SetPriceCF rToken price collateralFactor
+    PriceOracle SetPrice rToken price
+    Cointroller SetCollateralFactor rToken collateralFactor
+
+Macro Give user amount bep20
+    Bep20 bep20 Faucet user amount
+
+Macro Donate token amount
+    (Trx Value amount (RToken token Donate))
+
+Macro Prep user amount bep20 token allowanceAmount=Nothing
+    Bep20 bep20 Faucet user amount
+    From user (Bep20 bep20 Approve token (Default allowanceAmount amount))
+
+Macro Allow user token
+    From user (Bep20 (RToken token Underlying) Approve token UInt256Max)
+
+Macro AccrueInterest token
+    RToken token AccrueInterest
+
+Macro Mint user amount token
+    From user (RToken token Mint amount)
+
+Macro SendMintEth user amount token
+    From user (Trx GasPrice 0 (Trx Value amount (Send token amount)))
+
+Macro CallMintEth user amount token
+    From user (Trx GasPrice 0 (Trx Value amount (RToken token Mint)))
+
+Macro Redeem user amount token
+    From user (RToken token Redeem amount)
+
+Macro RedeemEth user amount token
+    Trx GasPrice 0 (From user (RToken token Redeem amount))
+
+Macro RedeemUnderlying user amount token
+    From user (RToken token RedeemUnderlying amount)
+
+Macro RedeemUnderlyingEth user amount token
+    Trx GasPrice 0 (From user (RToken token RedeemUnderlying amount))
+
+Macro BorrowEth user amount token
+    Trx GasPrice 0 (From user (RToken token Borrow amount))
+
+Macro Borrow user amount token
+    From user (RToken token Borrow amount)
+
+Macro RepayBorrow user amount token
+    From user (RToken token RepayBorrow amount)
+
+Macro RepayBorrowEth user amount token
+    From user (Trx GasPrice 0 (Trx Value amount (RToken token RepayBorrow)))
+
+Macro RepayBorrowEthMax user amount token
+    From user (Trx GasPrice 0 (Trx Value amount (Maximillion RepayBehalf user)))
+
+Macro RepayBorrowBehalf user behalf amount token
+    From user (RToken token RepayBorrowBehalf behalf amount)
+
+Macro RepayBorrowEthBehalf user behalf amount token
+    From user (Trx GasPrice 0 (Trx Value amount (RToken token RepayBorrowBehalf behalf)))
+
+Macro Liquidate liquidator _ borrower amount token _ collateral
+    From liquidator (RToken token Liquidate borrower collateral amount)
+
+Macro LiquidateEthColl liquidator _ borrower amount token _ collateral
+    From liquidator (Trx GasPrice 0 (RToken token Liquidate borrower collateral amount))
+
+Macro LiquidateEthBorrow liquidator _ borrower amount token _ collateral
+    From liquidator (Trx GasPrice 0 (Trx Value amount (RToken token Liquidate borrower collateral)))
+
+Macro Seize amount token caller liquidator borrower
+    From caller (RToken token Seize liquidator borrower amount)
+
+Macro EvilSeize token amount treasure seizer seizee
+    RToken token EvilSeize treasure seizer seizee amount
+
+Macro Support rToken collateralFactor=0.5
+    Cointroller SupportMarket rToken
+    Cointroller SetCollateralFactor rToken collateralFactor
+
+Macro SetCollateralFactor rToken collateralFactor=0.5
+    Cointroller SetCollateralFactor rToken collateralFactor
+
+Macro AddReserves amount token user=Root
+    From user (RToken token AddReserves amount)
+
+Macro ReduceReserves amount token
+    RToken token ReduceReserves amount
+
+Macro FastForward n blocks
+    Cointroller FastForward n blocks
+
+Macro EnterMarkets user ...markets
+    From user (Cointroller EnterMarkets markets)
+
+Macro ExitMarket user market
+    From user (Cointroller ExitMarket market)
+
+Macro Transfer from to amount token
+    From from (Bep20 token Transfer to amount)
+
+Macro Cash rToken
+    Read Bep20 (RToken rToken Underlying) TokenBalance rToken
+
+Macro QuickMint amount rToken from=Me
+    Give from amount (RToken rToken Underlying)
+    Allow from rToken
+    From from (RToken rToken Mint amount)
+
+Macro QuickBorrow amount rToken ...collateral
+    From Me (Cointroller EnterMarkets collateral)
+    From Me (Cointroller EnterMarkets (rToken))
+    From Me (RToken rToken Borrow amount)
+
+-- Macro for performing a borrow with the sole
+-- purpose of adding interest to the bep20 market
+Macro BorrowAndRepayWithInterest bep20 rToken amount interestAmount interestRate blocks reserveRate=0
+    -- TODO: Make invariant success for these?
+    -- TODO: Named args as macros
+    InterestRateModel Deploy Fixed Std interestRate
+    RToken rToken SetInterestRateModel (InterestRateModel Std Address)
+    RToken rToken SetReserveFactor reserveRate
+    ListedRToken COLLAT rCOLLAT
+    Cointroller SetCollateralFactor rCOLLAT 0.9
+    Prep Torrey 1e30 COLLAT rCOLLAT
+    Mint Torrey 1e30 rCOLLAT
+    EnterMarkets Torrey rCOLLAT rToken
+    Assert True (Cointroller CheckMembership Torrey rCOLLAT)
+    Assert True (Cointroller CheckMembership Torrey rToken)
+    Borrow Torrey amount rToken
+    -- Cool, we've borrowed, now let's accrue interest then repay all
+    FastForward blocks Blocks
+    -- RepayBorrow Torrey (RToken BorrowBalance Torrey) rToken
+    From Torrey (Bep20 bep20 Approve rToken amount)
+    RepayBorrow Torrey amount rToken
+    From Torrey (Bep20 bep20 Approve rToken interestAmount)
+    Give Torrey interestAmount bep20
+    RepayBorrow Torrey interestAmount rToken
+    Assert Equal (RToken rToken BorrowBalance Torrey) Zero
+
+-- Macro for performing a borrow with the sole
+-- purpose of adding interest to the ether market
+Macro BorrowAndRepayEthWithInterest rBinance amount interestAmount interestRate blocks reserveRate=0
+    -- TODO: Make invariant success for these?
+    -- TODO: Named args as macros
+    InterestRateModel Deploy Fixed Std interestRate
+    RToken rBinance SetInterestRateModel (InterestRateModel Std Address)
+    RToken rBinance SetReserveFactor reserveRate
+    ListedRToken COLLAT rCOLLAT
+    Cointroller SetCollateralFactor rCOLLAT 0.9
+    Prep Torrey 1e30 COLLAT rCOLLAT
+    Mint Torrey 1e30 rCOLLAT
+    EnterMarkets Torrey rCOLLAT rBinance
+    Assert True (Cointroller CheckMembership Torrey rCOLLAT)
+    Assert True (Cointroller CheckMembership Torrey rBinance)
+    Borrow Torrey amount rBinance
+    -- Cool, we've borrowed, now let's accrue interest then repay all
+    FastForward blocks Blocks
+    -- RepayBorrow Torrey (RToken BorrowBalance Torrey) rBinance
+    RepayBorrowEth Torrey amount rBinance
+    RepayBorrowEth Torrey interestAmount rBinance
+    Assert Equal (RToken rBinance BorrowBalance Torrey) Zero

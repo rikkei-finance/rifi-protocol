@@ -1,0 +1,95 @@
+-- Tests for the grants and math patch
+
+Macro FlywheelCointroller price=1.0 borrowRate=0.000005 rifiInitAmount=5000000e18
+    Unitroller Deploy
+    PriceOracle Deploy Fixed price
+    PriceOracleProxy Deploy Admin (PriceOracle Address) (Address Zero) (Address Zero) (Address Zero) (Address Zero) (Address Zero)
+    ----g2
+    CointrollerImpl Deploy ScenarioG2 CointrollerScenG2
+    Unitroller SetPendingImpl CointrollerScenG2
+    CointrollerImpl CointrollerScenG2 BecomeG2
+    --list some tokens
+    Cointroller SetPriceOracle (PriceOracleProxy Address)
+    Cointroller SetMaxAssets 20
+    Cointroller SetCloseFactor 0.5
+    Cointroller LiquidationIncentive 1.1
+    NewRToken ZRX rZRX
+    NewRToken BAT rBAT
+    Support rZRX collateralFactor:0.5
+    Support rBAT collateralFactor:0.5
+    -- final
+    CointrollerImpl Deploy ScenarioG3 CointrollerScen
+    Unitroller SetPendingImpl CointrollerScen
+    CointrollerImpl CointrollerScen BecomeG3 1e18 [rZRX rBAT]
+    Bep20 Deploy Standard RIFI "RIFI Token" 18
+    Give (Address Cointroller) rifiInitAmount RIFI
+
+Macro GrantsCointroller
+    FlywheelCointroller
+    -- g4
+    CointrollerImpl Deploy ScenarioG4 CointrollerScen
+    Unitroller SetPendingImpl CointrollerScen
+    CointrollerImpl CointrollerScen BecomeG4
+    -- g5
+    CointrollerImpl Deploy ScenarioG5 CointrollerScen
+    Unitroller SetPendingImpl CointrollerScen
+    CointrollerImpl CointrollerScen BecomeG5
+    -- current
+    CointrollerImpl Deploy Scenario CointrollerScen
+    Unitroller SetPendingImpl CointrollerScen
+    CointrollerImpl CointrollerScen Become
+
+Macro InitSpeeds
+    Prep Geoff 100e18 ZRX rZRX
+    Mint Geoff 50e18 rZRX--tokenbalance = 50e18 / 2e9 = 2.5e10
+    Prep Coburn Some BAT rBAT
+    Mint Coburn 6e18 rBAT--tokenbalance = 6e18 / 2e9 = 3e9
+    EnterMarkets Coburn rBAT
+    Borrow Coburn 1e18 rZRX
+    Cointroller SetRifiSpeed rZRX 1
+    Cointroller SetRifiSpeed rBAT 1
+    Cointroller RefreshRifiSpeeds
+    Cointroller Send "setRifiAddress(address)" (Address RIFI)
+
+Test "RIFI speed can be set per market"
+    GrantsCointroller
+    InitSpeeds
+    -- Baseline rifi amounts
+    Assert Equal (Cointroller RifiAccrued Geoff) 0
+    Assert Equal (Bep20 RIFI TokenBalance Geoff) 0
+    -- Rifi speed can be set
+    Cointroller SetRifiSpeed rZRX 2
+    FastForward 1000 Blocks
+    Cointroller ClaimRifi Geoff
+    Assert Equal (Cointroller RifiAccrued Geoff) 0
+    Assert Equal (Bep20 RIFI TokenBalance Geoff) 2000
+    -- Rifi speed can be changed
+    Cointroller SetRifiSpeed rZRX 4
+    FastForward 1000 Blocks
+    Cointroller ClaimRifi Geoff
+    Assert Equal (Cointroller RifiAccrued Geoff) 0
+    Assert Equal (Bep20 RIFI TokenBalance Geoff) 6000
+    -- Rifi speed can be removed
+    Cointroller SetRifiSpeed rZRX 0
+    FastForward 1000 Blocks
+    Cointroller ClaimRifi Geoff
+    Assert Equal (Cointroller RifiAccrued Geoff) 0
+    Assert Equal (Bep20 RIFI TokenBalance Geoff) 6000
+
+Test "Set rifi rate is removed"
+    GrantsCointroller
+    InitSpeeds
+    AllowFailures
+    Cointroller SetRifiRate 5
+
+Test "Rifi is not claimed automatically"
+    GrantsCointroller
+    InitSpeeds
+    Cointroller SetRifiSpeed rZRX 2
+    FastForward 100000 Blocks
+    -- Check rifi is not claimed automatically
+    Mint Geoff 50e18 rZRX
+    Assert Equal (Bep20 RIFI TokenBalance Geoff) 0
+    -- Confirm there was rifi to claim
+    Cointroller ClaimRifi Geoff
+    Assert Equal (Bep20 RIFI TokenBalance Geoff) 200000

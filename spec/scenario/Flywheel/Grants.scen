@@ -1,0 +1,129 @@
+-- Tests for the grants and math patch
+
+Macro FlywheelCointroller price=1.0 borrowRate=0.000005 rifiInitAmount=5000000e18
+    Unitroller Deploy
+    PriceOracle Deploy Fixed price
+    PriceOracleProxy Deploy Admin (PriceOracle Address) (Address Zero) (Address Zero) (Address Zero) (Address Zero) (Address Zero)
+    ----g2
+    CointrollerImpl Deploy ScenarioG2 CointrollerScenG2
+    Unitroller SetPendingImpl CointrollerScenG2
+    CointrollerImpl CointrollerScenG2 BecomeG2
+    --list some tokens
+    Cointroller SetPriceOracle (PriceOracleProxy Address)
+    Cointroller SetMaxAssets 20
+    Cointroller SetCloseFactor 0.5
+    Cointroller LiquidationIncentive 1.1
+    NewRToken ZRX rZRX
+    NewRToken BAT rBAT
+    Support rZRX collateralFactor:0.5
+    Support rBAT collateralFactor:0.5
+    -- final
+    CointrollerImpl Deploy ScenarioG3 CointrollerScen
+    Unitroller SetPendingImpl CointrollerScen
+    CointrollerImpl CointrollerScen BecomeG3 1e18 [rZRX rBAT]
+    Bep20 Deploy Standard RIFI "RIFI Token" 18
+    Give (Address Cointroller) rifiInitAmount RIFI
+
+Macro GrantsCointroller
+    FlywheelCointroller
+    -- g4
+    CointrollerImpl Deploy ScenarioG4 CointrollerScen
+    Unitroller SetPendingImpl CointrollerScen
+    CointrollerImpl CointrollerScen BecomeG4
+    -- g5
+    CointrollerImpl Deploy ScenarioG5 CointrollerScen
+    Unitroller SetPendingImpl CointrollerScen
+    CointrollerImpl CointrollerScen BecomeG5
+    -- g6
+    CointrollerImpl Deploy ScenarioG6 CointrollerScen
+    Unitroller SetPendingImpl CointrollerScen
+    CointrollerImpl CointrollerScen BecomeG6
+    -- current
+    CointrollerImpl Deploy Scenario CointrollerScen
+    Unitroller SetPendingImpl CointrollerScen
+    CointrollerImpl CointrollerScen Become
+
+Macro InitSpeeds
+    Prep Geoff 100e18 ZRX rZRX
+    Mint Geoff 50e18 rZRX--tokenbalance = 50e18 / 2e9 = 2.5e10
+    Prep Coburn Some BAT rBAT
+    Mint Coburn 6e18 rBAT--tokenbalance = 6e18 / 2e9 = 3e9
+    EnterMarkets Coburn rBAT
+    Borrow Coburn 1e18 rZRX
+    Cointroller SetRifiSpeed rZRX 1
+    Cointroller SetRifiSpeed rBAT 1
+    Cointroller RefreshRifiSpeeds
+    Cointroller Send "setRifiAddress(address)" (Address RIFI)
+
+Test "RIFI can be granted in combination with liquidity rewards"
+    GrantsCointroller
+    InitSpeeds
+    Assert Equal (Cointroller RifiAccrued Geoff) 0
+    Assert Equal (Bep20 RIFI TokenBalance Geoff) 0
+    FastForward 1000 Blocks
+    Cointroller ClaimRifi Geoff
+    Cointroller Send "_grantRifi(address,uint256)" (Address Geoff) 1000
+    Assert Equal (Cointroller RifiAccrued Geoff) 0
+    Assert Equal (Bep20 RIFI TokenBalance Geoff) 1000000000000000001000
+
+Test "RIFI can be granted"
+    -- Can be granted once
+    GrantsCointroller
+    InitSpeeds
+    Assert Equal (Cointroller RifiAccrued Geoff) 0
+    Assert Equal (Bep20 RIFI TokenBalance Geoff) 0
+    Cointroller Send "_grantRifi(address,uint256)" (Address Geoff) 1000
+    Assert Equal (Cointroller RifiAccrued Geoff) 0
+    Assert Equal (Bep20 RIFI TokenBalance Geoff) 1000
+    -- Assert Log RifiGranted (recipient (Address Geoff)) (amount "1000")
+    -- Can be granted multiple times
+    Cointroller Send "_grantRifi(address,uint256)" (Address Geoff) 2000
+    Assert Equal (Cointroller RifiAccrued Geoff) 0
+    Assert Equal (Bep20 RIFI TokenBalance Geoff) 3000
+
+Test "RIFI can be streamed to contributors"
+    GrantsCointroller
+    InitSpeeds
+    Assert Equal (Cointroller RifiAccrued Torrey) 0
+    Assert Equal (Bep20 RIFI TokenBalance Torrey) 0
+    Cointroller Send "_setContributorRifiSpeed(address,uint256)" (Address Torrey) 300
+    -- Assert Log ContributorRifiSpeedUpdated (recipient (Address Torrey)) (amount "300")
+    FastForward 1000 Blocks
+    -- Just claimRifi does not receive RIFI
+    Cointroller ClaimRifi Torrey
+    Assert Equal (Cointroller RifiAccrued Torrey) 0
+    Assert Equal (Bep20 RIFI TokenBalance Torrey) 0
+    -- Calling updateContributorRewards and then claimRifi receives RIFI
+    Cointroller UpdateContributorRewards Torrey
+    Assert Equal (Cointroller RifiAccrued Torrey) 300000
+    Cointroller ClaimRifi Torrey
+    Assert Equal (Cointroller RifiAccrued Torrey) 0
+    Assert Equal (Bep20 RIFI TokenBalance Torrey) 300000
+
+Test "RIFI can be streamed in combination with liquidity rewards"
+    GrantsCointroller
+    InitSpeeds
+    Cointroller Send "_setContributorRifiSpeed(address,uint256)" (Address Geoff) 300
+    FastForward 1000 Blocks
+    -- Just claimRifi does not receive RIFI
+    Cointroller UpdateContributorRewards Geoff
+    Assert Equal (Cointroller RifiAccrued Geoff) 300000
+    Cointroller ClaimRifi Geoff
+    Assert Equal (Cointroller RifiAccrued Geoff) 0
+    Assert Equal (Bep20 RIFI TokenBalance Geoff) 1000000000000000300000
+
+Test "RIFI streaming can be changed for contributors"
+    GrantsCointroller
+    InitSpeeds
+    Cointroller Send "_setContributorRifiSpeed(address,uint256)" (Address Torrey) 300
+    FastForward 1000 Blocks
+    Cointroller Send "_setContributorRifiSpeed(address,uint256)" (Address Torrey) 600
+    FastForward 1000 Blocks
+    Cointroller UpdateContributorRewards Torrey
+    Cointroller ClaimRifi Torrey
+    Assert Equal (Cointroller RifiAccrued Torrey) 0
+    Assert Equal (Bep20 RIFI TokenBalance Torrey) 900000
+    Cointroller Send "_setContributorRifiSpeed(address,uint256)" (Address Torrey) 0
+    FastForward 2000 Blocks
+    Assert Equal (Cointroller RifiAccrued Torrey) 0
+    Assert Equal (Bep20 RIFI TokenBalance Torrey) 900000

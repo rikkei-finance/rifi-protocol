@@ -1,0 +1,63 @@
+
+Test "Borrow some WBTC enters WBTC and succeeds when not entered"
+    Invariant Success
+    NewCointroller price:1.0
+    NewRToken ZRX rZRX
+    NewRToken WBTC rWBTC tokenType:WBTC
+    Give rWBTC 10e8 WBTC -- Faucet some WBTC to borrow
+    Support rZRX collateralFactor:0.5
+    Support rWBTC collateralFactor:0.5
+    Prep Geoff Some ZRX rZRX
+    Mint Geoff 100e18 rZRX
+    EnterMarkets Geoff rZRX
+    Borrow Geoff 1e8 rWBTC
+    Assert Equal (rToken rWBTC BorrowBalance Geoff) (Exactly 1e8)
+    Assert Equal (Bep20 WBTC TokenBalance Geoff) (Exactly 1e8)
+    Assert Equal (Bep20 WBTC TokenBalance rWBTC) (Exactly 9e8)
+
+Test "Borrow some WBTC fails when no WBTC available"
+    NewCointroller price:1.0
+    NewRToken ZRX rZRX
+    NewRToken WBTC rWBTC tokenType:WBTC
+    Support rZRX collateralFactor:0.5
+    Support rWBTC collateralFactor:0.5
+    Prep Geoff Some ZRX rZRX
+    Mint Geoff 100e18 rZRX
+    EnterMarkets Geoff rZRX rWBTC
+    Invariant Static (RToken rZRX ExchangeRateStored)
+    AllowFailures
+    Borrow Geoff 1e8 rWBTC
+    Assert Failure TOKEN_INSUFFICIENT_CASH BORROW_CASH_NOT_AVAILABLE
+
+Test "Borrow some WBTC fails when WBTC paused"
+    NewCointroller price:1.0
+    NewRToken ZRX rZRX
+    NewRToken WBTC rWBTC tokenType:WBTC
+    Give rWBTC 10e8 WBTC -- Faucet some WBTC to borrow
+    Support rZRX collateralFactor:0.5
+    Support rWBTC collateralFactor:0.5
+    Prep Geoff Some ZRX rZRX
+    Mint Geoff 100e18 rZRX
+    EnterMarkets Geoff rZRX rWBTC
+    Invariant Static (RToken rZRX ExchangeRateStored)
+    Bep20 WBTC Pause
+    AllowFailures
+    Borrow Geoff 1e8 rWBTC
+    Assert Revert
+
+Test "Borrow some WBTC from Excess Cash"
+    Invariant Success
+    NewCointroller price:1.0
+    NewRToken ZRX rZRX
+    NewRToken WBTC rWBTC tokenType:WBTC
+    Give rWBTC 10e8 WBTC -- Faucet some WBTC to borrow
+    Support rZRX collateralFactor:0.5
+    Support rWBTC collateralFactor:0.5
+    Prep Geoff Some ZRX rZRX
+    Mint Geoff 100e18 rZRX
+    EnterMarkets Geoff rZRX rWBTC
+    Borrow Geoff 1e8 rWBTC
+    EnterMarkets Geoff rZRX rWBTC
+    Assert Equal (rToken rWBTC BorrowBalance Geoff) (Exactly 1e8)
+    Assert Equal (Bep20 WBTC TokenBalance Geoff) (Exactly 1e8)
+    Assert Equal (Bep20 WBTC TokenBalance rWBTC) (Exactly 9e8)

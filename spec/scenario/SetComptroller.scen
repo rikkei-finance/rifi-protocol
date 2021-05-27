@@ -1,0 +1,26 @@
+-- Sets for `_setCointroller` Admin Function
+
+Test "Set Cointroller"
+    NewCointroller
+    NewRToken ZRX rZRX
+    Assert Equal (RToken rZRX Cointroller) (Unitroller Address)
+    CointrollerImpl Deploy Scenario NewCointroller
+    From Root (RToken rZRX SetCointroller (CointrollerImpl NewCointroller Address))
+    -- TODO: Fix log assertion
+    -- Assert Log "NewCointroller" ("oldCointroller" (Unitroller Address)) ("newCointroller" (CointrollerImpl NewCointroller Address))
+    Assert Equal (RToken rZRX Cointroller) (CointrollerImpl NewCointroller Address)
+
+Test "Fail when is not a cointroller"
+    NewCointroller
+    NewRToken ZRX rZRX
+    Invariant Remains (RToken rZRX Cointroller) (Unitroller Address)
+    AllowFailures
+    From Root (RToken rZRX SetCointroller (PriceOracle Address))
+    Assert Revert
+
+Test "Fail to set cointroller as not admin"
+    NewCointroller
+    NewRToken ZRX rZRX
+    AllowFailures
+    From Geoff (RToken rZRX SetCointroller (PriceOracle Address))
+    Assert Failure UNAUTHORIZED SET_COINTROLLER_OWNER_CHECK

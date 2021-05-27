@@ -1,0 +1,49 @@
+
+Test "Borrow some Eth enters Eth and succeeds when Eth not entered"
+    NewCointroller price:1.0
+    ListedRToken ZRX rZRX
+    ListedEtherToken rETH initialExchangeRate:0.005e9
+    SetCollateralFactor rZRX collateralFactor:0.5
+    SetCollateralFactor rETH collateralFactor:0.5
+    Donate rETH 0.003e18
+    Prep Geoff Some ZRX rZRX
+    Mint Geoff 1e18 rZRX
+    EnterMarkets Geoff rZRX
+    Expect Changes (EtherBalance Geoff) +0.001e18
+    BorrowEth Geoff 0.001e18 rETH
+    Assert Equal (EtherBalance rETH) 0.002e18
+    Assert Equal (Cointroller Liquidity Geoff) 4.99e17
+    Assert Equal (Cointroller MembershipLength Geoff) (Exactly 2)
+    Assert True (Cointroller CheckMembership Geoff rETH)
+
+Test "Borrow some ETH fails when no ETH available"
+    NewCointroller price:1.0
+    ListedRToken ZRX rZRX
+    ListedEtherToken rETH initialExchangeRate:0.005e9
+    SetCollateralFactor rZRX collateralFactor:0.5
+    SetCollateralFactor rETH collateralFactor:0.5
+    Prep Geoff Some ZRX rZRX
+    Mint Geoff 100e18 rZRX
+    EnterMarkets Geoff rZRX rETH
+    AllowFailures
+    Invariant Static (RToken rZRX ExchangeRateStored)
+    Invariant Static (RToken rETH ExchangeRateStored)
+    Invariant Static (Cointroller Liquidity Geoff)
+    Invariant Static (EtherBalance Geoff)
+    BorrowEth Geoff 1e18 rETH
+    Assert Failure TOKEN_INSUFFICIENT_CASH BORROW_CASH_NOT_AVAILABLE
+
+Test "Borrow some ETH from excess cash"
+    NewCointroller price:1.0
+    ListedRToken ZRX rZRX
+    ListedEtherToken rETH initialExchangeRate:0.005e9
+    SetCollateralFactor rZRX collateralFactor:0.5
+    SetCollateralFactor rETH collateralFactor:0.5
+    Donate rETH 0.003e18
+    Prep Geoff Some ZRX rZRX
+    Mint Geoff 1e18 rZRX
+    EnterMarkets Geoff rZRX rETH
+    Expect Changes (EtherBalance Geoff) +0.001e18
+    BorrowEth Geoff 0.001e18 rETH
+    Assert Equal (EtherBalance rETH) 0.002e18
+    Assert Equal (Cointroller Liquidity Geoff) 4.99e17

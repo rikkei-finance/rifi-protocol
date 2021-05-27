@@ -1,0 +1,43 @@
+
+Test "Set admin"
+    NewCointroller
+    NewRToken ZRX rZRX
+    Assert Equal (RToken rZRX Admin) (Address Root)
+    Assert Equal (RToken rZRX PendingAdmin) (Address Zero)
+    From Root (RToken rZRX SetPendingAdmin Geoff)
+    Assert Equal (RToken rZRX Admin) (Address Root)
+    Assert Equal (RToken rZRX PendingAdmin) (Address Geoff)
+    From Geoff (RToken rZRX AcceptAdmin)
+    Assert Equal (RToken rZRX Admin) (Address Geoff)
+    Assert Equal (RToken rZRX PendingAdmin) (Address Zero)
+
+Test "Set admin to contructor argument"
+    NewCointroller
+    NewRToken ZRX rZRX admin:Torrey
+    Assert Equal (RToken rZRX Admin) (Address Torrey)
+    Assert Equal (RToken rZRX PendingAdmin) (Address Zero)
+    From Torrey (RToken rZRX SetPendingAdmin Geoff)
+    Assert Equal (RToken rZRX Admin) (Address Torrey)
+    Assert Equal (RToken rZRX PendingAdmin) (Address Geoff)
+    From Geoff (RToken rZRX AcceptAdmin)
+    Assert Equal (RToken rZRX Admin) (Address Geoff)
+    Assert Equal (RToken rZRX PendingAdmin) (Address Zero)
+
+
+Test "Fail to set pending admin"
+    NewCointroller
+    NewRToken ZRX rZRX
+    Invariant Remains (RToken rZRX Admin) (Address Root)
+    Invariant Remains (RToken rZRX PendingAdmin) (Address Zero)
+    AllowFailures
+    From Geoff (RToken rZRX SetPendingAdmin Geoff)
+    Assert Failure UNAUTHORIZED SET_PENDING_ADMIN_OWNER_CHECK
+
+Test "Fail to accept admin"
+    NewCointroller
+    NewRToken ZRX rZRX
+    Invariant Remains (RToken rZRX Admin) (Address Root)
+    Invariant Remains (RToken rZRX PendingAdmin) (Address Zero)
+    AllowFailures
+    From Geoff (RToken rZRX AcceptAdmin)
+    Assert Failure UNAUTHORIZED ACCEPT_ADMIN_PENDING_ADMIN_CHECK

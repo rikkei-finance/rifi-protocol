@@ -1,0 +1,8 @@
+#!/usr/bin/env yarn repl -n mainnet -s
+
+PrintTransactionLogs
+
+-- Deploy the flywheel impl
+CointrollerImpl Deploy Standard StdCointrollerG7
+
+Print "Deployed OK!"

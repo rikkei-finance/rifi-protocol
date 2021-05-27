@@ -1,0 +1,25 @@
+FROM mhart/alpine-node:13.8.0
+
+RUN mkdir -p /home/root/.vscode-server/extensions
+# Install sudo exec
+RUN apk add --no-cache sudo && echo '%wheel ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/wheel
+
+ENV HOME /home/root
+
+RUN apk update && apk add --no-cache --virtual build-dependencies git python g++ make
+RUN wget https://github.com/ethereum/solidity/releases/download/v0.5.16/solc-static-linux -O /bin/solc && chmod +x /bin/solc
+
+RUN apk add --no-cache bash curl git vim nano openssh
+RUN apk add --no-cache perl-utils
+
+RUN apk del build-dependencies
+
+RUN mkdir -p /xlend
+WORKDIR /xlend
+
+ENV SADDLE_SHELL=/bin/sh
+ENV SADDLE_CONTRACTS="contracts/*.sol contracts/**/*.sol tests/**/*.sol"
+
+COPY .bashrc /home/root/.bashrc
+
+CMD while :; do sleep 2073600; done
