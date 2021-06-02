@@ -12,7 +12,7 @@ contract Rifi {
     uint8 public constant decimals = 18;
 
     /// @notice Total number of tokens in circulation
-    uint public constant totalSupply = 10000000e18; // 10 million Rifi
+    uint public constant totalSupply = 500000000e18; // 500 million Rifi
 
     /// @notice Allowance amounts on behalf of others
     mapping (address => mapping (address => uint96)) internal allowances;
