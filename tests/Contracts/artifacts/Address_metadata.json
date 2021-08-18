@@ -1,0 +1,45 @@
+{
+	"compiler": {
+		"version": "0.8.6+commit.11564f7e"
+	},
+	"language": "Solidity",
+	"output": {
+		"abi": [],
+		"devdoc": {
+			"kind": "dev",
+			"methods": {},
+			"version": 1
+		},
+		"userdoc": {
+			"kind": "user",
+			"methods": {},
+			"version": 1
+		}
+	},
+	"settings": {
+		"compilationTarget": {
+			"Users/linhle/Projects/rifi/rifi-protocol/tests/Contracts/RIFIChainBridge.sol": "Address"
+		},
+		"evmVersion": "berlin",
+		"libraries": {},
+		"metadata": {
+			"bytecodeHash": "ipfs"
+		},
+		"optimizer": {
+			"enabled": false,
+			"runs": 200
+		},
+		"remappings": []
+	},
+	"sources": {
+		"Users/linhle/Projects/rifi/rifi-protocol/tests/Contracts/RIFIChainBridge.sol": {
+			"keccak256": "0x8f03dcb0044319b4f87ae8924fbba9664c4bf275ecfd1311818008ec9b09c0d0",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://b8277024692e949e90bd4dd726bc39d98ba7a25e579e9cd5a647fdf8c9ce5bbd",
+				"dweb:/ipfs/QmXsEHSPHY5P8X9w5gtkAMX4zdMhKCiHjmLHkdDBvsZXTc"
+			]
+		}
+	},
+	"version": 1
+}

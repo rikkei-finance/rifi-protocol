@@ -64,6 +64,9 @@ contract Cointroller is CointrollerStorage, CointrollerInterface, CointrollerErr
     /// @notice Emitted when RIFI is granted by admin
     event RifiGranted(address recipient, uint amount);
 
+    /// The address of the RIFI token
+    address internal rifiAddress;
+
     /// @notice The initial RIFI index for a market
     uint224 public constant rifiInitialIndex = 1e36;
 
@@ -78,6 +81,11 @@ contract Cointroller is CointrollerStorage, CointrollerInterface, CointrollerErr
 
     constructor() public {
         admin = msg.sender;
+    }
+
+    function initialize(address rifi) public {
+        require(rifiAddress == address(0), "RIFI address can only be set once");
+        rifiAddress = rifi;
     }
 
     /*** Assets You Are In ***/
@@ -1328,6 +1336,6 @@ contract Cointroller is CointrollerStorage, CointrollerInterface, CointrollerErr
      * @return The address of RIFI
      */
     function getRifiAddress() public view returns (address) {
-        return 0xb3DddbaCBeBEEC7641e5F76cacf16FC8eb8430bC;
+        return rifiAddress;
     }
 }

@@ -4,6 +4,7 @@ import "./PriceOracle.sol";
 import "./RBep20.sol";
 
 interface oracleChainlink {
+    function decimals() external view returns (uint8);
     function latestRoundData()
     external
     view
@@ -30,7 +31,8 @@ contract SimplePriceOracle is PriceOracle {
     }
 
     function getUnderlyingPrice(RToken rToken) public view returns (uint) {
+        uint decimals = oracleData[address(rToken)].decimals();
         (uint80 roundId,int256 answer,uint256 startedAt,uint256 updatedAt,uint80 answeredInRound) = oracleData[address(rToken)].latestRoundData();
-        return 10 ** 10 * uint(answer);
+        return 10 ** (18 - decimals) * uint(answer);
     }
 }
