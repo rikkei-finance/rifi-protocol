@@ -1,3 +1,8 @@
+const fs = require("fs");
+const argv = require("minimist")(process.argv.slice(2));
+
+const { network } = argv;
+
 const Unitroller = artifacts.require("Unitroller");
 const Maximillion = artifacts.require("Maximillion");
 const Cointroller = artifacts.require("Cointroller");
@@ -7,16 +12,24 @@ const RBep20Delegator = artifacts.require("RBep20Delegator");
 const SimplePriceOracle = artifacts.require("SimplePriceOracle");
 const RBinance = artifacts.require("RBinance");
 const FaucetToken = artifacts.require("FaucetToken");
-const fs = require('fs');
+const RifiLens = artifacts.require("RifiLens");
 
-const addressOutput = 'test/test-address.json';
-const deployConfig = 'test/test-config.json';
-const chainlinkOracle = 'test/test-chainlink.json';
+const addressOutput = `test/networks/${network}/address.json`;
+const deployConfig = `test/networks/${network}/config.json`;
+const deployProgress = `test/networks/${network}/progress.json`;
+const chainlinkOracle = `test/networks/${network}/chainlink.json`;
 const faucetInitialAmount = 10 ** 7;
 
-contract('Rifi Test', function (accounts) {
+const explorers = {
+  bsc_mainnet: "https://bscscan.com",
+  eth_mainnet: "https://etherscan.io",
+  bsc_testnet: "https://testnet.bscscan.com",
+  rinkeby: "https://rinkeby.etherscan.io",
+};
+
+contract("Rifi Test", function (accounts) {
   console.log(accounts[0]);
-  describe('Test common flow', async function () {
+  describe("Test common flow", async function () {
     let governance = accounts[0];
     let unitroller;
     let cointroller;
@@ -32,6 +45,9 @@ contract('Rifi Test', function (accounts) {
     const addresses = {};
     const config = {};
     const chainlink = {};
+    const progress = {};
+
+    const explorer = explorers[network];
 
     const deployJumpRateModel = async (params) => {
       const {
@@ -40,7 +56,7 @@ contract('Rifi Test', function (accounts) {
         multiplierPerYear,
         jumpMultiplierPerYear,
         kink_,
-        lowerKink_
+        lowerKink_,
       } = params;
       return JumpRateModel.new(
         web3.utils.toWei(baseRatePerYear, "ether"),
@@ -50,21 +66,65 @@ contract('Rifi Test', function (accounts) {
         web3.utils.toWei(kink_, "ether"),
         web3.utils.toWei(lowerKink_, "ether"),
         governance,
-        { from: governance });
+        { from: governance }
+      );
     };
 
     const deployFaucetToken = async (params) => {
       const { symbol, decimals } = params;
       const name = `Rifi Test ${symbol}`;
-      return FaucetToken.new(faucetInitialAmount, name, decimals, symbol, { from: governance });
+      return FaucetToken.new(faucetInitialAmount, name, decimals, symbol, {
+        from: governance,
+      });
     };
 
-    const saveAddresses = async () => (fs.promises.writeFile(addressOutput, JSON.stringify(addresses, null, 2)));
+    const saveAddresses = async () => {
+      await fs.promises.writeFile(
+        addressOutput,
+        JSON.stringify(addresses, null, 2)
+      );
+      await fs.promises.writeFile(
+        deployProgress,
+        JSON.stringify(progress, null, 2)
+      );
+      await fs.promises.writeFile(
+        deployConfig,
+        JSON.stringify(config, null, 2)
+      );
+    };
+
+    const runWithProgressCheck = async (tag, func) => {
+      if (progress[tag]) {
+        console.log(`Skipping '${tag}'.`);
+        return;
+      }
+      console.log(`Running: ${tag}`);
+      try {
+        if (func.constructor.name === "AsyncFunction") {
+          await func();
+        } else {
+          func();
+        }
+      } catch (e) {
+        throw e;
+      }
+
+      progress[tag] = true;
+      await saveAddresses();
+    };
 
     beforeEach(async () => {
       console.log("Prepairing...");
-      assert.equal(fs.existsSync(deployConfig), true, `Configuration file not found: ${deployConfig}`);
-      assert.equal(fs.existsSync(chainlinkOracle), true, `Configuration file not found: ${chainlinkOracle}`);
+      assert.equal(
+        fs.existsSync(deployConfig),
+        true,
+        `Configuration file not found: ${deployConfig}`
+      );
+      assert.equal(
+        fs.existsSync(chainlinkOracle),
+        true,
+        `Configuration file not found: ${chainlinkOracle}`
+      );
 
       if (fs.existsSync(addressOutput)) {
         const data = fs.readFileSync(addressOutput);
@@ -74,6 +134,13 @@ contract('Rifi Test', function (accounts) {
       const configData = fs.readFileSync(deployConfig);
       Object.assign(config, JSON.parse(configData.toString()));
 
+      if (!config.RIFI) {
+        throw new Error("RIFI address is required!");
+      }
+
+      const progressData = fs.readFileSync(deployProgress);
+      Object.assign(progress, JSON.parse(progressData.toString()));
+
       const chainlinkData = fs.readFileSync(chainlinkOracle);
       Object.assign(chainlink, JSON.parse(chainlinkData.toString()));
 
@@ -81,113 +148,152 @@ contract('Rifi Test', function (accounts) {
       console.log(config);
       console.log(addresses);
 
-      console.log("Deploy");
+      console.log("Deploying...");
 
-      if (!addresses.Cointroller) {
-        let unitroller = await Unitroller.new({ from: governance });
-        console.log(`Unitroller address at: https://testnet.bscscan.com/address/${unitroller.address}`);
+      const tokenDecimals = {};
+      const tokensList = [];
+      const tokenUnderlying = [];
 
-        let cointroller = await Cointroller.new({ from: governance });
-        console.log(`Cointroller address at: https://testnet.bscscan.com/address/${cointroller.address}`);
+      try {
+        let unitroller;
+        let cointroller;
+        await runWithProgressCheck("Unitroller", async () => {
+          unitroller = await Unitroller.new({ from: governance });
+          console.log(
+            `Unitroller address at: ${explorer}/address/${unitroller.address}`
+          );
+          addresses.Cointroller = unitroller.address;
+        });
 
-        let transaction = await unitroller._setPendingImplementation(cointroller.address, { from: governance });
-        console.log(`unitroller._setPendingImplementation transaction: https://testnet.bscscan.com/tx/${transaction.tx}`);
+        await runWithProgressCheck("Cointroller", async () => {
+          cointroller = await Cointroller.new({ from: governance });
+          console.log(
+            `Cointroller address at: ${explorer}/address/${cointroller.address}`
+          );
+          addresses.CointrollerImpl = cointroller.address;
+        });
 
-        transaction = await cointroller._become(unitroller.address, { from: governance });
-        console.log(`cointroller._become transaction: https://testnet.bscscan.com/tx/${transaction.tx}`);
+        if (!unitroller && !addresses.Cointroller) {
+          throw Error("Failed on deploying Unitroller");
+        }
 
-        addresses.Cointroller = unitroller.address;
+        if (!unitroller) {
+          unitroller = await Unitroller.at(addresses.Cointroller);
+        }
+
+        if (!cointroller && !addresses.CointrollerImpl) {
+          throw Error("Failed on deploying Cointroller implementation");
+        }
+
+        if (!cointroller) {
+          cointroller = await Cointroller.at(addresses.CointrollerImpl);
+        }
+
+        await runWithProgressCheck(
+          "unitroller._setPendingImplementation",
+          async () => {
+            const transaction = await unitroller._setPendingImplementation(
+              cointroller.address,
+              { from: governance }
+            );
+            console.log(
+              `unitroller._setPendingImplementation transaction: ${explorer}/tx/${transaction.tx}`
+            );
+          }
+        );
+
+        await runWithProgressCheck("cointroller._become", async () => {
+          const transaction = await cointroller._become(unitroller.address, {
+            from: governance,
+          });
+          console.log(
+            `cointroller._become transaction: ${explorer}/tx/${transaction.tx}`
+          );
+        });
 
         unitroller = await Cointroller.at(addresses.Cointroller);
 
-        const priceOracle = await SimplePriceOracle.new({ from: governance });
-        console.log(`PriceOracle address at: https://testnet.bscscan.com/address/${priceOracle.address}`);
-        addresses.PriceFeed = priceOracle.address;
+        await runWithProgressCheck("unitroller.initialize", async () => {
+          const transaction = await unitroller.initialize(config.RIFI, {
+            from: governance,
+          });
+          console.log(
+            `unitroller.initialize transaction: ${explorer}/tx/${transaction.tx}`
+          );
+        });
 
-        transaction = await unitroller._setPriceOracle(priceOracle.address, { from: governance });
-        console.log(`Unitroller._setPriceOracle transaction: https://testnet.bscscan.com/tx/${transaction.tx}`);
+        await runWithProgressCheck("SimplePriceOracle", async () => {
+          const priceOracle = await SimplePriceOracle.new({ from: governance });
+          console.log(
+            `PriceOracle address at: ${explorer}/address/${priceOracle.address}`
+          );
+          addresses.PriceFeed = priceOracle.address;
+        });
 
-        transaction = await unitroller._setCloseFactor(web3.utils.toWei(config.closeFactor, "ether"), { from: governance });
-        console.log(`Unitroller._setCloseFactor transaction: https://testnet.bscscan.com/tx/${transaction.tx}`);
+        const priceOracle = await SimplePriceOracle.at(addresses.PriceFeed);
 
-        transaction = await unitroller._setLiquidationIncentive(web3.utils.toWei(config.liquidationIncentive, "ether"), { from: governance });
-        console.log(`Unitroller._setLiquidationIncentive transaction: https://testnet.bscscan.com/tx/${transaction.tx}`);
+        await runWithProgressCheck("unitroller._setPriceOracle", async () => {
+          const transaction = await unitroller._setPriceOracle(
+            priceOracle.address,
+            {
+              from: governance,
+            }
+          );
+          console.log(
+            `Unitroller._setPriceOracle transaction: ${explorer}/tx/${transaction.tx}`
+          );
+        });
+
+        await runWithProgressCheck("unitroller._setCloseFactor", async () => {
+          const transaction = await unitroller._setCloseFactor(
+            web3.utils.toWei(config.closeFactor, "ether"),
+            { from: governance }
+          );
+          console.log(
+            `Unitroller._setCloseFactor transaction: ${explorer}/tx/${transaction.tx}`
+          );
+        });
+
+        await runWithProgressCheck(
+          "unitroller._setLiquidationIncentive",
+          async () => {
+            const transaction = await unitroller._setLiquidationIncentive(
+              web3.utils.toWei(config.liquidationIncentive, "ether"),
+              { from: governance }
+            );
+            console.log(
+              `Unitroller._setLiquidationIncentive transaction: ${explorer}/tx/${transaction.tx}`
+            );
+          }
+        );
 
         await saveAddresses();
-      } else {
-        console.log("Cointroller exists.");
-      }
 
-      const priceOracle = await SimplePriceOracle.at(addresses.PriceFeed);
-      const unitroller = await Cointroller.at(addresses.Cointroller);
-      if (!addresses.rBNB) {
-        const { rBNB: { name, symbol, decimals, underlying, initialExchangeRateMantissa, interestRateModel: { address, params } } } = config;
-        let modelAddress = address;
-        if (!modelAddress) {
-          const interestRateModel = await deployJumpRateModel(params);
-          console.log("rBNB InterestRateModel address at: https://testnet.bscscan.com/address/" + interestRateModel.address);
-          modelAddress = interestRateModel.address;
-        }
+        if (config.rNative) {
+          const {
+            rNative: {
+              name,
+              symbol,
+              decimals,
+              underlying,
+              initialExchangeRateMantissa,
+              interestRateModel: { address, params },
+            },
+          } = config;
 
-        const rBinance = await RBinance.new(addresses.Cointroller, modelAddress, web3.utils.toWei(initialExchangeRateMantissa, "ether"), name, symbol, decimals, governance, { from: governance });
-        console.log("rBNB address at: https://testnet.bscscan.com/address/" + rBinance.address);
-
-        addresses.rBNB = rBinance.address;
-
-        let transaction = await unitroller._supportMarket(addresses.rBNB, { from: governance });
-        console.log(`rBNB Unitroller._supportMarket transaction: https://testnet.bscscan.com/tx/${transaction.tx}`);
-
-        transaction = await priceOracle.setOracleData(addresses.rBNB, chainlink[underlying.symbol].address, { from: governance });
-        console.log(`rBNB priceOracle.setOracleData transaction: https://testnet.bscscan.com/tx/${transaction.tx}`);
-
-        transaction = await unitroller._setCollateralFactor(addresses.rBNB, web3.utils.toWei(config.rBNB.collateralFactor, "ether"), { from: governance });
-        console.log(`rBNB Unitroller._setCollateralFactor transaction: https://testnet.bscscan.com/tx/${transaction.tx}`);
-
-        await saveAddresses();
-      } else {
-        console.log("rBNB exists.");
-      }
-
-      if (!addresses.rBep20Delegate) {
-        const rBep20Delegate = await RBep20Delegate.new({ from: governance });
-        console.log("RBep20Delegate address at: https://testnet.bscscan.com/address/" + rBep20Delegate.address);
-        addresses.rBep20Delegate = rBep20Delegate.address;
-        await saveAddresses();
-      }
-
-      const tokenDecimals = {
-        rBNB: parseInt(config.rBNB.decimals),
-        BNB: 18,
-      };
-      const { rTokens = {} } = config;
-      const tokens = Object.entries(rTokens);
-
-      const tokensList = ['rBNB'];
-      const tokenUnderlying = ['BNB'];
-      if (tokens.length > 0) {
-        for (let [, token] of tokens) {
-          const { name, symbol, decimals, underlying, initialExchangeRateMantissa, collateralFactor, interestRateModel: { address, params } } = token;
-          if (!addresses[symbol]) {
-            console.log(`Deploying ${symbol} (${name})`);
+          await runWithProgressCheck("rNative", async () => {
             let modelAddress = address;
             if (!modelAddress) {
               const interestRateModel = await deployJumpRateModel(params);
-              console.log(`${symbol} InterestRateModel address at: https://testnet.bscscan.com/address/${interestRateModel.address}`);
+              console.log(
+                "rNative InterestRateModel address at: ${explorer}/address/" +
+                  interestRateModel.address
+              );
               modelAddress = interestRateModel.address;
+              config.rNative.interestRateModel.address = modelAddress;
             }
 
-            let underlyingAddress = underlying.address || addresses[underlying.symbol];
-            if (!underlyingAddress) {
-              const faucetToken = await deployFaucetToken(underlying);
-              console.log(`${underlying.symbol} address at: https://testnet.bscscan.com/address/${faucetToken.address}`);
-              underlyingAddress = faucetToken.address;
-            }
-
-            addresses[underlying.symbol] = underlyingAddress;
-            await saveAddresses();
-
-            const rBep20Delegator = await RBep20Delegator.new(
-              underlyingAddress,
+            const rBinance = await RBinance.new(
               addresses.Cointroller,
               modelAddress,
               web3.utils.toWei(initialExchangeRateMantissa, "ether"),
@@ -195,38 +301,240 @@ contract('Rifi Test', function (accounts) {
               symbol,
               decimals,
               governance,
-              addresses.rBep20Delegate,
-              "0x",
-              { from: governance });
-            console.log(`${symbol} address at: https://testnet.bscscan.com/address/${rBep20Delegator.address}`);
-            addresses[symbol] = rBep20Delegator.address;
+              { from: governance }
+            );
+            console.log(
+              "rNative address at: ${explorer}/address/" + rBinance.address
+            );
 
-            let transaction = await unitroller._supportMarket(addresses[symbol], { from: governance });
-            console.log(`${symbol} Unitroller._supportMarket transaction: https://testnet.bscscan.com/tx/${transaction.tx}`);
+            addresses[symbol] = rBinance.address;
+          });
 
-            transaction = await priceOracle.setOracleData(addresses[symbol], chainlink[underlying.symbol].address, { from: governance });
-            console.log(`${symbol} priceOracle.setOracleData transaction: https://testnet.bscscan.com/tx/${transaction.tx}`);
+          await runWithProgressCheck(
+            "rNative: unitroller._supportMarket",
+            async () => {
+              let transaction = await unitroller._supportMarket(
+                addresses[symbol],
+                {
+                  from: governance,
+                }
+              );
+              console.log(
+                `rNative Unitroller._supportMarket transaction: ${explorer}/tx/${transaction.tx}`
+              );
+            }
+          );
 
-            transaction = await unitroller._setCollateralFactor(addresses[symbol], web3.utils.toWei(collateralFactor, "ether"), { from: governance });
-            console.log(`${symbol} Unitroller._setCollateralFactor transaction: https://testnet.bscscan.com/tx/${transaction.tx}`);
+          await runWithProgressCheck(
+            "rNative: priceOracle.setOracleData",
+            async () => {
+              transaction = await priceOracle.setOracleData(
+                addresses[symbol],
+                chainlink[underlying.symbol].address,
+                { from: governance }
+              );
+              console.log(
+                `rBNB priceOracle.setOracleData transaction: ${explorer}/tx/${transaction.tx}`
+              );
+            }
+          );
 
-            await saveAddresses();
-          } else {
-            console.log(`${symbol} exists.`);
-          }
+          await runWithProgressCheck(
+            "rNative: unitroller._setCollateralFactor",
+            async () => {
+              transaction = await unitroller._setCollateralFactor(
+                addresses[symbol],
+                web3.utils.toWei(config.rNative.collateralFactor, "ether"),
+                { from: governance }
+              );
+              console.log(
+                `rNative Unitroller._setCollateralFactor transaction: ${explorer}/tx/${transaction.tx}`
+              );
+            }
+          );
+
+          await runWithProgressCheck(
+            "rNative: unitroller._setRifiSpeed",
+            async () => {
+              transaction = await unitroller._setRifiSpeed(
+                addresses[symbol],
+                web3.utils.toWei(config.rNative.rifiSpeed, "ether"),
+                { from: governance }
+              );
+              console.log(
+                `rBNB Unitroller._setRifiSpeed transaction: ${explorer}/tx/${transaction.tx}`
+              );
+            }
+          );
 
           tokenDecimals[symbol] = parseInt(decimals);
           tokenDecimals[underlying.symbol] = parseInt(underlying.decimals);
-
           tokensList.push(symbol);
           tokenUnderlying.push(underlying.symbol);
-        }
-      }
 
-      if (!addresses.Maximillion) {
-        const maximillion = await Maximillion.new(addresses.rBNB, { from: governance });
-        console.log(`Maximillion address at: https://testnet.bscscan.com/address/${maximillion.address}`);
-        addresses.Maximillion = maximillion.address;
+          await saveAddresses();
+        } else {
+          console.log("rNative is not configured.");
+        }
+
+        if (!addresses.rBep20Delegate) {
+          console.log("Creating RBep20Delegate");
+          const rBep20Delegate = await RBep20Delegate.new({ from: governance });
+          console.log(
+            `RBep20Delegate address at: ${explorer}/address/${rBep20Delegate.address}`
+          );
+          addresses.rBep20Delegate = rBep20Delegate.address;
+          await saveAddresses();
+        }
+
+        const { rTokens = {} } = config;
+        const tokens = Object.entries(rTokens);
+
+        if (tokens.length > 0) {
+          for (let [, token] of tokens) {
+            const {
+              name,
+              symbol,
+              decimals,
+              underlying,
+              initialExchangeRateMantissa,
+              collateralFactor,
+              rifiSpeed,
+              interestRateModel: { address, params },
+            } = token;
+            console.log(`Deploying ${symbol} (${name})`);
+
+            await runWithProgressCheck(symbol, async () => {
+              let modelAddress = address;
+              if (!modelAddress) {
+                console.log("Creating InterestRateModel");
+                const interestRateModel = await deployJumpRateModel(params);
+                console.log(
+                  `${symbol} InterestRateModel address at: ${explorer}/address/${interestRateModel.address}`
+                );
+                modelAddress = interestRateModel.address;
+                config.rTokens[symbol].interestRateModel.address = modelAddress;
+              }
+
+              let underlyingAddress =
+                underlying.address || addresses[underlying.symbol];
+              if (!underlyingAddress) {
+                const faucetToken = await deployFaucetToken(underlying);
+                console.log(
+                  `${underlying.symbol} address at: ${explorer}/address/${faucetToken.address}`
+                );
+                underlyingAddress = faucetToken.address;
+              }
+
+              addresses[underlying.symbol] = underlyingAddress;
+              await saveAddresses();
+
+              console.log("Creating RBep20Delegator");
+              const rBep20Delegator = await RBep20Delegator.new(
+                underlyingAddress,
+                addresses.Cointroller,
+                modelAddress,
+                web3.utils.toWei(initialExchangeRateMantissa, "ether"),
+                name,
+                symbol,
+                decimals,
+                governance,
+                addresses.rBep20Delegate,
+                "0x",
+                { from: governance }
+              );
+              console.log(
+                `${symbol} address at: ${explorer}/address/${rBep20Delegator.address}`
+              );
+              addresses[symbol] = rBep20Delegator.address;
+            });
+
+            await runWithProgressCheck(
+              `${symbol}: unitroller._supportMarket`,
+              async () => {
+                const transaction = await unitroller._supportMarket(
+                  addresses[symbol],
+                  { from: governance }
+                );
+                console.log(
+                  `${symbol} Unitroller._supportMarket transaction: ${explorer}/tx/${transaction.tx}`
+                );
+              }
+            );
+
+            await runWithProgressCheck(
+              `${symbol}: priceOracle.setOracleData`,
+              async () => {
+                const transaction = await priceOracle.setOracleData(
+                  addresses[symbol],
+                  chainlink[underlying.symbol].address,
+                  { from: governance }
+                );
+                console.log(
+                  `${symbol} priceOracle.setOracleData transaction: ${explorer}/tx/${transaction.tx}`
+                );
+              }
+            );
+
+            await runWithProgressCheck(
+              `${symbol}: unitroller._setCollateralFactor`,
+              async () => {
+                const transaction = await unitroller._setCollateralFactor(
+                  addresses[symbol],
+                  web3.utils.toWei(collateralFactor, "ether"),
+                  { from: governance }
+                );
+                console.log(
+                  `${symbol} Unitroller._setCollateralFactor transaction: ${explorer}/tx/${transaction.tx}`
+                );
+              }
+            );
+
+            await runWithProgressCheck(
+              `${symbol}: unitroller._setRifiSpeed`,
+              async () => {
+                transaction = await unitroller._setRifiSpeed(
+                  addresses[symbol],
+                  web3.utils.toWei(rifiSpeed, "ether"),
+                  { from: governance }
+                );
+                console.log(
+                  `${symbol} Unitroller._setRifiSpeed transaction: ${explorer}/tx/${transaction.tx}`
+                );
+              }
+            );
+
+            await saveAddresses();
+
+            tokenDecimals[symbol] = parseInt(decimals);
+            tokenDecimals[underlying.symbol] = parseInt(underlying.decimals);
+
+            tokensList.push(symbol);
+            tokenUnderlying.push(underlying.symbol);
+          }
+        }
+
+        await runWithProgressCheck("RifiLens", async () => {
+          const lens = await RifiLens.new({ from: governance });
+          console.log(
+            `RifiLens address at: ${explorer}/address/${lens.address}`
+          );
+          addresses.RifiLens = lens.address;
+        });
+
+        if (!addresses.Maximillion && config.rNative) {
+          const maximillion = await Maximillion.new(
+            addresses[config.rNative.symbol],
+            { from: governance }
+          );
+          console.log(
+            `Maximillion address at: ${explorer}/address/${maximillion.address}`
+          );
+          addresses.Maximillion = maximillion.address;
+        }
+      } catch (e) {
+        console.log(e);
+        await saveAddresses();
       }
 
       console.log(tokenDecimals);
@@ -237,7 +545,7 @@ contract('Rifi Test', function (accounts) {
 
     it("Common flow", async function () {
       //     transaction = await rBinance.mint({from: governance, value: web3.utils.toWei("0.5", 'ether')});
-      //     console.log("19. Deposit from governance to RBNB transaction: https://testnet.bscscan.com/tx/" + transaction.tx);
+      //     console.log("19. Deposit from governance to RBNB transaction: ${explorer}/tx/" + transaction.tx);
       //     let exchangeRateStored = await rBinance.exchangeRateStored();
       //     exchangeRateStored = parseInt(exchangeRateStored);
       //     transaction.receipt.rawLogs.forEach((item, index) => {
@@ -253,16 +561,12 @@ contract('Rifi Test', function (accounts) {
       //             assert.equal(parseInt(item.data), web3.utils.toWei("500000000000000000", "ether") / exchangeRateStored);
       //         }
       //     })
-
-
       //     transaction = await bEP20Token.transfer(accounts[1], web3.utils.toWei("100", "ether"), {from: governance});
-      //     console.log("20. Transfer BUSD from governance to account1 transaction: https://testnet.bscscan.com/tx/" + transaction.tx);
-
+      //     console.log("20. Transfer BUSD from governance to account1 transaction: ${explorer}/tx/" + transaction.tx);
       //     transaction = await bEP20Token.approve(rBep20Delegator.address, web3.utils.toWei("100000", "ether"), {from: accounts[1]});
-      //     console.log("21. Approve BUSD from account1 to rBUSD  transaction: https://testnet.bscscan.com/tx/" + transaction.tx);
-
+      //     console.log("21. Approve BUSD from account1 to rBUSD  transaction: ${explorer}/tx/" + transaction.tx);
       //     transaction = await rBep20Delegator.mint(web3.utils.toWei("100", "ether"), {from: accounts[1]});
-      //     console.log("22. Deposit from account1 to rBUSD transaction: https://testnet.bscscan.com/tx/" + transaction.tx);
+      //     console.log("22. Deposit from account1 to rBUSD transaction: ${explorer}/tx/" + transaction.tx);
       //     exchangeRateStored = await rBep20Delegator.exchangeRateStored();
       //     exchangeRateStored = parseInt(exchangeRateStored);
       //     transaction.receipt.rawLogs.forEach((item, index) => {
@@ -283,10 +587,8 @@ contract('Rifi Test', function (accounts) {
       //             }
       //         }
       //     })
-
-
       //     transaction = await rBep20Delegator.redeem(5000000000, {from: accounts[1]});
-      //     console.log("23. Redeem 50  from account1 to rBUSD transaction: https://testnet.bscscan.com/tx/" + transaction.tx);
+      //     console.log("23. Redeem 50  from account1 to rBUSD transaction: ${explorer}/tx/" + transaction.tx);
       //     exchangeRateStored = await rBep20Delegator.exchangeRateStored();
       //     exchangeRateStored = parseInt(exchangeRateStored);
       //     transaction.receipt.rawLogs.forEach((item, index) => {
@@ -307,13 +609,10 @@ contract('Rifi Test', function (accounts) {
       //             }
       //         }
       //     })
-
-
       //     transaction = await unitroller.enterMarkets([rBinance.address], {from: governance});
-      //     console.log("24. Enable collateral transaction: https://testnet.bscscan.com/tx/" + transaction.tx);
-
+      //     console.log("24. Enable collateral transaction: ${explorer}/tx/" + transaction.tx);
       //     transaction = await rBep20Delegator.borrow(web3.utils.toWei("10", "ether"), {from: governance});
-      //     console.log("25. Borrow from governance to rBUSD transaction: https://testnet.bscscan.com/tx/" + transaction.tx);
+      //     console.log("25. Borrow from governance to rBUSD transaction: ${explorer}/tx/" + transaction.tx);
       //     exchangeRateStored = await rBep20Delegator.exchangeRateStored();
       //     exchangeRateStored = parseInt(exchangeRateStored);
       //     transaction.receipt.rawLogs.forEach((item, index) => {
@@ -330,12 +629,10 @@ contract('Rifi Test', function (accounts) {
       //             assert.equal(parseInt(item.data), web3.utils.toWei("10", "ether"));
       //         }
       //     })
-
       //     transaction = await bEP20Token.approve(rBep20Delegator.address, web3.utils.toWei("100000", "ether"), {from: governance});
-      //     console.log("26. Approve BUSD from governance to rBUSD  transaction: https://testnet.bscscan.com/tx/" + transaction.tx);
-
+      //     console.log("26. Approve BUSD from governance to rBUSD  transaction: ${explorer}/tx/" + transaction.tx);
       //     transaction = await rBep20Delegator.repayBorrow(web3.utils.toWei("10", "ether"), {from: governance});
-      //     console.log("27. Repay borrow from governance to rBUSD transaction: https://testnet.bscscan.com/tx/" + transaction.tx);
+      //     console.log("27. Repay borrow from governance to rBUSD transaction: ${explorer}/tx/" + transaction.tx);
       //     exchangeRateStored = await rBep20Delegator.exchangeRateStored();
       //     exchangeRateStored = parseInt(exchangeRateStored);
       //     transaction.receipt.rawLogs.forEach((item, index) => {
@@ -351,18 +648,12 @@ contract('Rifi Test', function (accounts) {
       //             assert.equal(parseInt(item.data), web3.utils.toWei("10", "ether"));
       //         }
       //     })
-
       //     transaction = await unitroller.enterMarkets([rBep20Delegator.address], {from: accounts[1]});
-      //     console.log("28. Enable collateral transaction: https://testnet.bscscan.com/tx/" + transaction.tx);
-
+      //     console.log("28. Enable collateral transaction: ${explorer}/tx/" + transaction.tx);
       //     transaction = await rBinance.borrow(web3.utils.toWei("0.001", "ether"), {from: accounts[1]});
-      //     console.log("29. Borrow ether from account1 transaction: https://testnet.bscscan.com/tx/" + transaction.tx);
-
+      //     console.log("29. Borrow ether from account1 transaction: ${explorer}/tx/" + transaction.tx);
       //     transaction = await maximillion.repayBehalf(accounts[1], {from: accounts[1], value:web3.utils.toWei("0.002",'ether')});
-      //     console.log("30. Repay max BNB transaction: https://testnet.bscscan.com/tx/" + transaction.tx);
-
-
-
-    }).timeout(40000000000)
-  })
-})
+      //     console.log("30. Repay max BNB transaction: ${explorer}/tx/" + transaction.tx);
+    }).timeout(40000000000);
+  });
+});

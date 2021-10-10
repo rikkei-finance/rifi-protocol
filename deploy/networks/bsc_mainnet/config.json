@@ -1,0 +1,82 @@
+{
+  "RIFI": "0xD7c271AC4eB765705B32EdbA75CB6d3243c731F6",
+  "rTokens": {
+    "rBUSD": {
+      "name": "Rifi BUSD Mainnet Testing",
+      "symbol": "rBUSD",
+      "decimals": 8,
+      "underlying": {
+        "symbol": "BUSD",
+        "decimals": 18,
+        "address": "0xe9e7cea3dedca5984780bafc599bd69add087d56"
+      },
+      "interestRateModel": {
+        "address": "0x9E6172622C32d16fb8f2dc1a5097Eac711816796",
+        "model": "JumpRateModel",
+        "params": {
+          "baseRatePerYear": "0.02",
+          "lowerBaseRatePerYear": "0.01",
+          "multiplierPerYear": "0.04",
+          "jumpMultiplierPerYear": "1.09",
+          "kink_": "0.8",
+          "lowerKink_": "0.4"
+        }
+      },
+      "initialExchangeRateMantissa": "200000000",
+      "collateralFactor": "0.6",
+      "rifiSpeed": "0.00000000645"
+    },
+    "rUSDC": {
+      "name": "Rifi USDC Mainnet Testing",
+      "symbol": "rUSDC",
+      "decimals": 8,
+      "underlying": {
+        "symbol": "USDC",
+        "decimals": "18",
+        "address": "0x8ac76a51cc950d9822d68b83fe1ad97b32cd580d"
+      },
+      "interestRateModel": {
+        "address": "0x90E33Cce8A1d6C21F04dD80aB9b88283Ed5D819D",
+        "model": "JumpRateModel",
+        "params": {
+          "baseRatePerYear": "0.02",
+          "lowerBaseRatePerYear": "0.01",
+          "multiplierPerYear": "0.04",
+          "jumpMultiplierPerYear": "1.09",
+          "kink_": "0.8",
+          "lowerKink_": "0.4"
+        }
+      },
+      "initialExchangeRateMantissa": "200000000",
+      "collateralFactor": "0.6",
+      "rifiSpeed": "0.00000000645"
+    },
+    "rUSDT": {
+      "name": "Rifi USDT Mainnet Testing",
+      "symbol": "rUSDT",
+      "decimals": 8,
+      "underlying": {
+        "symbol": "USDT",
+        "decimals": "18",
+        "address": "0x55d398326f99059ff775485246999027b3197955"
+      },
+      "interestRateModel": {
+        "address": "0xD710b241ef048c40DaC1Ef3eBBe9554798d7930f",
+        "model": "JumpRateModel",
+        "params": {
+          "baseRatePerYear": "0.02",
+          "lowerBaseRatePerYear": "0.01",
+          "multiplierPerYear": "0.04",
+          "jumpMultiplierPerYear": "1.09",
+          "kink_": "0.8",
+          "lowerKink_": "0.4"
+        }
+      },
+      "initialExchangeRateMantissa": "200000000",
+      "collateralFactor": "0.6",
+      "rifiSpeed": "0.00000000645"
+    }
+  },
+  "closeFactor": "0.25",
+  "liquidationIncentive": "1.08"
+}
