@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.6;
+pragma solidity 0.8.9;
 
 interface IBEP20 {
     function totalSupply() external view returns (uint256);
@@ -273,15 +273,14 @@ abstract contract Ownable {
 }
 
 contract SignData {
-    bytes32 public DOMAIN_SEPARATOR;
-    string public NAME;
+    bytes32 public immutable DOMAIN_SEPARATOR;
+    string public constant NAME = "RIFI BRIDGE LOCKER";
     mapping(address => uint256) public nonces;
-    bytes32 public UNLOCK_TYPE_HASH;
-    bytes32 public LOCK_TYPE_HASH;
-    bytes32 public UPDATE_EPOCH_TYPE_HASH;
+    bytes32 public immutable UNLOCK_TYPE_HASH;
+    bytes32 public immutable LOCK_TYPE_HASH;
+    bytes32 public immutable UPDATE_EPOCH_TYPE_HASH;
 
     constructor() {
-        NAME = "RIFI BRIDGE LOCKER";
         uint256 chainId;
         assembly {
             chainId := chainid()
@@ -536,6 +535,7 @@ contract RIFIChainBridge is Ownable, SignData {
         address sender
     ) internal {
         require(unlockedRoles[sender], "Forbidden");
+        require(receivers.length == senders.length, "Invalid data");
         require(receivers.length == amounts.length, "Invalid data");
         require(isUnlocked[receiveEpoch] == false, "Unlocked");
         isUnlocked[receiveEpoch] = true;
