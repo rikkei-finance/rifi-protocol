@@ -7,7 +7,7 @@ import "./SafeMath.sol";
  * @author Rifi (modified by Dharma Labs, refactored by Arr00)
  * @notice Version 2 modifies Version 1 by enabling updateable parameters.
  */
-contract BaseJumpRateModel {
+contract BaseJumpRateModelBSC {
     using SafeMath for uint256;
 
     event NewInterestParams(
@@ -27,7 +27,12 @@ contract BaseJumpRateModel {
     /**
      * @notice The approximate number of blocks per year that is assumed by the interest rate model
      */
-    uint256 public constant blocksPerYear = 2102400;
+    uint256 public constant blocksPerYear = 10512000;
+
+    /**
+     * @notice The approximate number of seconds per block that is assumed by the interest rate model
+     */
+    uint256 public constant secondsPerBlock = 3;
 
     /**
      * @notice The multiplier of utilization rate that gives the slope of the interest rate
