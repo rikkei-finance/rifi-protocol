@@ -57,8 +57,9 @@ module.exports = {
       accounts: [`0x${LOCAL_KEY}`],
     },
     bsc_mainnet: {
-      url: `https://bsc-dataseed.binance.org/`,
-      // url: `wss://bsc-ws-node.nariox.org:443`,
+      // url: `https://bsc-dataseed.binance.org/`,
+      url: `https://bsc-dataseed1.defibit.io/`,
+      // url: `https://bsc-dataseed1.ninicoin.io/`,
       accounts: [`0x${MAINNET_KEY}`],
       network_id: 56,
       confirmations: 2,
@@ -67,7 +68,7 @@ module.exports = {
       production: true,
     },
     bsc_testnet: {
-      url: `https://data-seed-prebsc-2-s2.binance.org:8545`,
+      url: `https://data-seed-prebsc-2-s3.binance.org:8545`,
       accounts: [`0x${TESTNET_KEY}`],
       network_id: 97,
       confirmations: 2,

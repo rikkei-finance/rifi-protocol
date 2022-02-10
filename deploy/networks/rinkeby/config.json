@@ -1,5 +1,30 @@
 {
   "RIFI": "0xa96786DC3Fd5261FcaDB6ac6FfD21252CAA9053F",
+  "rNative": {
+    "name": "Rifi ETH",
+    "symbol": "rETH",
+    "decimals": 8,
+    "underlying": {
+      "symbol": "ETH",
+      "decimals": 18,
+      "address": ""
+    },
+    "interestRateModel": {
+      "address": "0x59440D4e1f1d638CaE72Ba4fb8047619e3455672",
+      "model": "JumpRateModel",
+      "params": {
+        "baseRatePerYear": "0.02",
+        "lowerBaseRatePerYear": "0.01",
+        "multiplierPerYear": "4",
+        "jumpMultiplierPerYear": "1.09",
+        "kink_": "0.8",
+        "lowerKink_": "0.4"
+      }
+    },
+    "initialExchangeRateMantissa": "200000000",
+    "collateralFactor": "0.6",
+    "rifiSpeed": "0.00000000645"
+  },
   "rTokens": {
     "rUSDT": {
       "name": "Rifi USDT",
@@ -37,6 +62,31 @@
       },
       "interestRateModel": {
         "address": "0x21D02427877049153d985AF4215492EddE4cc316",
+        "model": "JumpRateModel",
+        "params": {
+          "baseRatePerYear": "0.02",
+          "lowerBaseRatePerYear": "0.01",
+          "multiplierPerYear": "0.04",
+          "jumpMultiplierPerYear": "1.09",
+          "kink_": "0.8",
+          "lowerKink_": "0.4"
+        }
+      },
+      "initialExchangeRateMantissa": "200000000",
+      "collateralFactor": "0.6",
+      "rifiSpeed": "0.00000000645"
+    },
+    "rBTC": {
+      "name": "Rifi BTC",
+      "symbol": "rBTC",
+      "decimals": 8,
+      "underlying": {
+        "symbol": "BTC",
+        "decimals": "18",
+        "address": ""
+      },
+      "interestRateModel": {
+        "address": "",
         "model": "JumpRateModel",
         "params": {
           "baseRatePerYear": "0.02",
