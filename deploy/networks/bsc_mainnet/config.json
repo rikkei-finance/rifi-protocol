@@ -37,7 +37,7 @@
         "address": "0xe9e7cea3dedca5984780bafc599bd69add087d56"
       },
       "interestRateModel": {
-        "address": "0x9E6172622C32d16fb8f2dc1a5097Eac711816796",
+        "address": "0x1b51D9527684782a792013D877A7E2ba9622C972",
         "model": "JumpRateModel",
         "params": {
           "baseRatePerYear": "0.02",
@@ -63,7 +63,7 @@
         "address": "0x8ac76a51cc950d9822d68b83fe1ad97b32cd580d"
       },
       "interestRateModel": {
-        "address": "0x90E33Cce8A1d6C21F04dD80aB9b88283Ed5D819D",
+        "address": "0xE21ef0129df468eAfb5950a416dfC0E94883485D",
         "model": "JumpRateModel",
         "params": {
           "baseRatePerYear": "0.02",
@@ -89,7 +89,7 @@
         "address": "0x55d398326f99059ff775485246999027b3197955"
       },
       "interestRateModel": {
-        "address": "0xD710b241ef048c40DaC1Ef3eBBe9554798d7930f",
+        "address": "0x5b1dF6645E72f0B2C4874dDA720c640A31b5517F",
         "model": "JumpRateModel",
         "params": {
           "baseRatePerYear": "0.02",

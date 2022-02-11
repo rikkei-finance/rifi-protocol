@@ -14,6 +14,7 @@
     "deploy:ropsten": "HARDHAT_NETWORK=ropsten hardhat run deploy/lending.js",
     "deploy:rinkeby": "HARDHAT_NETWORK=rinkeby hardhat run deploy/lending.js",
     "deploy:kovan": "HARDHAT_NETWORK=kovan hardhat run deploy/lending.js",
+    "update_model:bsc_mainnet": "HARDHAT_NETWORK=bsc_mainnet hardhat run deploy/update_model.js",
     "update_model:bsc_testnet": "HARDHAT_NETWORK=bsc_testnet hardhat run deploy/update_model.js",
     "lint": "./script/lint",
     "repl": "./scenario/script/repl",

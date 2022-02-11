@@ -34,7 +34,7 @@ contract BaseJumpRateModelBSC {
      */
     uint256 public constant secondsPerBlock = 3;
 
-    /**
+    /**3
      * @notice The multiplier of utilization rate that gives the slope of the interest rate
      */
     uint256 public multiplierPerBlock;

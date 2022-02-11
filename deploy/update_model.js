@@ -12,6 +12,9 @@ const addressOutput = `${__dirname}/networks/${network}/address.json`;
 const deployConfig = `${__dirname}/networks/${network}/config.json`;
 const deployProgress = `${__dirname}/networks/${network}/model_progress.json`;
 
+const waitTime = 60;
+const delay = (n) => new Promise(r => setTimeout(r, n * 1000));
+
 const explorers = {
   bsc_mainnet: "https://bscscan.com",
   eth_mainnet: "https://etherscan.io",
@@ -66,6 +69,13 @@ async function main() {
 
     await model.deployed();
 
+    console.log(
+      `deployJumpRateModel InterestRateModel address at: ${explorer}/address/${model.address}`
+    );
+
+    console.log(`Waiting for ${waitTime} seconds before verifying contract.`)
+    await delay(waitTime);
+
     try {
       await hre.run("verify:verify", {
         address: model.address,
@@ -105,6 +115,13 @@ async function main() {
     );
 
     await model.deployed();
+
+    console.log(
+      `deployLegacyJumpRateModel InterestRateModel address at: ${explorer}/address/${model.address}`
+    );
+
+    console.log(`Waiting for ${waitTime} seconds before verifying contract.`)
+    await delay(waitTime);
 
     try {
       await hre.run("verify:verify", {
@@ -185,27 +202,23 @@ async function main() {
         },
       } = config;
 
-      await runWithProgressCheck("rNative", async () => {
-        let modelAddress = address;
-        if (!modelAddress) {
-          const interestRateModel = await modelDeploy[model](params);
-          console.log(
-            `rNative InterestRateModel address at: ${explorer}/address/${interestRateModel.address}`
-          );
-          modelAddress = interestRateModel.address;
-          config.rNative.interestRateModel.address = modelAddress;
-        }
+      let modelAddress = address;
+      if (!modelAddress) {
+        const interestRateModel = await modelDeploy[model](params);
+        console.log(
+          `rNative InterestRateModel address at: ${explorer}/address/${interestRateModel.address}`
+        );
+        modelAddress = interestRateModel.address;
+        config.rNative.interestRateModel.address = modelAddress;
+      }
 
-        await runWithProgressCheck("rBinance._setInterestRateModel", async () => {
-          const rBinance = RBinance.attach(addresses[symbol]);
-          const transaction = await rBinance._setInterestRateModel(modelAddress);
-          console.log(
-            `rBinance._setInterestRateModel transaction: ${explorer}/tx/${transaction.hash}`
-          );
-        });
+      await runWithProgressCheck("rNative._setInterestRateModel", async () => {
+        const rBinance = RBinance.attach(addresses[symbol]);
+        const transaction = await rBinance._setInterestRateModel(modelAddress);
+        console.log(
+          `rNative._setInterestRateModel transaction: ${explorer}/tx/${transaction.hash}`
+        );
       });
-
-      await saveAddresses();
     } else {
       console.log("rNative is not configured.");
     }
