@@ -15,7 +15,7 @@ const chainlinkOracle = `${__dirname}/networks/${network}/chainlink.json`;
 const faucetInitialAmount = 10 ** 7;
 
 const waitTime = 60;
-const delay = (n) => new Promise( r => setTimeout(r, n*1000));
+const delay = (n) => new Promise(r => setTimeout(r, n * 1000));
 
 const explorers = {
   bsc_mainnet: "https://bscscan.com",
@@ -117,6 +117,7 @@ async function main() {
     const name = `Rifi Test ${symbol}`;
     const token = await FaucetToken.deploy(faucetInitialAmount, name, decimals, symbol);
     await token.deployed();
+    await delay(waitTime);
     await hre.run("verify:verify", {
       address: token.address,
       constructorArguments: [faucetInitialAmount, name, decimals, symbol],
@@ -188,6 +189,7 @@ async function main() {
       console.log(`Unitroller address at: ${explorer}/address/${unitroller.address}`);
       addresses.Cointroller = unitroller.address;
 
+      await delay(waitTime);
       await hre.run("verify:verify", { address: unitroller.address });
     });
 
@@ -196,6 +198,8 @@ async function main() {
       await cointroller.deployed();
       console.log(`Cointroller address at: ${explorer}/address/${cointroller.address}`);
       addresses.CointrollerImpl = cointroller.address;
+
+      await delay(waitTime);
       await hre.run("verify:verify", { address: cointroller.address });
     });
 
@@ -239,6 +243,7 @@ async function main() {
       await priceOracle.deployed();
       console.log(`PriceOracle address at: ${explorer}/address/${priceOracle.address}`);
       addresses.PriceFeed = priceOracle.address;
+      await delay(waitTime);
       await hre.run("verify:verify", { address: priceOracle.address });
     });
 
@@ -312,6 +317,7 @@ async function main() {
       });
 
       await runWithProgressCheck("rNative: verify", async () => {
+        await delay(waitTime);
         await hre.run("verify:verify", {
           address: addresses[symbol],
           constructorArguments: [
@@ -387,6 +393,7 @@ async function main() {
       console.log(`RBep20Delegate address at: ${explorer}/address/${rBep20Delegate.address}`);
       addresses.rBep20Delegate = rBep20Delegate.address;
       await saveAddresses();
+      await delay(waitTime);
       await hre.run("verify:verify", { address: rBep20Delegate.address });
     }
 
@@ -452,22 +459,28 @@ async function main() {
           addresses[symbol] = rBep20Delegator.address;
         });
 
-        await runWithProgressCheck("rNative: verify", async () => {
-          await hre.run("verify:verify", {
-            address: rBep20Delegator.address,
-            constructorArguments: [
-              underlyingAddress,
-              addresses.Cointroller,
-              config.rTokens[symbol].interestRateModel.address,
-              initialExchangeRateMantissa,
-              name,
-              symbol,
-              decimals,
-              governance,
-              addresses.rBep20Delegate,
-              "0x",
-            ],
-          });
+        await runWithProgressCheck(`${symbol}: verify`, async () => {
+          await delay(waitTime);
+          try {
+            await hre.run("verify:verify", {
+              address: addresses[symbol],
+              constructorArguments: [
+                addresses[underlying.symbol],
+                addresses.Cointroller,
+                config.rTokens[symbol].interestRateModel.address,
+                initialExchangeRateMantissa,
+                name,
+                symbol,
+                decimals,
+                governance,
+                addresses.rBep20Delegate,
+                "0x",
+              ],
+            });
+          } catch (e) {
+            console.log(e);
+            console.log(JSON.stringify(e, null, 2));
+          }
         });
 
         await runWithProgressCheck(`${symbol}: unitroller._supportMarket`, async () => {
