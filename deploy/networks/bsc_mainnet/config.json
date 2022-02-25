@@ -23,9 +23,9 @@
         }
       },
       "initialExchangeRateMantissa": "200000000",
-      "collateralFactor": "0.75",
+      "collateralFactor": "0.8",
       "reserveFactor": "0.1",
-      "rifiSpeed": "0.0000921"
+      "rifiSpeed": "0.01"
     },
     "rUSDC": {
       "name": "Rifi USDC",
@@ -49,9 +49,9 @@
         }
       },
       "initialExchangeRateMantissa": "200000000",
-      "collateralFactor": "0.75",
+      "collateralFactor": "0.8",
       "reserveFactor": "0.1",
-      "rifiSpeed": "0.0000921"
+      "rifiSpeed": "0.01"
     },
     "rUSDT": {
       "name": "Rifi USDT",
@@ -75,9 +75,9 @@
         }
       },
       "initialExchangeRateMantissa": "200000000",
-      "collateralFactor": "0.75",
+      "collateralFactor": "0.8",
       "reserveFactor": "0.1",
-      "rifiSpeed": "0.0000921"
+      "rifiSpeed": "0.01"
     },
     "rBTC": {
       "name": "Rifi BTC",
@@ -103,7 +103,7 @@
       "initialExchangeRateMantissa": "200000000",
       "collateralFactor": "0.7",
       "reserveFactor": "0.1",
-      "rifiSpeed": "0.0000921"
+      "rifiSpeed": "0.01"
     },
     "rDAI": {
       "name": "Rifi DAI",
@@ -127,11 +127,11 @@
         }
       },
       "initialExchangeRateMantissa": "200000000",
-      "collateralFactor": "0.7",
+      "collateralFactor": "0.8",
       "reserveFactor": "0.1",
-      "rifiSpeed": "0.0000921"
+      "rifiSpeed": "0.01"
     }
   },
-  "closeFactor": "0.25",
+  "closeFactor": "0.5",
   "liquidationIncentive": "1.08"
 }

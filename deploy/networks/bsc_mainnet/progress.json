@@ -3,7 +3,6 @@
   "Cointroller": true,
   "unitroller._setPendingImplementation": true,
   "cointroller._become": true,
-  "unitroller.initialize": true,
   "SimplePriceOracle": true,
   "unitroller._setPriceOracle": true,
   "unitroller._setCloseFactor": true,
@@ -43,5 +42,6 @@
   "rDAI: unitroller._setCollateralFactor": true,
   "rDAI: rToken._setReserveFactor": true,
   "rDAI: unitroller._setRifiSpeed": true,
-  "RifiLens": true
+  "RifiLens": true,
+  "unitroller.initialize": true
 }
