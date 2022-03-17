@@ -1,0 +1,108 @@
+
+Test "Simple rToken Transfer"
+    NewCointroller
+    ListedRToken ZRX rZRX initialExchangeRate:1e9
+    Prep Geoff Some ZRX rZRX
+    Mint Geoff 50e18 rZRX
+    -- Just to be sure, check initial balances
+    Assert Equal (Bep20 rZRX TokenBalance Geoff) (Exactly 50e9)
+    Assert Equal (Bep20 rZRX TokenBalance Torrey) Zero
+    -- Just transfer
+    Transfer Geoff Torrey 10e9 rZRX
+    Assert Equal (Bep20 rZRX TokenBalance Geoff) (Exactly 40e9)
+    Assert Equal (Bep20 rZRX TokenBalance Torrey) (Exactly 10e9)
+
+Test "Simple rToken Transfer When Underlying Paused"
+    NewCointroller
+    ListedRToken WBTC rWBTC initialExchangeRate:0.1 tokenType:WBTC
+    Prep Geoff Some WBTC rWBTC
+    Mint Geoff 50e8 rWBTC
+    -- Just to be sure, check initial balances
+    Assert Equal (Bep20 rWBTC TokenBalance Geoff) (Exactly 50e9)
+    Assert Equal (Bep20 rWBTC TokenBalance Torrey) Zero
+    -- Just transfer
+    Bep20 WBTC Pause
+    Transfer Geoff Torrey 10e9 rWBTC
+    Assert Equal (Bep20 rWBTC TokenBalance Geoff) (Exactly 40e9)
+    Assert Equal (Bep20 rWBTC TokenBalance Torrey) (Exactly 10e9)
+
+Test "Simple rToken Transfer 1:1 Rate"
+    NewCointroller
+    ListedRToken ZRX rZRX initialExchangeRate:1e0
+    Prep Geoff Some ZRX rZRX
+    Mint Geoff 50e18 rZRX
+    -- Just to be sure, check initial balances
+    Assert Equal (Bep20 rZRX TokenBalance Geoff) (Exactly 50e18)
+    Assert Equal (Bep20 rZRX TokenBalance Torrey) Zero
+    -- Just transfer
+    Transfer Geoff Torrey 10e18 rZRX
+    Assert Equal (Bep20 rZRX TokenBalance Geoff) (Exactly 40e18)
+    Assert Equal (Bep20 rZRX TokenBalance Torrey) (Exactly 10e18)
+
+Test "Simple rToken Transfer Not Allowed by Cointroller"
+    NewCointroller
+    ListedRToken ZRX rZRX initialExchangeRate:1e0
+    Cointroller SetCollateralFactor rZRX 0.1
+    EnterMarkets Geoff rZRX
+    Prep Geoff Some ZRX rZRX
+    Mint Geoff 50e18 rZRX
+    -- Just to be sure, check initial balances
+    Invariant Remains (Bep20 rZRX TokenBalance Geoff) (Exactly 50e18)
+    Invariant Remains (Bep20 rZRX TokenBalance Torrey) Zero
+    -- Just transfer
+    AllowFailures
+    Transfer Geoff Torrey 60e18 rZRX
+    Assert Failure COINTROLLER_REJECTION TRANSFER_COINTROLLER_REJECTION INSUFFICIENT_LIQUIDITY
+
+Test "Simple rToken Transfer From"
+    NewCointroller
+    ListedRToken ZRX rZRX initialExchangeRate:1e9
+    Prep Geoff Some ZRX rZRX
+    Mint Geoff 50e18 rZRX
+    -- Just to be sure, check initial balances
+    Invariant Remains (Bep20 rZRX TokenBalance Torrey) Zero
+    Assert Equal (Bep20 rZRX TokenBalance Geoff) (Exactly 50e9)
+    Assert Equal (Bep20 rZRX TokenBalance Coburn) Zero
+    -- Add approval
+    From Geoff (Bep20 rZRX Approve Torrey 25e9)
+    Assert Equal (Bep20 rZRX Allowance Geoff Torrey) (Exactly 25e9)
+    -- Perform transfer from
+    From Torrey (Bep20 rZRX TransferFrom Geoff Coburn 10e9)
+    Assert Equal (Bep20 rZRX TokenBalance Geoff) (Exactly 40e9)
+    Assert Equal (Bep20 rZRX TokenBalance Coburn) (Exactly 10e9)
+    Assert Equal (Bep20 rZRX Allowance Geoff Torrey) (Exactly 15e9)
+
+Test "rToken Transfer From Not Allowed"
+    NewCointroller
+    ListedRToken ZRX rZRX initialExchangeRate:1e9
+    Prep Geoff Some ZRX rZRX
+    Mint Geoff 50e18 rZRX
+    --
+    Invariant Remains (Bep20 rZRX TokenBalance Geoff) (Exactly 50e9)
+    Invariant Remains (Bep20 rZRX TokenBalance Torrey) (Exactly 0e9)
+    AllowFailures
+    Bep20 rZRX TransferFrom Geoff Torrey 10e9
+    Assert Failure MATH_ERROR TRANSFER_NOT_ALLOWED
+
+Test "rToken Transfer paused"
+    NewCointroller
+    ListedRToken ZRX rZRX initialExchangeRate:1e9
+    Prep Geoff Some ZRX rZRX
+    Mint Geoff 50e18 rZRX
+    -- Just to be sure, check initial balances
+    Assert Equal (Bep20 rZRX TokenBalance Geoff) (Exactly 50e9)
+    Assert Equal (Bep20 rZRX TokenBalance Coburn) Zero
+    -- Pause and attempt transfer
+    Cointroller SetPauseGuardian Coburn
+    From Coburn (Cointroller SetGuardianPaused "Transfer" True)
+    AllowFailures
+    Transfer Geoff Torrey 10e9 rZRX
+    Assert Revert "revert transfer is paused"
+    Assert Equal (Bep20 rZRX TokenBalance Geoff) (Exactly 50e9)
+    Assert Equal (Bep20 rZRX TokenBalance Coburn) Zero
+    -- unPause and complete transfer
+    Invariant Success
+    Cointroller SetGuardianPaused "Transfer" False
+    Transfer Geoff Coburn 10e9 rZRX
+    Assert Equal (Bep20 rZRX TokenBalance Geoff) (Exactly 40e9)
+    Assert Equal (Bep20 rZRX TokenBalance Coburn) (Exactly 10e9)

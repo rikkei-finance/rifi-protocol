@@ -1,0 +1,31 @@
+#!/usr/bin/env yarn run repl -s
+-- Deploys new Cointroller with some BEP20 and some rTokens
+
+-- First deploy a price oracle
+Gate (PriceOracle Address) (PriceOracle Deploy Simple)
+
+-- Next a cointroller
+Gate (Cointroller Address) (Cointroller Deploy YesNo)
+
+-- Next an interest rate model
+Gate (InterestRateModel InterestRateModel Address) (InterestRateModel Deploy Fixed InterestRateModel 0.0004)
+
+-- Now deploy some BEP-20 faucet tokens
+Gate (Bep20 ZRX Address) (Bep20 Deploy Standard ZRX "0x")
+Gate (Bep20 BAT Address) (Bep20 Deploy NonStandard BAT "Basic Attention Token")
+Gate (Bep20 DAI Address) (Bep20 Deploy Standard DAI "Dai")
+Gate (Bep20 REP Address) (Bep20 Deploy Standard REP "Augur")
+Gate (Bep20 USDC Address) (Bep20 Deploy Standard USDC "USD Coin" 6)
+
+-- Now deploy our rTokens
+Gate (RToken rZRX Address) (RToken Deploy RBep20 rZRX "Test 0x 📈" (Bep20 ZRX Address) (Cointroller Address) (InterestRateModel InterestRateModel Address) 0.2e9 8)
+Gate (RToken rBAT Address) (RToken Deploy RBep20 rBAT "Test Basic Attention Token 📈" (Bep20 BAT Address) (Cointroller Address) (InterestRateModel InterestRateModel Address) 0.2e9 8)
+Gate (RToken rDAI Address) (RToken Deploy RBep20 rDAI "Test Dai 📈" (Bep20 DAI Address) (Cointroller Address) (InterestRateModel InterestRateModel Address) 0.2e9 8)
+Gate (RToken rREP Address) (RToken Deploy RBep20 rREP "Test Augur 📈" (Bep20 REP Address) (Cointroller Address) (InterestRateModel InterestRateModel Address) 0.2e9 8)
+Gate (RToken rETH Address) (RToken Deploy RBinance rETH "Test Ether 📈" (Cointroller Address) (InterestRateModel InterestRateModel Address) 0.2e9 8)
+Gate (RToken rUSDC Address) (RToken Deploy RBep20 rUSDC "Test USD Coin 📈" (Bep20 USDC Address) (Cointroller Address) (InterestRateModel InterestRateModel Address) 2e-4 8)
+
+-- Deploy Maximillion
+Gate (Maximillion Address) (Maximillion Deploy rETH)
+
+Print "Deployed Cointroller and rTokens: rETH, rBAT, rDAI, rREP, rUSDC and rZRX"

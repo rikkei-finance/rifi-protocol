@@ -1,0 +1,49 @@
+
+Test "Calculates hypothetical account liquidity"
+    -- Note, this comes a bit from `EnterExitMarkets` Scenario
+    PricedCointroller
+    ListedRToken ZRX rZRX initialExchangeRate:1e9
+    SetPriceCF rZRX 0.002 0.4
+    ListedEtherToken rETH initialExchangeRate:1e9
+    Cointroller SetCollateralFactor cEth 0.8
+    ListedRToken BAT rBAT initialExchangeRate:1e9
+    SetPriceCF rBAT 0.0015 0.3
+    ListedRToken OMG rOMG initialExchangeRate:1e9
+    NewRToken REP rREP
+    -- Mint some rZRX and rETH
+    Prep Geoff 1250e18 ZRX rZRX
+    Mint Geoff 1250e18 rZRX -- Liquidity -> 0.4 * 0.002 * 1250e18 = 1.0e18
+    SendMintEth Geoff 2.5e18 rETH -- Liqiuidity -> 0.8 * 1.0 * 2.5e18 = 2.0e18
+    -- Check liquidity is zero when not in any markets
+    Assert Equal (Cointroller Liquidity Geoff) Zero
+    -- Enter ZRX and check liquidity
+    EnterMarkets Geoff rZRX
+    Assert Equal (Cointroller Liquidity Geoff) 1.0e18
+    -- Now let's look at some hypotheticals
+    Assert Equal (Cointroller Hypothetical Geoff Redeems 1000e9 rZRX) 0.2e18 -- 0.4 * 0.002 * -1000e18 = -0.8e18
+    Assert Equal (Cointroller Hypothetical Geoff Borrows 1000e18 rZRX) -1e18 -- 0.002 * -1000e18 = -2e18
+    -- Note, if you're not in an asset, this function returns no effect
+    Assert Equal (Cointroller Hypothetical Geoff Redeems 0.002e9 rETH) 1.0e18 -- 0.8 * 1000.0 * -0.002e18 = -1.6e18
+    Assert Equal (Cointroller Hypothetical Geoff Borrows 0.002e18 rETH) 1.0e18 -- 1000.0 * -0.002e18 = -2e18
+    EnterMarkets Geoff rETH
+    Assert Equal (Cointroller Liquidity Geoff) 3.0e18
+    Assert Equal (Cointroller Hypothetical Geoff Redeems 1000e9 rZRX) 2.2e18 -- 0.4 * 0.002 * -1000e18 = -0.8e18
+    Assert Equal (Cointroller Hypothetical Geoff Borrows 1000e18 rZRX) 1e18 -- 0.002 * -1000e18 = -2e18
+    Assert Equal (Cointroller Hypothetical Geoff Redeems 2e9 rETH) 1.4e18 -- 0.8 * 1.0 * -2e18 = -1.6e18
+    Assert Equal (Cointroller Hypothetical Geoff Borrows 2e18 rETH) 1.0e18 -- 1.0 * -2e18 = -2e18
+    EnterMarkets Geoff rBAT
+    Assert Equal (Cointroller Hypothetical Geoff Redeems 1000e9 rBAT) 2.55e18 -- 0.3 * 0.0015 * -1000e18 = -0.45e18e18
+    Assert Equal (Cointroller Hypothetical Geoff Borrows 1000e18 rBAT) 1.5e18 -- 0.0015 * -1000e18 = -1.5e18
+    EnterMarkets Geoff rOMG
+    -- Fails if the given asset doesn't have a price
+    Assert ReadError (Cointroller Hypothetical Geoff Redeems 1e20 rOMG) "Failed to compute account hypothetical liquidity: error code = 13"
+    Assert ReadError (Cointroller Hypothetical Geoff Borrows 1e20 rOMG) "Failed to compute account hypothetical liquidity: error code = 13"
+    PriceOracle SetPrice rOMG 0.01
+    -- Has a price and now is listed
+    Assert Equal (Cointroller Hypothetical Geoff Redeems 100e9 rOMG) 3.0e18 -- No collateral factor
+    Assert Equal (Cointroller Hypothetical Geoff Borrows 100e18 rOMG) 2.0e18 -- 0.01 * -100e18 = -1e18
+    -- For a token has no price and isn't listed
+    -- Note: we can't actually enter the unlisted market without some harness function
+    --       we could consider testing this, but it would be out of the scope of scenarios
+    Assert Equal (Cointroller Hypothetical Geoff Redeems 100e18 rREP) 3.0e18 -- No effect
+    Assert Equal (Cointroller Hypothetical Geoff Borrows 100e18 rREP) 3.0e18 -- No effect

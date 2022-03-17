@@ -1,0 +1,21 @@
+{
+  "Unitroller": true,
+  "Cointroller": true,
+  "unitroller._setPendingImplementation": true,
+  "cointroller._become": true,
+  "unitroller.initialize": true,
+  "SimplePriceOracle": true,
+  "unitroller._setPriceOracle": true,
+  "unitroller._setCloseFactor": true,
+  "unitroller._setLiquidationIncentive": true,
+  "rUSDT": true,
+  "rUSDT: unitroller._supportMarket": true,
+  "rUSDT: priceOracle.setOracleData": true,
+  "rUSDT: unitroller._setCollateralFactor": true,
+  "rUSDT: unitroller._setRifiSpeed": true,
+  "rDAI": true,
+  "rDAI: unitroller._supportMarket": true,
+  "rDAI: priceOracle.setOracleData": true,
+  "rDAI: unitroller._setCollateralFactor": true,
+  "rDAI: unitroller._setRifiSpeed": true
+}

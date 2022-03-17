@@ -1,0 +1,134 @@
+{
+  "AUD": {
+    "decimals": "8",
+    "address": "0x5813A90f826e16dB392abd2aF7966313fc1fd5B8"
+  },
+  "BAT": {
+    "decimals": "8",
+    "address": "0x8e67A0CFfbbF6A346ce87DFe06daE2dc782b3219"
+  },
+  "BNB": {
+    "decimals": "8",
+    "address": "0x8993ED705cdf5e84D0a3B754b5Ee0e1783fcdF16"
+  },
+  "BTC": {
+    "decimals": "8",
+    "address": "0x6135b13325bfC4B00278B4abC5e20bbce2D6580e"
+  },
+  "CHF": {
+    "decimals": "8",
+    "address": "0xed0616BeF04D374969f302a34AE4A63882490A8C"
+  },
+  "COMP": {
+    "decimals": "8",
+    "address": "0xECF93D14d25E02bA2C13698eeDca9aA98348EFb6"
+  },
+  "DAI": {
+    "decimals": "8",
+    "address": "0x777A68032a88E5A84678A77Af2CD65A7b3c0775a"
+  },
+  "ETH": {
+    "decimals": "8",
+    "address": "0x9326BFA02ADD2366b30bacB125260Af641031331"
+  },
+  "EUR": {
+    "decimals": "8",
+    "address": "0x0c15Ab9A0DB086e062194c273CC79f41597Bbf13"
+  },
+  "GBP": {
+    "decimals": "8",
+    "address": "0x28b0061f44E6A9780224AA61BEc8C3Fcb0d37de9"
+  },
+  "JPY": {
+    "decimals": "8",
+    "address": "0xD627B1eF3AC23F1d3e576FA6206126F3c1Bd0942"
+  },
+  "KRW": {
+    "decimals": "8",
+    "address": "0x9e465c5499023675051517E9Ee5f4C334D91e369"
+  },
+  "LINK": {
+    "decimals": "8",
+    "address": "0x396c5E36DD0a0F5a5D33dae44368D4193f69a1F0"
+  },
+  "LTC": {
+    "decimals": "8",
+    "address": "0xCeE03CF92C7fFC1Bad8EAA572d69a4b61b6D4640"
+  },
+  "ORN": {
+    "decimals": "8",
+    "address": "0x66413F734E69C2C41B4902024D0C5C3A86b8EcD2"
+  },
+  "Oil": {
+    "decimals": "8",
+    "address": "0x48c9FF5bFD7D12e3C511022A6E54fB1c5b8DC3Ea"
+  },
+  "PKR": {
+    "decimals": "8",
+    "address": "0x0bf79F617988C472DcA68ff41eFe1338955b9A80"
+  },
+  "REP": {
+    "decimals": "8",
+    "address": "0x8f4e77806EFEC092A279AC6A49e129e560B4210E"
+  },
+  "SNX": {
+    "decimals": "8",
+    "address": "0x31f93DA9823d737b7E44bdee0DF389Fe62Fd1AcD"
+  },
+  "TRX": {
+    "decimals": "8",
+    "address": "0x9477f0E5bfABaf253eacEE3beE3ccF08b46cc79c"
+  },
+  "TSLA": {
+    "decimals": "8",
+    "address": "0xb31357d152638fd1ae0853d24b9Ea81dF29E3EF2"
+  },
+  "UNI": {
+    "decimals": "8",
+    "address": "0xDA5904BdBfB4EF12a3955aEcA103F51dc87c7C39"
+  },
+  "USDC": {
+    "decimals": "8",
+    "address": "0x9211c6b3BF41A10F78539810Cf5c64e1BB78Ec60"
+  },
+  "USDT": {
+    "decimals": "8",
+    "address": "0x2ca5A90D34cA333661083F89D831f757A9A50148"
+  },
+  "VELO": {
+    "decimals": "8",
+    "address": "0x6d393f929E213D2Ca67A7FA73108A42b884F5f74"
+  },
+  "VXX": {
+    "decimals": "8",
+    "address": "0xFc362828930519f236ad0c8f126B7996562a695A"
+  },
+  "XAG": {
+    "decimals": "8",
+    "address": "0x4594051c018Ac096222b5077C3351d523F93a963"
+  },
+  "XAU": {
+    "decimals": "8",
+    "address": "0xc8fb5684f2707C82f28595dEaC017Bfdf44EE9c5"
+  },
+  "XRP": {
+    "decimals": "8",
+    "address": "0x3eA2b7e3ed9EA9120c3d6699240d1ff2184AC8b3"
+  },
+  "XTZ": {
+    "decimals": "8",
+    "address": "0xC6F39246494F25BbCb0A8018796890037Cb5980C"
+  },
+  "ZRX": {
+    "decimals": "8",
+    "address": "0x24D6B177CF20166cd8F55CaaFe1c745B44F6c203"
+  },
+  "sCEX": {
+    "decimals": "8",
+    "address": "0xA85646318D20C684f6251097d24A6e74Fe1ED5eB"
+  },
+  "sDEFI": {
+    "decimals": "8",
+    "address": "0x70179FB2F3A0a5b7FfB36a235599De440B0922ea"
+  }
+}
