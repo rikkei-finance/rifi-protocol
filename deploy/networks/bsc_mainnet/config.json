@@ -1,5 +1,31 @@
 {
   "RIFI": "0xe17fbdf671f3cce0f354cacbd27e03f4245a3ffe",
+  "rNative": {
+    "name": "Rifi BNB",
+    "symbol": "rBNB",
+    "decimals": 8,
+    "underlying": {
+      "symbol": "BNB",
+      "decimals": 18,
+      "address": ""
+    },
+    "interestRateModel": {
+      "address": "0x191778cDf53d9312A1deD358291B989ddf027d59",
+      "model": "JumpRateModel",
+      "params": {
+        "baseRatePerYear": "0.02",
+        "lowerBaseRatePerYear": "0.01",
+        "multiplierPerYear": "0.04",
+        "jumpMultiplierPerYear": "1.09",
+        "kink_": "0.8",
+        "lowerKink_": "0.4"
+      }
+    },
+    "initialExchangeRateMantissa": "200000000",
+    "collateralFactor": "0.7",
+    "reserveFactor": "0.1",
+    "rifiSpeed": "0.04"
+  },
   "rTokens": {
     "rBUSD": {
       "name": "Rifi BUSD",
@@ -51,7 +77,7 @@
       "initialExchangeRateMantissa": "200000000",
       "collateralFactor": "0.8",
       "reserveFactor": "0.1",
-      "rifiSpeed": "0.08"
+      "rifiSpeed": "0.04"
     },
     "rUSDT": {
       "name": "Rifi USDT",

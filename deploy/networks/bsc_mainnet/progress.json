@@ -43,5 +43,14 @@
   "rDAI: rToken._setReserveFactor": true,
   "rDAI: unitroller._setRifiSpeed": true,
   "RifiLens": true,
-  "unitroller.initialize": true
+  "unitroller.initialize": true,
+  "rNative": true,
+  "rNative: verify": true,
+  "rNative: unitroller._supportMarket": true,
+  "rNative: priceOracle.setOracleData": true,
+  "rNative: unitroller._setCollateralFactor": true,
+  "rNative: rToken._setReserveFactor": true,
+  "rNative: unitroller._setRifiSpeed": true,
+  "Maximillion": true,
+  "Maximillion:verify": true
 }

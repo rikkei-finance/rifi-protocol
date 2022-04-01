@@ -133,7 +133,8 @@ contract RToken is RTokenInterface, Exponential, TokenErrorReporter {
      * @return Whether or not the transfer succeeded
      */
     function transfer(address dst, uint256 amount) external nonReentrant returns (bool) {
-        return transferTokens(msg.sender, msg.sender, dst, amount) == uint(Error.NO_ERROR);
+        require(transferTokens(msg.sender, msg.sender, dst, amount) == uint(Error.NO_ERROR));
+        return true;
     }
 
     /**
@@ -144,7 +145,8 @@ contract RToken is RTokenInterface, Exponential, TokenErrorReporter {
      * @return Whether or not the transfer succeeded
      */
     function transferFrom(address src, address dst, uint256 amount) external nonReentrant returns (bool) {
-        return transferTokens(msg.sender, src, dst, amount) == uint(Error.NO_ERROR);
+        require(transferTokens(msg.sender, src, dst, amount) == uint(Error.NO_ERROR));
+        return true;
     }
 
     /**
@@ -1129,7 +1131,7 @@ contract RToken is RTokenInterface, Exponential, TokenErrorReporter {
       */
     function _acceptAdmin() external returns (uint) {
         // Check caller is pendingAdmin and pendingAdmin ≠ address(0)
-        if (msg.sender != pendingAdmin || msg.sender == address(0)) {
+        if (msg.sender != pendingAdmin) {
             return fail(Error.UNAUTHORIZED, FailureInfo.ACCEPT_ADMIN_PENDING_ADMIN_CHECK);
         }
 

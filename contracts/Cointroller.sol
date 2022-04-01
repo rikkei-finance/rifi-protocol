@@ -84,6 +84,7 @@ contract Cointroller is CointrollerStorage, CointrollerInterface, CointrollerErr
     }
 
     function initialize(address rifi) public {
+        require(admin == msg.sender, "This function can only be called by admin");
         require(rifiAddress == address(0), "RIFI address can only be set once");
         rifiAddress = rifi;
     }
