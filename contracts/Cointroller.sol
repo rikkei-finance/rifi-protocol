@@ -43,8 +43,11 @@ contract Cointroller is CointrollerStorage, CointrollerInterface, CointrollerErr
     /// @notice Emitted when an action is paused on a market
     event ActionPaused(RToken rToken, string action, bool pauseState);
 
-    /// @notice Emitted when a new RIFI speed is calculated for a market
-    event RifiSpeedUpdated(RToken indexed rToken, uint newSpeed);
+    /// @notice Emitted when a new borrow-side RIFI speed is calculated for a market
+    event RifiBorrowSpeedUpdated(RToken indexed rToken, uint newSpeed);
+
+    /// @notice Emitted when a new supply-side RIFI speed is calculated for a market
+    event RifiSupplySpeedUpdated(RToken indexed rToken, uint newSpeed);
 
     /// @notice Emitted when a new RIFI speed is set for a contributor
     event ContributorRifiSpeedUpdated(address indexed contributor, uint newSpeed);
@@ -1064,38 +1067,28 @@ contract Cointroller is CointrollerStorage, CointrollerInterface, CointrollerErr
     /**
      * @notice Set RIFI speed for a single market
      * @param rToken The market whose RIFI speed to update
-     * @param rifiSpeed New RIFI speed for market
+     * @param supplySpeed New supply-side RIFI speed for market
+     * @param borrowSpeed New borrow-side RIFI speed for market
      */
-    function setRifiSpeedInternal(RToken rToken, uint rifiSpeed) internal {
-        uint currentRifiSpeed = rifiSpeeds[address(rToken)];
-        if (currentRifiSpeed != 0) {
-            // note that RIFI speed could be set to 0 to halt liquidity rewards for a market
-            Exp memory borrowIndex = Exp({mantissa: rToken.borrowIndex()});
+    function setRifiSpeedInternal(RToken rToken, uint supplySpeed, uint borrowSpeed) internal {
+        Market storage market = markets[address(rToken)];
+        require(market.isListed == true, "rifi market is not listed");
+
+        if (rifiSupplySpeeds[address(rToken)] != supplySpeed) {
             updateRifiSupplyIndex(address(rToken));
-            updateRifiBorrowIndex(address(rToken), borrowIndex);
-        } else if (rifiSpeed != 0) {
-            // Add the RIFI market
-            Market storage market = markets[address(rToken)];
-            require(market.isListed == true, "rifi market is not listed");
 
-            if (rifiSupplyState[address(rToken)].index == 0 && rifiSupplyState[address(rToken)].block == 0) {
-                rifiSupplyState[address(rToken)] = RifiMarketState({
-                    index: rifiInitialIndex,
-                    block: safe32(getBlockNumber(), "block number exceeds 32 bits")
-                });
-            }
-
-            if (rifiBorrowState[address(rToken)].index == 0 && rifiBorrowState[address(rToken)].block == 0) {
-                rifiBorrowState[address(rToken)] = RifiMarketState({
-                    index: rifiInitialIndex,
-                    block: safe32(getBlockNumber(), "block number exceeds 32 bits")
-                });
-            }
+            // Update speed and emit event
+            rifiSupplySpeeds[address(rToken)] = supplySpeed;
+            emit RifiSupplySpeedUpdated(rToken, supplySpeed);
         }
 
-        if (currentRifiSpeed != rifiSpeed) {
-            rifiSpeeds[address(rToken)] = rifiSpeed;
-            emit RifiSpeedUpdated(rToken, rifiSpeed);
+        if (rifiBorrowSpeeds[address(rToken)] != borrowSpeed) {
+            Exp memory borrowIndex = Exp({mantissa: rToken.borrowIndex()});
+            updateRifiBorrowIndex(address(rToken), borrowIndex);
+
+            // Update speed and emit event
+            rifiBorrowSpeeds[address(rToken)] = borrowSpeed;
+            emit RifiBorrowSpeedUpdated(rToken, borrowSpeed);
         }
     }
 
@@ -1105,7 +1098,7 @@ contract Cointroller is CointrollerStorage, CointrollerInterface, CointrollerErr
      */
     function updateRifiSupplyIndex(address rToken) internal {
         RifiMarketState storage supplyState = rifiSupplyState[rToken];
-        uint supplySpeed = rifiSpeeds[rToken];
+        uint supplySpeed = rifiSupplySpeeds[rToken];
         uint blockNumber = getBlockNumber();
         uint deltaBlocks = sub_(blockNumber, uint(supplyState.block));
         if (deltaBlocks > 0 && supplySpeed > 0) {
@@ -1128,7 +1121,7 @@ contract Cointroller is CointrollerStorage, CointrollerInterface, CointrollerErr
      */
     function updateRifiBorrowIndex(address rToken, Exp memory marketBorrowIndex) internal {
         RifiMarketState storage borrowState = rifiBorrowState[rToken];
-        uint borrowSpeed = rifiSpeeds[rToken];
+        uint borrowSpeed = rifiBorrowSpeeds[rToken];
         uint blockNumber = getBlockNumber();
         uint deltaBlocks = sub_(blockNumber, uint(borrowState.block));
         if (deltaBlocks > 0 && borrowSpeed > 0) {
@@ -1288,13 +1281,20 @@ contract Cointroller is CointrollerStorage, CointrollerInterface, CointrollerErr
     }
 
     /**
-     * @notice Set RIFI speed for a single market
-     * @param rToken The market whose RIFI speed to update
-     * @param rifiSpeed New RIFI speed for market
+     * @notice Set RIFI borrow and supply speeds for the specified markets.
+     * @param rTokens The markets whose RIFI speed to update.
+     * @param supplySpeeds New supply-side RIFI speed for the corresponding market.
+     * @param borrowSpeeds New borrow-side RIFI speed for the corresponding market.
      */
-    function _setRifiSpeed(RToken rToken, uint rifiSpeed) public {
-        require(adminOrInitializing(), "only admin can set rifi speed");
-        setRifiSpeedInternal(rToken, rifiSpeed);
+    function _setRifiSpeed(RToken[] memory rTokens, uint[] memory supplySpeeds, uint[] memory borrowSpeeds) public {
+        require(adminOrInitializing(), "only admin can set comp speed");
+
+        uint numTokens = rTokens.length;
+        require(numTokens == supplySpeeds.length && numTokens == borrowSpeeds.length, "Comptroller::_setRifiSpeed invalid input");
+
+        for (uint i = 0; i < numTokens; ++i) {
+            setRifiSpeedInternal(rTokens[i], supplySpeeds[i], borrowSpeeds[i]);
+        }
     }
 
     /**
