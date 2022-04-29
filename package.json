@@ -17,6 +17,8 @@
     "update_model:bsc_mainnet": "HARDHAT_NETWORK=bsc_mainnet hardhat run deploy/update_model.js",
     "update_model:bsc_testnet": "HARDHAT_NETWORK=bsc_testnet hardhat run deploy/update_model.js",
     "deploy_check:bsc_mainnet": "HARDHAT_NETWORK=bsc_mainnet hardhat run deploy/deploy_check.js",
+    "pending_admin:bsc_mainnet": "HARDHAT_NETWORK=bsc_mainnet hardhat run deploy/pending_admin.js",
+    "accept_admin:bsc_mainnet": "HARDHAT_NETWORK=bsc_mainnet hardhat run deploy/accept_admin.js",
     "lint": "./script/lint",
     "repl": "./scenario/script/repl",
     "profile": "yarn test tests/gasProfiler.js",

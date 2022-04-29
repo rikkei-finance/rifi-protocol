@@ -155,7 +155,7 @@
       "initialExchangeRateMantissa": "200000000",
       "collateralFactor": "0.8",
       "reserveFactor": "0.1",
-      "rifiSpeed": "0.08"
+      "rifiSpeed": "0.04"
     }
   },
   "closeFactor": "0.5",
