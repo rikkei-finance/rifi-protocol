@@ -101,9 +101,6 @@ contract CointrollerStorage is UnitrollerAdminStorage {
     // @notice The rate at which rifi is distributed to the corresponding borrow market (per block)
     mapping(address => uint) public rifiBorrowSpeeds;
 
-    /// @notice The rate at which rifi is distributed to the corresponding supply market (per block)
-    mapping(address => uint) public rifiSupplySpeeds;
-
     /// @notice The RIFI market supply state for each market
     mapping(address => RifiMarketState) public rifiSupplyState;
 
@@ -130,4 +127,7 @@ contract CointrollerStorage is UnitrollerAdminStorage {
 
     /// @notice Last block at which a contributor's RIFI rewards have been allocated
     mapping(address => uint256) public lastContributorBlock;
+
+    /// @notice The rate at which rifi is distributed to the corresponding supply market (per block)
+    mapping(address => uint) public rifiSupplySpeeds;
 }
