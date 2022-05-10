@@ -98,8 +98,8 @@ contract CointrollerStorage is UnitrollerAdminStorage {
     /// @notice The rate at which the flywheel distributes RIFI, per block
     uint256 public rifiRate;
 
-    /// @notice The portion of rifiRate that each market currently receives
-    mapping(address => uint256) public rifiSpeeds;
+    /// @notice The rate at which rifi is distributed to the corresponding borrow market (per block)
+    mapping(address => uint) public rifiBorrowSpeeds;
 
     /// @notice The RIFI market supply state for each market
     mapping(address => RifiMarketState) public rifiSupplyState;

@@ -7,6 +7,7 @@ import "./CointrollerInterface.sol";
 import "./CointrollerStorage.sol";
 import "./Unitroller.sol";
 import "./Governance/Rifi.sol";
+import "./ITimeLock.sol";
 
 /**
  * @title Rifi's Cointroller Contract
@@ -43,8 +44,11 @@ contract Cointroller is CointrollerStorage, CointrollerInterface, CointrollerErr
     /// @notice Emitted when an action is paused on a market
     event ActionPaused(RToken rToken, string action, bool pauseState);
 
-    /// @notice Emitted when a new RIFI speed is calculated for a market
-    event RifiSpeedUpdated(RToken indexed rToken, uint newSpeed);
+    /// @notice Emitted when a new borrow-side RIFI speed is calculated for a market
+    event RifiBorrowSpeedUpdated(RToken indexed rToken, uint newSpeed);
+
+    /// @notice Emitted when a new supply-side RIFI speed is calculated for a market
+    event RifiSupplySpeedUpdated(RToken indexed rToken, uint newSpeed);
 
     /// @notice Emitted when a new RIFI speed is set for a contributor
     event ContributorRifiSpeedUpdated(address indexed contributor, uint newSpeed);
@@ -79,6 +83,16 @@ contract Cointroller is CointrollerStorage, CointrollerInterface, CointrollerErr
     // No collateralFactorMantissa may exceed this value
     uint internal constant collateralFactorMaxMantissa = 0.9e18; // 0.9
 
+    /// @notice The rate at which rifi is distributed to the corresponding supply market (per block)
+    mapping(address => uint) public rifiSupplySpeeds;
+
+    ITimelock public timelock;
+
+    modifier onlyTimeLock() {
+      require(msg.sender == address(timelock), "only timelock");
+      _;
+    }
+
     constructor() public {
         admin = msg.sender;
     }
@@ -88,6 +102,25 @@ contract Cointroller is CointrollerStorage, CointrollerInterface, CointrollerErr
         require(rifiAddress == address(0), "RIFI address can only be set once");
         rifiAddress = rifi;
     }
+
+    function initializeV1_1(ITimelock  _timelock) public {
+        require(admin == msg.sender, "This function can only be called by admin");
+        require(address(timelock) == address(0), "Initialize can be call once");
+        timelock = _timelock;
+        RToken[] memory allRTokens = allMarkets;
+        for (uint i = 0; i < allRTokens.length; i++) {
+          address token = address(allRTokens[i]);
+          rifiSupplySpeeds[token] = rifiBorrowSpeeds[token];
+        }
+    }
+
+    /**
+      * @dev for some reason admin wanna set new timelock and need to authorize administration 
+      */
+    function authorizeTimeLock() public {
+        timelock.acceptAdmin();
+    }
+
 
     /*** Assets You Are In ***/
 
@@ -810,16 +843,19 @@ contract Cointroller is CointrollerStorage, CointrollerInterface, CointrollerErr
 
     /*** Admin Functions ***/
 
+	function _setTimelock(ITimelock  _timelock) public returns (uint) {
+      if (msg.sender != admin) {
+          return fail(Error.UNAUTHORIZED, FailureInfo.SET_PRICE_ORACLE_OWNER_CHECK);
+      }
+      timelock = _timelock;
+  }
+
     /**
       * @notice Sets a new price oracle for the cointroller
       * @dev Admin function to set a new price oracle
       * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
       */
-    function _setPriceOracle(PriceOracle newOracle) public returns (uint) {
-        // Check caller is admin
-        if (msg.sender != admin) {
-            return fail(Error.UNAUTHORIZED, FailureInfo.SET_PRICE_ORACLE_OWNER_CHECK);
-        }
+    function _setPriceOracle(PriceOracle newOracle) public onlyTimeLock returns (uint) {
 
         // Track the old oracle for the cointroller
         PriceOracle oldOracle = oracle;
@@ -839,10 +875,7 @@ contract Cointroller is CointrollerStorage, CointrollerInterface, CointrollerErr
       * @param newCloseFactorMantissa New close factor, scaled by 1e18
       * @return uint 0=success, otherwise a failure
       */
-    function _setCloseFactor(uint newCloseFactorMantissa) external returns (uint) {
-        // Check caller is admin
-    	require(msg.sender == admin, "only admin can set close factor");
-
+    function _setCloseFactor(uint newCloseFactorMantissa) external onlyTimeLock returns (uint) {
         uint oldCloseFactorMantissa = closeFactorMantissa;
         closeFactorMantissa = newCloseFactorMantissa;
         emit NewCloseFactor(oldCloseFactorMantissa, closeFactorMantissa);
@@ -857,12 +890,7 @@ contract Cointroller is CointrollerStorage, CointrollerInterface, CointrollerErr
       * @param newCollateralFactorMantissa The new collateral factor, scaled by 1e18
       * @return uint 0=success, otherwise a failure. (See ErrorReporter for details)
       */
-    function _setCollateralFactor(RToken rToken, uint newCollateralFactorMantissa) external returns (uint) {
-        // Check caller is admin
-        if (msg.sender != admin) {
-            return fail(Error.UNAUTHORIZED, FailureInfo.SET_COLLATERAL_FACTOR_OWNER_CHECK);
-        }
-
+    function _setCollateralFactor(RToken rToken, uint newCollateralFactorMantissa) external onlyTimeLock returns (uint) {
         // Verify market is listed
         Market storage market = markets[address(rToken)];
         if (!market.isListed) {
@@ -898,11 +926,7 @@ contract Cointroller is CointrollerStorage, CointrollerInterface, CointrollerErr
       * @param newLiquidationIncentiveMantissa New liquidationIncentive scaled by 1e18
       * @return uint 0=success, otherwise a failure. (See ErrorReporter for details)
       */
-    function _setLiquidationIncentive(uint newLiquidationIncentiveMantissa) external returns (uint) {
-        // Check caller is admin
-        if (msg.sender != admin) {
-            return fail(Error.UNAUTHORIZED, FailureInfo.SET_LIQUIDATION_INCENTIVE_OWNER_CHECK);
-        }
+    function _setLiquidationIncentive(uint newLiquidationIncentiveMantissa) external onlyTimeLock returns (uint) {
 
         // Save current value for use in log
         uint oldLiquidationIncentiveMantissa = liquidationIncentiveMantissa;
@@ -922,10 +946,7 @@ contract Cointroller is CointrollerStorage, CointrollerInterface, CointrollerErr
       * @param rToken The address of the market (token) to list
       * @return uint 0=success, otherwise a failure. (See enum Error for details)
       */
-    function _supportMarket(RToken rToken) external returns (uint) {
-        if (msg.sender != admin) {
-            return fail(Error.UNAUTHORIZED, FailureInfo.SUPPORT_MARKET_OWNER_CHECK);
-        }
+    function _supportMarket(RToken rToken) external onlyTimeLock returns (uint) {
 
         if (markets[address(rToken)].isListed) {
             return fail(Error.MARKET_ALREADY_LISTED, FailureInfo.SUPPORT_MARKET_EXISTS);
@@ -957,7 +978,7 @@ contract Cointroller is CointrollerStorage, CointrollerInterface, CointrollerErr
       * @param rTokens The addresses of the markets (tokens) to change the borrow caps for
       * @param newBorrowCaps The new borrow cap values in underlying to be set. A value of 0 corresponds to unlimited borrowing.
       */
-    function _setMarketBorrowCaps(RToken[] calldata rTokens, uint[] calldata newBorrowCaps) external {
+    function _setMarketBorrowCaps(RToken[] calldata rTokens, uint[] calldata newBorrowCaps) onlyTimeLock external {
     	require(msg.sender == admin || msg.sender == borrowCapGuardian, "only admin or borrow cap guardian can set borrow caps");
 
         uint numMarkets = rTokens.length;
@@ -975,9 +996,7 @@ contract Cointroller is CointrollerStorage, CointrollerInterface, CointrollerErr
      * @notice Admin function to change the Borrow Cap Guardian
      * @param newBorrowCapGuardian The address of the new Borrow Cap Guardian
      */
-    function _setBorrowCapGuardian(address newBorrowCapGuardian) external {
-        require(msg.sender == admin, "only admin can set borrow cap guardian");
-
+    function _setBorrowCapGuardian(address newBorrowCapGuardian) external onlyTimeLock {
         // Save current value for inclusion in log
         address oldBorrowCapGuardian = borrowCapGuardian;
 
@@ -993,11 +1012,7 @@ contract Cointroller is CointrollerStorage, CointrollerInterface, CointrollerErr
      * @param newPauseGuardian The address of the new Pause Guardian
      * @return uint 0=success, otherwise a failure. (See enum Error for details)
      */
-    function _setPauseGuardian(address newPauseGuardian) public returns (uint) {
-        if (msg.sender != admin) {
-            return fail(Error.UNAUTHORIZED, FailureInfo.SET_PAUSE_GUARDIAN_OWNER_CHECK);
-        }
-
+    function _setPauseGuardian(address newPauseGuardian) public onlyTimeLock returns (uint) {
         // Save current value for inclusion in log
         address oldPauseGuardian = pauseGuardian;
 
@@ -1060,43 +1075,40 @@ contract Cointroller is CointrollerStorage, CointrollerInterface, CointrollerErr
         return msg.sender == admin || msg.sender == cointrollerImplementation;
     }
 
+    /**
+     * @notice Checks caller is admin, or this contract is becoming the new implementation
+     */
+     function timelockOrInitializing() internal view returns (bool) {
+      return msg.sender == address(timelock) || msg.sender == cointrollerImplementation;
+  }
+
     /*** Rifi Distribution ***/
 
     /**
      * @notice Set RIFI speed for a single market
      * @param rToken The market whose RIFI speed to update
-     * @param rifiSpeed New RIFI speed for market
+     * @param supplySpeed New supply-side RIFI speed for market
+     * @param borrowSpeed New borrow-side RIFI speed for market
      */
-    function setRifiSpeedInternal(RToken rToken, uint rifiSpeed) internal {
-        uint currentRifiSpeed = rifiSpeeds[address(rToken)];
-        if (currentRifiSpeed != 0) {
-            // note that RIFI speed could be set to 0 to halt liquidity rewards for a market
-            Exp memory borrowIndex = Exp({mantissa: rToken.borrowIndex()});
+    function setRifiSpeedInternal(RToken rToken, uint supplySpeed, uint borrowSpeed) internal {
+        Market storage market = markets[address(rToken)];
+        require(market.isListed == true, "rifi market is not listed");
+
+        if (rifiSupplySpeeds[address(rToken)] != supplySpeed) {
             updateRifiSupplyIndex(address(rToken));
-            updateRifiBorrowIndex(address(rToken), borrowIndex);
-        } else if (rifiSpeed != 0) {
-            // Add the RIFI market
-            Market storage market = markets[address(rToken)];
-            require(market.isListed == true, "rifi market is not listed");
 
-            if (rifiSupplyState[address(rToken)].index == 0 && rifiSupplyState[address(rToken)].block == 0) {
-                rifiSupplyState[address(rToken)] = RifiMarketState({
-                    index: rifiInitialIndex,
-                    block: safe32(getBlockNumber(), "block number exceeds 32 bits")
-                });
-            }
-
-            if (rifiBorrowState[address(rToken)].index == 0 && rifiBorrowState[address(rToken)].block == 0) {
-                rifiBorrowState[address(rToken)] = RifiMarketState({
-                    index: rifiInitialIndex,
-                    block: safe32(getBlockNumber(), "block number exceeds 32 bits")
-                });
-            }
+            // Update speed and emit event
+            rifiSupplySpeeds[address(rToken)] = supplySpeed;
+            emit RifiSupplySpeedUpdated(rToken, supplySpeed);
         }
 
-        if (currentRifiSpeed != rifiSpeed) {
-            rifiSpeeds[address(rToken)] = rifiSpeed;
-            emit RifiSpeedUpdated(rToken, rifiSpeed);
+        if (rifiBorrowSpeeds[address(rToken)] != borrowSpeed) {
+            Exp memory borrowIndex = Exp({mantissa: rToken.borrowIndex()});
+            updateRifiBorrowIndex(address(rToken), borrowIndex);
+
+            // Update speed and emit event
+            rifiBorrowSpeeds[address(rToken)] = borrowSpeed;
+            emit RifiBorrowSpeedUpdated(rToken, borrowSpeed);
         }
     }
 
@@ -1106,7 +1118,7 @@ contract Cointroller is CointrollerStorage, CointrollerInterface, CointrollerErr
      */
     function updateRifiSupplyIndex(address rToken) internal {
         RifiMarketState storage supplyState = rifiSupplyState[rToken];
-        uint supplySpeed = rifiSpeeds[rToken];
+        uint supplySpeed = rifiSupplySpeeds[rToken];
         uint blockNumber = getBlockNumber();
         uint deltaBlocks = sub_(blockNumber, uint(supplyState.block));
         if (deltaBlocks > 0 && supplySpeed > 0) {
@@ -1129,7 +1141,7 @@ contract Cointroller is CointrollerStorage, CointrollerInterface, CointrollerErr
      */
     function updateRifiBorrowIndex(address rToken, Exp memory marketBorrowIndex) internal {
         RifiMarketState storage borrowState = rifiBorrowState[rToken];
-        uint borrowSpeed = rifiSpeeds[rToken];
+        uint borrowSpeed = rifiBorrowSpeeds[rToken];
         uint blockNumber = getBlockNumber();
         uint deltaBlocks = sub_(blockNumber, uint(borrowState.block));
         if (deltaBlocks > 0 && borrowSpeed > 0) {
@@ -1282,20 +1294,27 @@ contract Cointroller is CointrollerStorage, CointrollerInterface, CointrollerErr
      * @param amount The amount of RIFI to (possibly) transfer
      */
     function _grantRifi(address recipient, uint amount) public {
-        require(adminOrInitializing(), "only admin can grant rifi");
+        require(timelockOrInitializing(), "only timelock can grant rifi");
         uint amountLeft = grantRifiInternal(recipient, amount);
         require(amountLeft == 0, "insufficient rifi for grant");
         emit RifiGranted(recipient, amount);
     }
 
     /**
-     * @notice Set RIFI speed for a single market
-     * @param rToken The market whose RIFI speed to update
-     * @param rifiSpeed New RIFI speed for market
+     * @notice Set RIFI borrow and supply speeds for the specified markets.
+     * @param rTokens The markets whose RIFI speed to update.
+     * @param supplySpeeds New supply-side RIFI speed for the corresponding market.
+     * @param borrowSpeeds New borrow-side RIFI speed for the corresponding market.
      */
-    function _setRifiSpeed(RToken rToken, uint rifiSpeed) public {
-        require(adminOrInitializing(), "only admin can set rifi speed");
-        setRifiSpeedInternal(rToken, rifiSpeed);
+    function _setRifiSpeed(RToken[] memory rTokens, uint[] memory supplySpeeds, uint[] memory borrowSpeeds) public {
+        require(timelockOrInitializing(), "only timelock can set comp speed");
+
+        uint numTokens = rTokens.length;
+        require(numTokens == supplySpeeds.length && numTokens == borrowSpeeds.length, "Comptroller::_setRifiSpeed invalid input");
+
+        for (uint i = 0; i < numTokens; ++i) {
+            setRifiSpeedInternal(rTokens[i], supplySpeeds[i], borrowSpeeds[i]);
+        }
     }
 
     /**
@@ -1304,7 +1323,7 @@ contract Cointroller is CointrollerStorage, CointrollerInterface, CointrollerErr
      * @param rifiSpeed New RIFI speed for contributor
      */
     function _setContributorRifiSpeed(address contributor, uint rifiSpeed) public {
-        require(adminOrInitializing(), "only admin can set rifi speed");
+        require(timelockOrInitializing(), "only timelock can set rifi speed");
 
         // note that RIFI speed could be set to 0 to halt liquidity rewards for a contributor
         updateContributorRewards(contributor);
