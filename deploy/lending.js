@@ -93,7 +93,7 @@ async function main() {
         web3.utils.toWei(lowerKink_, "ether"),
         governance,
       ],
-    });
+    }).catch(error => {});
 
     return model;
   };
@@ -106,7 +106,7 @@ async function main() {
     await hre.run("verify:verify", {
       address: token.address,
       constructorArguments: [faucetInitialAmount, name, decimals, symbol],
-    });
+    }).catch(error => {});
     return token;
   };
 
@@ -174,7 +174,7 @@ async function main() {
       console.log(`Unitroller address at: ${explorer}/address/${unitroller.address}`);
       addresses.Cointroller = unitroller.address;
 
-      await hre.run("verify:verify", { address: unitroller.address });
+      await hre.run("verify:verify", { address: unitroller.address }).catch(error => {});
     });
 
     await runWithProgressCheck("Cointroller", async () => {
@@ -182,7 +182,7 @@ async function main() {
       await cointroller.deployed();
       console.log(`Cointroller address at: ${explorer}/address/${cointroller.address}`);
       addresses.CointrollerImpl = cointroller.address;
-      await hre.run("verify:verify", { address: cointroller.address });
+      await hre.run("verify:verify", { address: cointroller.address }).catch(error => {});
     });
 
     if (!unitroller && !addresses.Cointroller) {
@@ -225,7 +225,7 @@ async function main() {
       await priceOracle.deployed();
       console.log(`PriceOracle address at: ${explorer}/address/${priceOracle.address}`);
       addresses.PriceFeed = priceOracle.address;
-      await hre.run("verify:verify", { address: priceOracle.address });
+      await hre.run("verify:verify", { address: priceOracle.address }).catch(error => {});
     });
 
     const priceOracle = SimplePriceOracle.attach(addresses.PriceFeed);
@@ -291,7 +291,7 @@ async function main() {
 
         addresses[symbol] = rBinance.address;
 
-        await hre.run("verify:verify", { address: rBinance.address });
+        await hre.run("verify:verify", { address: rBinance.address }).catch(error => {});
       });
 
       await runWithProgressCheck("rNative: unitroller._supportMarket", async () => {
@@ -344,7 +344,7 @@ async function main() {
       console.log(`RBep20Delegate address at: ${explorer}/address/${rBep20Delegate.address}`);
       addresses.rBep20Delegate = rBep20Delegate.address;
       await saveAddresses();
-      await hre.run("verify:verify", { address: rBep20Delegate.address });
+      await hre.run("verify:verify", { address: rBep20Delegate.address }).catch(error => {});
     }
 
     const { rTokens = {} } = config;
@@ -419,7 +419,7 @@ async function main() {
               addresses.rBep20Delegate,
               "0x",
             ],
-          });
+          }).catch(error => {});
         });
 
         await runWithProgressCheck(`${symbol}: unitroller._supportMarket`, async () => {
@@ -474,7 +474,7 @@ async function main() {
       await lens.deployed();
       console.log(`RifiLens address at: ${explorer}/address/${lens.address}`);
       addresses.RifiLens = lens.address;
-      await hre.run("verify:verify", { address: lens.address });
+      await hre.run("verify:verify", { address: lens.address }).catch(error => {});
     });
 
     if (!addresses.Maximillion && config.rNative) {
@@ -483,7 +483,7 @@ async function main() {
       console.log(`Maximillion address at: ${explorer}/address/${maximillion.address}`);
       addresses.Maximillion = maximillion.address;
 
-      await hre.run("verify:verify", { address: maximillion.address });
+      await hre.run("verify:verify", { address: maximillion.address }).catch(error => {});
     }
   } catch (e) {
     console.log(e);
