@@ -834,11 +834,11 @@ contract CointrollerV1_1 is CointrollerStorage, CointrollerInterface, Cointrolle
     /*** Admin Functions ***/
 
 	function _setTimelock(ITimelock  _timelock) public returns (uint) {
-		if (msg.sender != admin) {
-            return fail(Error.UNAUTHORIZED, FailureInfo.SET_PRICE_ORACLE_OWNER_CHECK);
-        }
-        timelock = _timelock;
-    }
+      if (msg.sender != admin) {
+          return fail(Error.UNAUTHORIZED, FailureInfo.SET_PRICE_ORACLE_OWNER_CHECK);
+      }
+      timelock = _timelock;
+  }
 
     // function _pendingSetPriceOracle(PriceOracle newOracle) public onlyTimeLock returns (uint) {
     //     // Check caller is admin
