@@ -132,7 +132,7 @@ async function main() {
   unitroller = Cointroller.attach(addresses.Cointroller);
 
   await runWithProgressCheck("unitroller.initialize", async () => {
-    const timelock = await Timelock.deploy(owner.address, 120);
+    const timelock = await Timelock.deploy(owner.address, 172800);
     await timelock.deployed();
     console.log(`timelock address at: ${explorers.bsc_testnet}/address/${timelock.address}`);
     await hre.run("verify:verify", {
