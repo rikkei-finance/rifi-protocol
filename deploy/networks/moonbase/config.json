@@ -1,0 +1,83 @@
+{
+  "RIFI": "0xD7c271AC4eB765705B32EdbA75CB6d3243c731F6",
+  "rNative": {
+    "name": "Rifi GLMR",
+    "symbol": "rGLMR",
+    "decimals": 8,
+    "underlying": {
+      "symbol": "GLMR",
+      "decimals": 18,
+      "address": ""
+    },
+    "interestRateModel": {
+      "address": "0x6793bb24c5a8Da221b07eCC07B1D13F6dC6129e3",
+      "model": "JumpRateModel",
+      "params": {
+        "baseRatePerYear": "0.02",
+        "lowerBaseRatePerYear": "0.01",
+        "multiplierPerYear": "0.04",
+        "jumpMultiplierPerYear": "1.09",
+        "kink_": "0.8",
+        "lowerKink_": "0.4"
+      }
+    },
+    "initialExchangeRateMantissa": "200000000",
+    "collateralFactor": "0.7",
+    "reserveFactor": "0.1",
+    "rifiSpeed": "0.04"
+  },
+  "rTokens": {
+    "rBUSD": {
+      "name": "Rifi BUSD",
+      "symbol": "rBUSD",
+      "decimals": 8,
+      "underlying": {
+        "symbol": "BUSD",
+        "decimals": 18,
+        "address": ""
+      },
+      "interestRateModel": {
+        "address": "0x6793bb24c5a8Da221b07eCC07B1D13F6dC6129e3",
+        "model": "JumpRateModel",
+        "params": {
+          "baseRatePerYear": "0.02",
+          "lowerBaseRatePerYear": "0.01",
+          "multiplierPerYear": "4",
+          "jumpMultiplierPerYear": "1.09",
+          "kink_": "0.8",
+          "lowerKink_": "0.4"
+        }
+      },
+      "initialExchangeRateMantissa": "200000000",
+      "collateralFactor": "0.6",
+      "rifiSpeed": "0.00000000645"
+    },
+    "rUSDC": {
+      "name": "Rifi USDC",
+      "symbol": "rUSDC",
+      "decimals": 8,
+      "underlying": {
+        "symbol": "USDC",
+        "decimals": "18",
+        "address": ""
+      },
+      "interestRateModel": {
+        "address": "0x6793bb24c5a8Da221b07eCC07B1D13F6dC6129e3",
+        "model": "JumpRateModel",
+        "params": {
+          "baseRatePerYear": "0.02",
+          "lowerBaseRatePerYear": "0.01",
+          "multiplierPerYear": "4",
+          "jumpMultiplierPerYear": "1.09",
+          "kink_": "0.8",
+          "lowerKink_": "0.4"
+        }
+      },
+      "initialExchangeRateMantissa": "200000000",
+      "collateralFactor": "0.6",
+      "rifiSpeed": "0.00000000645"
+    }
+  },
+  "closeFactor": "0.25",
+  "liquidationIncentive": "1.08"
+}

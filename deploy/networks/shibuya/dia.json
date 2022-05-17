@@ -1,0 +1,38 @@
+{
+  "BTC": {
+    "decimals": "8",
+    "pair": "BTC/USD"
+  },
+  "ETH": {
+    "decimals": "8",
+    "pair": "ETH/USD"
+  },
+  "DIA": {
+    "decimals": "8",
+    "pair": "DIA/USD"
+  },
+  "USDC": {
+    "decimals": "8",
+    "pair": "USDC/USD"
+  },
+  "FTM": {
+    "decimals": "8",
+    "pair": "FTM/USD"
+  },
+  "SDN": {
+    "decimals": "8",
+    "pair": "SDN/USD"
+  },
+  "KSM": {
+    "decimals": "8",
+    "pair": "KSM/USD"
+  },
+  "MOVR": {
+    "decimals": "8",
+    "pair": "MOVR/USD"
+  },
+  "ASTR": {
+    "decimals": "8",
+    "pair": "ASTR/USD"
+  }
+}
