@@ -2,6 +2,10 @@ pragma solidity ^0.5.16;
 
 import "./RToken.sol";
 
+interface RifiLike {
+  function delegate(address delegatee) external;
+}
+
 /**
  * @title Rifi's RBep20 Contract
  * @notice RTokens which wrap an EIP-20 underlying
@@ -195,7 +199,7 @@ contract RBep20 is RToken, RBep20Interface {
                 case 0 {                      // This is a non-standard BEP-20
                     success := not(0)          // set success to true
                 }
-                case 32 {                     // This is a complaint BEP-20
+                case 32 {                     // This is a compliant BEP-20
                     returndatacopy(0, 0, 32)
                     success := mload(0)        // Set `success = returndata` of external call
                 }
@@ -204,5 +208,15 @@ contract RBep20 is RToken, RBep20Interface {
                 }
         }
         require(success, "TOKEN_TRANSFER_OUT_FAILED");
+    }
+
+    /**
+    * @notice Admin call to delegate the votes of the RIFI-like underlying
+    * @param rifiLikeDelegatee The address to delegate votes to
+    * @dev RTokens whose underlying are not RifiLike should revert here
+    */
+    function _delegateRifiLikeTo(address rifiLikeDelegatee) external {
+        require(msg.sender == admin, "only the admin may set the rifi-like delegate");
+        RifiLike(underlying).delegate(rifiLikeDelegatee);
     }
 }

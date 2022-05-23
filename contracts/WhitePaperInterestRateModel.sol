@@ -4,11 +4,11 @@ import "./InterestRateModel.sol";
 import "./SafeMath.sol";
 
 /**
-  * @title Rifi's LitePaperInterestRateModel Contract
+  * @title Rifi's WhitePaperInterestRateModel Contract
   * @author Rifi
   * @notice The parameterized model described in section 2.4 of the original Rifi Protocol whitepaper
   */
-contract LitePaperInterestRateModel is InterestRateModel {
+contract WhitePaperInterestRateModel is InterestRateModel {
     using SafeMath for uint;
 
     event NewInterestParams(uint baseRatePerBlock, uint multiplierPerBlock);
@@ -16,7 +16,7 @@ contract LitePaperInterestRateModel is InterestRateModel {
     /**
      * @notice The approximate number of blocks per year that is assumed by the interest rate model
      */
-    uint public constant blocksPerYear = 10512000;
+    uint public constant blocksPerYear = 2102400;
 
     /**
      * @notice The multiplier of utilization rate that gives the slope of the interest rate

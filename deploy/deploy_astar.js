@@ -11,7 +11,7 @@ const {
 const addressOutput = `${__dirname}/networks/${network}/address.json`;
 const deployConfig = `${__dirname}/networks/${network}/config.json`;
 const deployProgress = `${__dirname}/networks/${network}/progress.json`;
-const chainlinkOracle = `${__dirname}/networks/${network}/chainlink.json`;
+const diaOracle = `${__dirname}/networks/${network}/dia.json`;
 const faucetInitialAmount = 10 ** 7;
 
 const explorers = {
@@ -21,6 +21,8 @@ const explorers = {
   ropsten: "https://ropsten.etherscan.io",
   rinkeby: "https://rinkeby.etherscan.io",
   kovan: "https://kovan.etherscan.io",
+  moonbase: "https://moonbase.moonscan.io/",
+  shibuya: "https://shibuya.subscan.io/",
 };
 
 async function main() {
@@ -32,7 +34,7 @@ async function main() {
 
   const addresses = {};
   const config = {};
-  const chainlink = {};
+  const dia = {};
   const progress = {};
 
   const explorer = explorers[network];
@@ -44,10 +46,11 @@ async function main() {
     JumpRateModel,
     RBep20Delegate,
     RBep20Delegator,
-    SimplePriceOracle,
+    DIAPriceOracle,
     RBinance,
     FaucetToken,
     RifiLens,
+    Timelock
   ] = await Promise.all([
     ethers.getContractFactory("Unitroller"),
     ethers.getContractFactory("Maximillion"),
@@ -55,10 +58,11 @@ async function main() {
     ethers.getContractFactory("JumpRateModel"),
     ethers.getContractFactory("RBep20Delegate"),
     ethers.getContractFactory("RBep20Delegator"),
-    ethers.getContractFactory("SimplePriceOracle"),
+    ethers.getContractFactory("DIAPriceOracle"),
     ethers.getContractFactory("RBinance"),
     ethers.getContractFactory("FaucetToken"),
     ethers.getContractFactory("RifiLens"),
+    ethers.getContractFactory("Timelock"),
   ]);
 
   const deployJumpRateModel = async (params) => {
@@ -154,10 +158,10 @@ async function main() {
   const progressData = fs.readFileSync(deployProgress);
   Object.assign(progress, JSON.parse(progressData.toString()));
 
-  const chainlinkData = fs.readFileSync(chainlinkOracle);
-  Object.assign(chainlink, JSON.parse(chainlinkData.toString()));
+  const diaData = fs.readFileSync(diaOracle);
+  Object.assign(dia, JSON.parse(diaData.toString()));
 
-  console.log(chainlink);
+  console.log(dia);
   console.log(config);
   console.log(addresses);
 
@@ -221,13 +225,19 @@ async function main() {
 
     unitroller = Cointroller.attach(addresses.Cointroller);
 
-    await runWithProgressCheck("unitroller.initialize", async () => {
-      const transaction = await unitroller.initialize(config.RIFI);
-      console.log(`unitroller.initialize transaction: ${explorer}/tx/${transaction.tx}`);
-    });
+    // await runWithProgressCheck("unitroller.initialize", async () => {
+    //   const transaction = await unitroller.initialize(config.RIFI);
+    //   console.log(`unitroller.initialize transaction: ${explorer}/tx/${transaction.tx}`);
+    // });
 
-    await runWithProgressCheck("SimplePriceOracle", async () => {
-      const priceOracle = await SimplePriceOracle.deploy();
+    // await runWithProgressCheck("cointroller.initializeV1_1", async () => {
+    //   const transaction = await unitroller.initializeV1_1(governance);
+    //   console.log(`cointroller.initializeV1_1 transaction: ${explorer}/tx/${transaction.tx}`);
+    // });
+
+    await runWithProgressCheck("DIAPriceOracle", async () => {
+      if (!config.DIA) throw new Error("can not found DIA");
+      const priceOracle = await DIAPriceOracle.deploy(config.DIA);
       await priceOracle.deployed();
       console.log(`PriceOracle address at: ${explorer}/address/${priceOracle.address}`);
       addresses.PriceFeed = priceOracle.address;
@@ -236,7 +246,14 @@ async function main() {
         .catch((e) => console.log(e.message));
     });
 
-    const priceOracle = SimplePriceOracle.attach(addresses.PriceFeed);
+    const priceOracle = DIAPriceOracle.attach(addresses.PriceFeed);
+
+    // await runWithProgressCheck("priceOracle.setOracle", async () => {
+    //   if (!config.DIA) throw new Error("can not found DIA")
+    //   const transaction = await priceOracle.setOracle(config.DIA);
+    //   addresses.DIA = config.DIA;
+    //   console.log(`priceOracle.setOracle transaction: ${explorer}/tx/${transaction.tx}`);
+    // });
 
     await runWithProgressCheck("unitroller._setPriceOracle", async () => {
       const transaction = await unitroller._setPriceOracle(priceOracle.address);
@@ -321,9 +338,11 @@ async function main() {
       });
 
       await runWithProgressCheck("rNative: priceOracle.setOracleData", async () => {
+        console.log(dia);
+        console.log(underlying.symbol);
         transaction = await priceOracle.setOracleData(
           addresses[symbol],
-          chainlink[underlying.symbol].address
+          dia[underlying.symbol].pair
         );
         console.log(`rBNB priceOracle.setOracleData transaction: ${explorer}/tx/${transaction.tx}`);
       });
@@ -338,12 +357,13 @@ async function main() {
         );
       });
 
-      await runWithProgressCheck("rNative: unitroller._setRifiSpeed", async () => {
-        transaction = await unitroller._setRifiSpeed(
-          addresses[symbol],
-          web3.utils.toWei(config.rNative.rifiSpeed, "ether")
+      await runWithProgressCheck("rNative: unitroller._setRifiSpeeds", async () => {
+        transaction = await unitroller._setRifiSpeeds(
+          [addresses[symbol]],
+          [web3.utils.toWei(config.rNative.rifiSpeed, "ether")],
+          [web3.utils.toWei(config.rNative.rifiSpeed, "ether")]
         );
-        console.log(`rBNB Unitroller._setRifiSpeed transaction: ${explorer}/tx/${transaction.tx}`);
+        console.log(`rBNB Unitroller._setRifiSpeeds transaction: ${explorer}/tx/${transaction.tx}`);
       });
 
       tokenDecimals[symbol] = parseInt(decimals);
@@ -455,7 +475,7 @@ async function main() {
         await runWithProgressCheck(`${symbol}: priceOracle.setOracleData`, async () => {
           const transaction = await priceOracle.setOracleData(
             addresses[symbol],
-            chainlink[underlying.symbol].address
+            dia[underlying.symbol].pair
           );
           console.log(
             `${symbol} priceOracle.setOracleData transaction: ${explorer}/tx/${transaction.tx}`
@@ -472,13 +492,14 @@ async function main() {
           );
         });
 
-        await runWithProgressCheck(`${symbol}: unitroller._setRifiSpeed`, async () => {
-          transaction = await unitroller._setRifiSpeed(
-            addresses[symbol],
-            web3.utils.toWei(rifiSpeed, "ether")
+        await runWithProgressCheck(`${symbol}: unitroller._setRifiSpeeds`, async () => {
+          transaction = await unitroller._setRifiSpeeds(
+            [addresses[symbol]],
+            [web3.utils.toWei(rifiSpeed, "ether")],
+            [web3.utils.toWei(rifiSpeed, "ether")]
           );
           console.log(
-            `${symbol} Unitroller._setRifiSpeed transaction: ${explorer}/tx/${transaction.tx}`
+            `${symbol} Unitroller._setRifiSpeeds transaction: ${explorer}/tx/${transaction.tx}`
           );
         });
 
@@ -491,6 +512,20 @@ async function main() {
         tokenUnderlying.push(underlying.symbol);
       }
     }
+
+    // await runWithProgressCheck("timelock", async () => {
+    //   const timelock = await Timelock.deploy(governance, 2);
+    //   await timelock.deployed();
+    //   addresses.timelock = timelock.address;
+    //   console.log(`Cointroller address at: ${explorer}/address/${timelock.address}`);
+    // }); 
+
+    // await runWithProgressCheck("cointroller._setTimelock", async () => {
+    //   if (!addresses.timelock) throw new Error("timelock is not deployed yet");
+    //   const timelock = await Timelock.attach(addresses.timelock);
+    //   const transaction = await cointroller._setTimelock(timelock.address);
+    //   console.log(`cointroller._setTimelock transaction: ${explorer}/tx/${transaction.tx}`);
+    // });
 
     await runWithProgressCheck("RifiLens", async () => {
       const lens = await RifiLens.deploy();

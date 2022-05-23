@@ -5,27 +5,28 @@ import "./PriceOracle.sol";
 
 contract UnitrollerAdminStorage {
     /**
-     * @notice Administrator for this contract
-     */
+    * @notice Administrator for this contract
+    */
     address public admin;
 
     /**
-     * @notice Pending administrator for this contract
-     */
+    * @notice Pending administrator for this contract
+    */
     address public pendingAdmin;
 
     /**
-     * @notice Active brains of Unitroller
-     */
+    * @notice Active brains of Unitroller
+    */
     address public cointrollerImplementation;
 
     /**
-     * @notice Pending brains of Unitroller
-     */
+    * @notice Pending brains of Unitroller
+    */
     address public pendingCointrollerImplementation;
 }
 
-contract CointrollerStorage is UnitrollerAdminStorage {
+contract CointrollerV1Storage is UnitrollerAdminStorage {
+
     /**
      * @notice Oracle which gives the price of any given asset
      */
@@ -34,34 +35,40 @@ contract CointrollerStorage is UnitrollerAdminStorage {
     /**
      * @notice Multiplier used to calculate the maximum repayAmount when liquidating a borrow
      */
-    uint256 public closeFactorMantissa;
+    uint public closeFactorMantissa;
 
     /**
      * @notice Multiplier representing the discount on collateral that a liquidator receives
      */
-    uint256 public liquidationIncentiveMantissa;
+    uint public liquidationIncentiveMantissa;
 
     /**
      * @notice Max number of assets a single account can participate in (borrow or use as collateral)
      */
-    uint256 public maxAssets;
+    uint public maxAssets;
 
     /**
      * @notice Per-account mapping of "assets you are in", capped by maxAssets
      */
     mapping(address => RToken[]) public accountAssets;
 
+}
+
+contract CointrollerV2Storage is CointrollerV1Storage {
     struct Market {
         /// @notice Whether or not this market is listed
         bool isListed;
+
         /**
          * @notice Multiplier representing the most one can borrow against their collateral in this market.
          *  For instance, 0.9 to allow borrowing 90% of collateral value.
          *  Must be between 0 and 1, and stored as a mantissa.
          */
-        uint256 collateralFactorMantissa;
+        uint collateralFactorMantissa;
+
         /// @notice Per-market mapping of "accounts in this asset"
         mapping(address => bool) accountMembership;
+
         /// @notice Whether or not this market receives RIFI
         bool isRified;
     }
@@ -71,6 +78,7 @@ contract CointrollerStorage is UnitrollerAdminStorage {
      * @dev Used e.g. to determine if a market is supported
      */
     mapping(address => Market) public markets;
+
 
     /**
      * @notice The Pause Guardian can pause certain actions as a safety mechanism.
@@ -84,10 +92,13 @@ contract CointrollerStorage is UnitrollerAdminStorage {
     bool public seizeGuardianPaused;
     mapping(address => bool) public mintGuardianPaused;
     mapping(address => bool) public borrowGuardianPaused;
+}
 
+contract CointrollerV3Storage is CointrollerV2Storage {
     struct RifiMarketState {
         /// @notice The market's last updated rifiBorrowIndex or rifiSupplyIndex
         uint224 index;
+
         /// @notice The block number the index was last updated at
         uint32 block;
     }
@@ -96,10 +107,10 @@ contract CointrollerStorage is UnitrollerAdminStorage {
     RToken[] public allMarkets;
 
     /// @notice The rate at which the flywheel distributes RIFI, per block
-    uint256 public rifiRate;
+    uint public rifiRate;
 
     /// @notice The portion of rifiRate that each market currently receives
-    mapping(address => uint256) public rifiSpeeds;
+    mapping(address => uint) public rifiSpeeds;
 
     /// @notice The RIFI market supply state for each market
     mapping(address => RifiMarketState) public rifiSupplyState;
@@ -108,23 +119,43 @@ contract CointrollerStorage is UnitrollerAdminStorage {
     mapping(address => RifiMarketState) public rifiBorrowState;
 
     /// @notice The RIFI borrow index for each market for each supplier as of the last time they accrued RIFI
-    mapping(address => mapping(address => uint256)) public rifiSupplierIndex;
+    mapping(address => mapping(address => uint)) public rifiSupplierIndex;
 
-    /// @notice The RIFI borrow index for each market for each borrower as of the last time they accrued RIFI
-    mapping(address => mapping(address => uint256)) public rifiBorrowerIndex;
+    /// @notice The RIFI borrow index for each market for each borrower as of the last time they accrued rifi
+    mapping(address => mapping(address => uint)) public rifiBorrowerIndex;
 
     /// @notice The RIFI accrued but not yet transferred to each user
-    mapping(address => uint256) public rifiAccrued;
+    mapping(address => uint) public rifiAccrued;
+}
 
+contract CointrollerV4Storage is CointrollerV3Storage {
     // @notice The borrowCapGuardian can set borrowCaps to any number for any market. Lowering the borrow cap could disable borrowing on the given market.
     address public borrowCapGuardian;
 
     // @notice Borrow caps enforced by borrowAllowed for each rToken address. Defaults to zero which corresponds to unlimited borrowing.
-    mapping(address => uint256) public borrowCaps;
+    mapping(address => uint) public borrowCaps;
+}
 
+contract CointrollerV5Storage is CointrollerV4Storage {
     /// @notice The portion of RIFI that each contributor receives per block
-    mapping(address => uint256) public rifiContributorSpeeds;
+    mapping(address => uint) public rifiContributorSpeeds;
 
     /// @notice Last block at which a contributor's RIFI rewards have been allocated
-    mapping(address => uint256) public lastContributorBlock;
+    mapping(address => uint) public lastContributorBlock;
+}
+
+contract CointrollerV6Storage is CointrollerV5Storage {
+    /// @notice The rate at which rifi is distributed to the corresponding borrow market (per block)
+    mapping(address => uint) public rifiBorrowSpeeds;
+
+    /// @notice The rate at which rifi is distributed to the corresponding supply market (per block)
+    mapping(address => uint) public rifiSupplySpeeds;
+}
+
+contract CointrollerV7Storage is CointrollerV6Storage {
+    /// @notice Flag indicating whether the function to fix RIFI accruals has been executed (RE: proposal 62 bug)
+    bool public proposal65FixExecuted;
+
+    /// @notice Accounting storage mapping account addresses to how much RIFI they owe the protocol.
+    mapping(address => uint) public rifiReceivable;
 }

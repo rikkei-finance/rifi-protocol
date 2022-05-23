@@ -3,7 +3,7 @@ pragma solidity ^0.5.16;
 import "./RBep20Delegate.sol";
 
 /**
- * @title Rifi's CDai Contract
+ * @title Rifi's RDai Contract
  * @notice RToken which wraps Multi-Collateral DAI
  * @author Rifi
  */
@@ -183,8 +183,6 @@ contract RDaiDelegate is RBep20Delegate {
 
 interface PotLike {
     function chi() external view returns (uint);
-    function dsr() external view returns (uint);
-    function rho() external view returns (uint);
     function pie(address) external view returns (uint);
     function drip() external returns (uint);
     function join(uint) external;

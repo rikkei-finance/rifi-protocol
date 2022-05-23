@@ -133,8 +133,7 @@ contract RToken is RTokenInterface, Exponential, TokenErrorReporter {
      * @return Whether or not the transfer succeeded
      */
     function transfer(address dst, uint256 amount) external nonReentrant returns (bool) {
-        require(transferTokens(msg.sender, msg.sender, dst, amount) == uint(Error.NO_ERROR));
-        return true;
+        return transferTokens(msg.sender, msg.sender, dst, amount) == uint(Error.NO_ERROR);
     }
 
     /**
@@ -145,8 +144,7 @@ contract RToken is RTokenInterface, Exponential, TokenErrorReporter {
      * @return Whether or not the transfer succeeded
      */
     function transferFrom(address src, address dst, uint256 amount) external nonReentrant returns (bool) {
-        require(transferTokens(msg.sender, src, dst, amount) == uint(Error.NO_ERROR));
-        return true;
+        return transferTokens(msg.sender, src, dst, amount) == uint(Error.NO_ERROR);
     }
 
     /**
@@ -464,7 +462,7 @@ contract RToken is RTokenInterface, Exponential, TokenErrorReporter {
     }
 
     /**
-     * @notice Sender supplies assets into the market and receives rTokens in exchange
+     * @notice Sender supplies assets into the market and receives RTokens in exchange
      * @dev Accrues interest whether or not the operation succeeds, unless reverted
      * @param mintAmount The amount of the underlying asset to supply
      * @return (uint, uint) An error code (0=success, otherwise a failure, see ErrorReporter.sol), and the actual mint amount.
@@ -490,7 +488,7 @@ contract RToken is RTokenInterface, Exponential, TokenErrorReporter {
     }
 
     /**
-     * @notice User supplies assets into the market and receives rTokens in exchange
+     * @notice User supplies assets into the market and receives RTokens in exchange
      * @dev Assumes interest has already been accrued up to the current block
      * @param minter The address of the account which is supplying the assets
      * @param mintAmount The amount of the underlying asset to supply
@@ -521,16 +519,16 @@ contract RToken is RTokenInterface, Exponential, TokenErrorReporter {
 
         /*
          *  We call `doTransferIn` for the minter and the mintAmount.
-         *  Note: The rToken must handle variations between BEP-20 and ETH underlying.
+         *  Note: The RToken must handle variations between BEP-20 and BNB underlying.
          *  `doTransferIn` reverts if anything goes wrong, since we can't be sure if
          *  side-effects occurred. The function returns the amount actually transferred,
-         *  in case of a fee. On success, the rToken holds an additional `actualMintAmount`
+         *  in case of a fee. On success, the RToken holds an additional `actualMintAmount`
          *  of cash.
          */
         vars.actualMintAmount = doTransferIn(minter, mintAmount);
 
         /*
-         * We get the current exchange rate and calculate the number of rTokens to be minted:
+         * We get the current exchange rate and calculate the number of RTokens to be minted:
          *  mintTokens = actualMintAmount / exchangeRate
          */
 
@@ -538,7 +536,7 @@ contract RToken is RTokenInterface, Exponential, TokenErrorReporter {
         require(vars.mathErr == MathError.NO_ERROR, "MINT_EXCHANGE_CALCULATION_FAILED");
 
         /*
-         * We calculate the new total supply of rTokens and minter token balance, checking for overflow:
+         * We calculate the new total supply of RTokens and minter token balance, checking for overflow:
          *  totalSupplyNew = totalSupply + mintTokens
          *  accountTokensNew = accountTokens[minter] + mintTokens
          */
@@ -564,9 +562,9 @@ contract RToken is RTokenInterface, Exponential, TokenErrorReporter {
     }
 
     /**
-     * @notice Sender redeems rTokens in exchange for the underlying asset
+     * @notice Sender redeems RTokens in exchange for the underlying asset
      * @dev Accrues interest whether or not the operation succeeds, unless reverted
-     * @param redeemTokens The number of rTokens to redeem into underlying
+     * @param redeemTokens The number of RTokens to redeem into underlying
      * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
      */
     function redeemInternal(uint redeemTokens) internal nonReentrant returns (uint) {
@@ -580,9 +578,9 @@ contract RToken is RTokenInterface, Exponential, TokenErrorReporter {
     }
 
     /**
-     * @notice Sender redeems rTokens in exchange for a specified amount of underlying asset
+     * @notice Sender redeems RTokens in exchange for a specified amount of underlying asset
      * @dev Accrues interest whether or not the operation succeeds, unless reverted
-     * @param redeemAmount The amount of underlying to receive from redeeming rTokens
+     * @param redeemAmount The amount of underlying to receive from redeeming RTokens
      * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
      */
     function redeemUnderlyingInternal(uint redeemAmount) internal nonReentrant returns (uint) {
@@ -606,11 +604,11 @@ contract RToken is RTokenInterface, Exponential, TokenErrorReporter {
     }
 
     /**
-     * @notice User redeems rTokens in exchange for the underlying asset
+     * @notice User redeems RTokens in exchange for the underlying asset
      * @dev Assumes interest has already been accrued up to the current block
      * @param redeemer The address of the account which is redeeming the tokens
-     * @param redeemTokensIn The number of rTokens to redeem into underlying (only one of redeemTokensIn or redeemAmountIn may be non-zero)
-     * @param redeemAmountIn The number of underlying tokens to receive from redeeming rTokens (only one of redeemTokensIn or redeemAmountIn may be non-zero)
+     * @param redeemTokensIn The number of RTokens to redeem into underlying (only one of redeemTokensIn or redeemAmountIn may be non-zero)
+     * @param redeemAmountIn The number of underlying tokens to receive from redeeming RTokens (only one of redeemTokensIn or redeemAmountIn may be non-zero)
      * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
      */
     function redeemFresh(address payable redeemer, uint redeemTokensIn, uint redeemAmountIn) internal returns (uint) {
@@ -687,17 +685,17 @@ contract RToken is RTokenInterface, Exponential, TokenErrorReporter {
         // EFFECTS & INTERACTIONS
         // (No safe failures beyond this point)
 
-        /* We write previously calculated values into storage */
-        totalSupply = vars.totalSupplyNew;
-        accountTokens[redeemer] = vars.accountTokensNew;
-
         /*
          * We invoke doTransferOut for the redeemer and the redeemAmount.
-         *  Note: The rToken must handle variations between BEP-20 and ETH underlying.
-         *  On success, the rToken has redeemAmount less of cash.
+         *  Note: The RToken must handle variations between BEP-20 and BNB underlying.
+         *  On success, the RToken has redeemAmount less of cash.
          *  doTransferOut reverts if anything goes wrong, since we can't be sure if side effects occurred.
          */
         doTransferOut(redeemer, vars.redeemAmount);
+
+        /* We write previously calculated values into storage */
+        totalSupply = vars.totalSupplyNew;
+        accountTokens[redeemer] = vars.accountTokensNew;
 
         /* We emit a Transfer event, and a Redeem event */
         emit Transfer(redeemer, address(this), vars.redeemTokens);
@@ -779,18 +777,18 @@ contract RToken is RTokenInterface, Exponential, TokenErrorReporter {
         // EFFECTS & INTERACTIONS
         // (No safe failures beyond this point)
 
+        /*
+         * We invoke doTransferOut for the borrower and the borrowAmount.
+         *  Note: The RToken must handle variations between BEP-20 and BNB underlying.
+         *  On success, the RToken borrowAmount less of cash.
+         *  doTransferOut reverts if anything goes wrong, since we can't be sure if side effects occurred.
+         */
+        doTransferOut(borrower, borrowAmount);
+
         /* We write the previously calculated values into storage */
         accountBorrows[borrower].principal = vars.accountBorrowsNew;
         accountBorrows[borrower].interestIndex = borrowIndex;
         totalBorrows = vars.totalBorrowsNew;
-
-        /*
-         * We invoke doTransferOut for the borrower and the borrowAmount.
-         *  Note: The rToken must handle variations between BEP-20 and ETH underlying.
-         *  On success, the rToken borrowAmount less of cash.
-         *  doTransferOut reverts if anything goes wrong, since we can't be sure if side effects occurred.
-         */
-        doTransferOut(borrower, borrowAmount);
 
         /* We emit a Borrow event */
         emit Borrow(borrower, borrowAmount, vars.accountBorrowsNew, vars.totalBorrowsNew);
@@ -887,8 +885,8 @@ contract RToken is RTokenInterface, Exponential, TokenErrorReporter {
 
         /*
          * We call doTransferIn for the payer and the repayAmount
-         *  Note: The rToken must handle variations between BEP-20 and ETH underlying.
-         *  On success, the rToken holds an additional repayAmount of cash.
+         *  Note: The RToken must handle variations between BEP-20 and BNB underlying.
+         *  On success, the RToken holds an additional repayAmount of cash.
          *  doTransferIn reverts if anything goes wrong, since we can't be sure if side effects occurred.
          *   it returns the amount actually transferred, in case of a fee.
          */
@@ -923,7 +921,7 @@ contract RToken is RTokenInterface, Exponential, TokenErrorReporter {
     /**
      * @notice The sender liquidates the borrowers collateral.
      *  The collateral seized is transferred to the liquidator.
-     * @param borrower The borrower of this rToken to be liquidated
+     * @param borrower The borrower of this RToken to be liquidated
      * @param rTokenCollateral The market in which to seize collateral from the borrower
      * @param repayAmount The amount of the underlying borrowed asset to repay
      * @return (uint, uint) An error code (0=success, otherwise a failure, see ErrorReporter.sol), and the actual repayment amount.
@@ -948,7 +946,7 @@ contract RToken is RTokenInterface, Exponential, TokenErrorReporter {
     /**
      * @notice The liquidator liquidates the borrowers collateral.
      *  The collateral seized is transferred to the liquidator.
-     * @param borrower The borrower of this rToken to be liquidated
+     * @param borrower The borrower of this RToken to be liquidated
      * @param liquidator The address repaying the borrow and seizing collateral
      * @param rTokenCollateral The market in which to seize collateral from the borrower
      * @param repayAmount The amount of the underlying borrowed asset to repay
@@ -1027,25 +1025,37 @@ contract RToken is RTokenInterface, Exponential, TokenErrorReporter {
 
     /**
      * @notice Transfers collateral tokens (this market) to the liquidator.
-     * @dev Will fail unless called by another rToken during the process of liquidation.
-     *  Its absolutely critical to use msg.sender as the borrowed rToken and not a parameter.
+     * @dev Will fail unless called by another RToken during the process of liquidation.
+     *  Its absolutely critical to use msg.sender as the borrowed RToken and not a parameter.
      * @param liquidator The account receiving seized collateral
      * @param borrower The account having collateral seized
-     * @param seizeTokens The number of rTokens to seize
+     * @param seizeTokens The number of RTokens to seize
      * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
      */
     function seize(address liquidator, address borrower, uint seizeTokens) external nonReentrant returns (uint) {
         return seizeInternal(msg.sender, liquidator, borrower, seizeTokens);
     }
 
+    struct SeizeInternalLocalVars {
+        MathError mathErr;
+        uint borrowerTokensNew;
+        uint liquidatorTokensNew;
+        uint liquidatorSeizeTokens;
+        uint protocolSeizeTokens;
+        uint protocolSeizeAmount;
+        uint exchangeRateMantissa;
+        uint totalReservesNew;
+        uint totalSupplyNew;
+    }
+
     /**
      * @notice Transfers collateral tokens (this market) to the liquidator.
      * @dev Called only during an in-kind liquidation, or by liquidateBorrow during the liquidation of another RToken.
-     *  Its absolutely critical to use msg.sender as the seizer rToken and not a parameter.
-     * @param seizerToken The contract seizing the collateral (i.e. borrowed rToken)
+     *  Its absolutely critical to use msg.sender as the seizer RToken and not a parameter.
+     * @param seizerToken The contract seizing the collateral (i.e. borrowed RToken)
      * @param liquidator The account receiving seized collateral
      * @param borrower The account having collateral seized
-     * @param seizeTokens The number of rTokens to seize
+     * @param seizeTokens The number of RTokens to seize
      * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
      */
     function seizeInternal(address seizerToken, address liquidator, address borrower, uint seizeTokens) internal returns (uint) {
@@ -1060,23 +1070,32 @@ contract RToken is RTokenInterface, Exponential, TokenErrorReporter {
             return fail(Error.INVALID_ACCOUNT_PAIR, FailureInfo.LIQUIDATE_SEIZE_LIQUIDATOR_IS_BORROWER);
         }
 
-        MathError mathErr;
-        uint borrowerTokensNew;
-        uint liquidatorTokensNew;
+        SeizeInternalLocalVars memory vars;
 
         /*
          * We calculate the new borrower and liquidator token balances, failing on underflow/overflow:
          *  borrowerTokensNew = accountTokens[borrower] - seizeTokens
          *  liquidatorTokensNew = accountTokens[liquidator] + seizeTokens
          */
-        (mathErr, borrowerTokensNew) = subUInt(accountTokens[borrower], seizeTokens);
-        if (mathErr != MathError.NO_ERROR) {
-            return failOpaque(Error.MATH_ERROR, FailureInfo.LIQUIDATE_SEIZE_BALANCE_DECREMENT_FAILED, uint(mathErr));
+        (vars.mathErr, vars.borrowerTokensNew) = subUInt(accountTokens[borrower], seizeTokens);
+        if (vars.mathErr != MathError.NO_ERROR) {
+            return failOpaque(Error.MATH_ERROR, FailureInfo.LIQUIDATE_SEIZE_BALANCE_DECREMENT_FAILED, uint(vars.mathErr));
         }
 
-        (mathErr, liquidatorTokensNew) = addUInt(accountTokens[liquidator], seizeTokens);
-        if (mathErr != MathError.NO_ERROR) {
-            return failOpaque(Error.MATH_ERROR, FailureInfo.LIQUIDATE_SEIZE_BALANCE_INCREMENT_FAILED, uint(mathErr));
+        vars.protocolSeizeTokens = mul_(seizeTokens, Exp({mantissa: protocolSeizeShareMantissa}));
+        vars.liquidatorSeizeTokens = sub_(seizeTokens, vars.protocolSeizeTokens);
+
+        (vars.mathErr, vars.exchangeRateMantissa) = exchangeRateStoredInternal();
+        require(vars.mathErr == MathError.NO_ERROR, "exchange rate math error");
+
+        vars.protocolSeizeAmount = mul_ScalarTruncate(Exp({mantissa: vars.exchangeRateMantissa}), vars.protocolSeizeTokens);
+
+        vars.totalReservesNew = add_(totalReserves, vars.protocolSeizeAmount);
+        vars.totalSupplyNew = sub_(totalSupply, vars.protocolSeizeTokens);
+
+        (vars.mathErr, vars.liquidatorTokensNew) = addUInt(accountTokens[liquidator], vars.liquidatorSeizeTokens);
+        if (vars.mathErr != MathError.NO_ERROR) {
+            return failOpaque(Error.MATH_ERROR, FailureInfo.LIQUIDATE_SEIZE_BALANCE_INCREMENT_FAILED, uint(vars.mathErr));
         }
 
         /////////////////////////
@@ -1084,11 +1103,15 @@ contract RToken is RTokenInterface, Exponential, TokenErrorReporter {
         // (No safe failures beyond this point)
 
         /* We write the previously calculated values into storage */
-        accountTokens[borrower] = borrowerTokensNew;
-        accountTokens[liquidator] = liquidatorTokensNew;
+        totalReserves = vars.totalReservesNew;
+        totalSupply = vars.totalSupplyNew;
+        accountTokens[borrower] = vars.borrowerTokensNew;
+        accountTokens[liquidator] = vars.liquidatorTokensNew;
 
         /* Emit a Transfer event */
-        emit Transfer(borrower, liquidator, seizeTokens);
+        emit Transfer(borrower, liquidator, vars.liquidatorSeizeTokens);
+        emit Transfer(borrower, address(this), vars.protocolSeizeTokens);
+        emit ReservesAdded(address(this), vars.protocolSeizeAmount, vars.totalReservesNew);
 
         /* We call the defense hook */
         // unused function
@@ -1131,7 +1154,7 @@ contract RToken is RTokenInterface, Exponential, TokenErrorReporter {
       */
     function _acceptAdmin() external returns (uint) {
         // Check caller is pendingAdmin and pendingAdmin ≠ address(0)
-        if (msg.sender != pendingAdmin) {
+        if (msg.sender != pendingAdmin || msg.sender == address(0)) {
             return fail(Error.UNAUTHORIZED, FailureInfo.ACCEPT_ADMIN_PENDING_ADMIN_CHECK);
         }
 
@@ -1258,8 +1281,8 @@ contract RToken is RTokenInterface, Exponential, TokenErrorReporter {
 
         /*
          * We call doTransferIn for the caller and the addAmount
-         *  Note: The rToken must handle variations between BEP-20 and ETH underlying.
-         *  On success, the rToken holds an additional addAmount of cash.
+         *  Note: The RToken must handle variations between BEP-20 and BNB underlying.
+         *  On success, the RToken holds an additional addAmount of cash.
          *  doTransferIn reverts if anything goes wrong, since we can't be sure if side effects occurred.
          *  it returns the amount actually transferred, in case of a fee.
          */

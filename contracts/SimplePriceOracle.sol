@@ -1,99 +1,43 @@
 pragma solidity ^0.5.16;
 
 import "./PriceOracle.sol";
-import "./ErrorReporter.sol";
 import "./RBep20.sol";
 
-interface oracleChainlink {
-    function decimals() external view returns (uint8);
-    function latestRoundData()
-    external
-    view
-    returns (
-        uint80 roundId,
-        int256 answer,
-        uint256 startedAt,
-        uint256 updatedAt,
-        uint80 answeredInRound
-    );
-}
-
-contract SimplePriceOracle is PriceOracle, CointrollerErrorReporter {
-    /**
-     * @notice Administrator for this contract
-     */
-    address public admin;
-
-    /**
-     * @notice Pending administrator for this contract
-     */
-    address public pendingAdmin;
-
+contract SimplePriceOracle is PriceOracle {
     mapping(address => uint) prices;
-
     event PricePosted(address asset, uint previousPriceMantissa, uint requestedPriceMantissa, uint newPriceMantissa);
 
-    event OracleChanged(address rToken, address oldOracle, address newOracle);
-
-    event NewPendingAdmin(address oldPendingAdmin, address newPendingAdmin);
-    event NewAdmin(address oldAdmin, address newAdmin);
-
-    mapping(address => oracleChainlink) public oracleData;
-
-    constructor() public {
-      admin = msg.sender;
-    }
-
-    function setOracleData(address rToken, oracleChainlink _oracle) external {
-        require(msg.sender == admin, "only admin can set");
-        address oldOracle = address(oracleData[rToken]);
-        oracleData[rToken] = _oracle;
-        emit OracleChanged(rToken, oldOracle, address(oracleData[rToken]));
+    function _getUnderlyingAddress(RToken rToken) private view returns (address) {
+        address asset;
+        if (compareStrings(rToken.symbol(), "rASTR")) {
+            asset = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
+        } else {
+            asset = address(RBep20(address(rToken)).underlying());
+        }
+        return asset;
     }
 
     function getUnderlyingPrice(RToken rToken) public view returns (uint) {
-        uint decimals = oracleData[address(rToken)].decimals();
-        ( , int256 answer, , , ) = oracleData[address(rToken)].latestRoundData();
-        return 10 ** (18 - decimals) * uint(answer);
+        return prices[_getUnderlyingAddress(rToken)];
     }
 
-    function _setPendingAdmin(address newPendingAdmin) public returns (uint) {
-        // Check caller = admin
-        if (msg.sender != admin) {
-            return fail(Error.UNAUTHORIZED, FailureInfo.SET_PENDING_ADMIN_OWNER_CHECK);
-        }
-
-        // Save current value, if any, for inclusion in log
-        address oldPendingAdmin = pendingAdmin;
-
-        // Store pendingAdmin with value newPendingAdmin
-        pendingAdmin = newPendingAdmin;
-
-        // Emit NewPendingAdmin(oldPendingAdmin, newPendingAdmin)
-        emit NewPendingAdmin(oldPendingAdmin, newPendingAdmin);
-
-        return uint(Error.NO_ERROR);
+    function setUnderlyingPrice(RToken rToken, uint underlyingPriceMantissa) public {
+        address asset = _getUnderlyingAddress(rToken);
+        emit PricePosted(asset, prices[asset], underlyingPriceMantissa, underlyingPriceMantissa);
+        prices[asset] = underlyingPriceMantissa;
     }
 
-    function _acceptAdmin() public returns (uint) {
-        // Check caller is pendingAdmin and pendingAdmin ≠ address(0)
-        if (msg.sender != pendingAdmin || msg.sender == address(0)) {
-            return fail(Error.UNAUTHORIZED, FailureInfo.ACCEPT_ADMIN_PENDING_ADMIN_CHECK);
-        }
+    function setDirectPrice(address asset, uint price) public {
+        emit PricePosted(asset, prices[asset], price, price);
+        prices[asset] = price;
+    }
 
-        // Save current values for inclusion in log
-        address oldAdmin = admin;
-        address oldPendingAdmin = pendingAdmin;
+    // v1 price oracle interface for use as backing of proxy
+    function assetPrices(address asset) external view returns (uint) {
+        return prices[asset];
+    }
 
-        // Store admin with value pendingAdmin
-        admin = pendingAdmin;
-
-        // Clear the pending value
-        pendingAdmin = address(0);
-
-        emit NewAdmin(oldAdmin, admin);
-        emit NewPendingAdmin(oldPendingAdmin, pendingAdmin);
-
-        return uint(Error.NO_ERROR);
+    function compareStrings(string memory a, string memory b) internal pure returns (bool) {
+        return (keccak256(abi.encodePacked((a))) == keccak256(abi.encodePacked((b))));
     }
 }

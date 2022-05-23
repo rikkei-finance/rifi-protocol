@@ -4,7 +4,7 @@ import "./RToken.sol";
 
 /**
  * @title Rifi's RBinance Contract
- * @notice RToken which wraps Ether
+ * @notice rToken which wraps Binance
  * @author Rifi
  */
 contract RBinance is RToken {
@@ -104,6 +104,14 @@ contract RBinance is RToken {
     function liquidateBorrow(address borrower, RToken rTokenCollateral) external payable {
         (uint err,) = liquidateBorrowInternal(borrower, msg.value, rTokenCollateral);
         requireNoError(err, "liquidateBorrow failed");
+    }
+
+    /**
+     * @notice The sender adds to reserves.
+     * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
+     */
+    function _addReserves() external payable returns (uint) {
+        return _addReservesInternal(msg.value);
     }
 
     /**

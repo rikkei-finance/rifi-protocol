@@ -12,7 +12,7 @@ import "./Governance/Rifi.sol";
  * @title Rifi's Cointroller Contract
  * @author Rifi
  */
-contract Cointroller is CointrollerV7Storage, CointrollerInterface, CointrollerErrorReporter, ExponentialNoError {
+contract CointrollerG6 is CointrollerV5Storage, CointrollerInterface, CointrollerErrorReporter, ExponentialNoError {
     /// @notice Emitted when an admin supports a market
     event MarketListed(RToken rToken);
 
@@ -43,11 +43,14 @@ contract Cointroller is CointrollerV7Storage, CointrollerInterface, CointrollerE
     /// @notice Emitted when an action is paused on a market
     event ActionPaused(RToken rToken, string action, bool pauseState);
 
-    /// @notice Emitted when a new borrow-side RIFI speed is calculated for a market
-    event RifiBorrowSpeedUpdated(RToken indexed rToken, uint newSpeed);
+    /// @notice Emitted when market rified status is changed
+    event MarketRified(RToken rToken, bool isRified);
 
-    /// @notice Emitted when a new supply-side RIFI speed is calculated for a market
-    event RifiSupplySpeedUpdated(RToken indexed rToken, uint newSpeed);
+    /// @notice Emitted when RIFI rate is changed
+    event NewRifiRate(uint oldRifiRate, uint newRifiRate);
+
+    /// @notice Emitted when a new RIFI speed is calculated for a market
+    event RifiSpeedUpdated(RToken indexed rToken, uint newSpeed);
 
     /// @notice Emitted when a new RIFI speed is set for a contributor
     event ContributorRifiSpeedUpdated(address indexed contributor, uint newSpeed);
@@ -67,11 +70,8 @@ contract Cointroller is CointrollerV7Storage, CointrollerInterface, CointrollerE
     /// @notice Emitted when RIFI is granted by admin
     event RifiGranted(address recipient, uint amount);
 
-    /// @notice Emitted when RIFI accrued for a user has been manually adjusted.
-    event RifiAccruedAdjusted(address indexed user, uint oldRifiAccrued, uint newRifiAccrued);
-
-    /// @notice Emitted when RIFI receivable for a user has been updated.
-    event RifiReceivableUpdated(address indexed user, uint oldRifiReceivable, uint newRifiReceivable);
+    /// @notice The threshold above which the flywheel transfers RIFI, in wei
+    uint public constant rifiClaimThreshold = 0.001e18;
 
     /// @notice The initial RIFI index for a market
     uint224 public constant rifiInitialIndex = 1e36;
@@ -244,7 +244,7 @@ contract Cointroller is CointrollerV7Storage, CointrollerInterface, CointrollerE
 
         // Keep the flywheel moving
         updateRifiSupplyIndex(rToken);
-        distributeSupplierRifi(rToken, minter);
+        distributeSupplierRifi(rToken, minter, false);
 
         return uint(Error.NO_ERROR);
     }
@@ -284,7 +284,7 @@ contract Cointroller is CointrollerV7Storage, CointrollerInterface, CointrollerE
 
         // Keep the flywheel moving
         updateRifiSupplyIndex(rToken);
-        distributeSupplierRifi(rToken, redeemer);
+        distributeSupplierRifi(rToken, redeemer, false);
 
         return uint(Error.NO_ERROR);
     }
@@ -382,7 +382,7 @@ contract Cointroller is CointrollerV7Storage, CointrollerInterface, CointrollerE
         // Keep the flywheel moving
         Exp memory borrowIndex = Exp({mantissa: RToken(rToken).borrowIndex()});
         updateRifiBorrowIndex(rToken, borrowIndex);
-        distributeBorrowerRifi(rToken, borrower, borrowIndex);
+        distributeBorrowerRifi(rToken, borrower, borrowIndex, false);
 
         return uint(Error.NO_ERROR);
     }
@@ -430,7 +430,7 @@ contract Cointroller is CointrollerV7Storage, CointrollerInterface, CointrollerE
         // Keep the flywheel moving
         Exp memory borrowIndex = Exp({mantissa: RToken(rToken).borrowIndex()});
         updateRifiBorrowIndex(rToken, borrowIndex);
-        distributeBorrowerRifi(rToken, borrower, borrowIndex);
+        distributeBorrowerRifi(rToken, borrower, borrowIndex, false);
 
         return uint(Error.NO_ERROR);
     }
@@ -482,28 +482,22 @@ contract Cointroller is CointrollerV7Storage, CointrollerInterface, CointrollerE
             return uint(Error.MARKET_NOT_LISTED);
         }
 
-        uint borrowBalance = RToken(rTokenBorrowed).borrowBalanceStored(borrower);
-
-        /* allow accounts to be liquidated if the market is deprecated */
-        if (isDeprecated(RToken(rTokenBorrowed))) {
-            require(borrowBalance >= repayAmount, "Can not repay more than the total borrow");
-        } else {
-            /* The borrower must have shortfall in order to be liquidatable */
-            (Error err, , uint shortfall) = getAccountLiquidityInternal(borrower);
-            if (err != Error.NO_ERROR) {
-                return uint(err);
-            }
-
-            if (shortfall == 0) {
-                return uint(Error.INSUFFICIENT_SHORTFALL);
-            }
-
-            /* The liquidator may not repay more than what is allowed by the closeFactor */
-            uint maxClose = mul_ScalarTruncate(Exp({mantissa: closeFactorMantissa}), borrowBalance);
-            if (repayAmount > maxClose) {
-                return uint(Error.TOO_MUCH_REPAY);
-            }
+        /* The borrower must have shortfall in order to be liquidatable */
+        (Error err, , uint shortfall) = getAccountLiquidityInternal(borrower);
+        if (err != Error.NO_ERROR) {
+            return uint(err);
         }
+        if (shortfall == 0) {
+            return uint(Error.INSUFFICIENT_SHORTFALL);
+        }
+
+        /* The liquidator may not repay more than what is allowed by the closeFactor */
+        uint borrowBalance = RToken(rTokenBorrowed).borrowBalanceStored(borrower);
+        uint maxClose = mul_ScalarTruncate(Exp({mantissa: closeFactorMantissa}), borrowBalance);
+        if (repayAmount > maxClose) {
+            return uint(Error.TOO_MUCH_REPAY);
+        }
+
         return uint(Error.NO_ERROR);
     }
 
@@ -566,8 +560,8 @@ contract Cointroller is CointrollerV7Storage, CointrollerInterface, CointrollerE
 
         // Keep the flywheel moving
         updateRifiSupplyIndex(rTokenCollateral);
-        distributeSupplierRifi(rTokenCollateral, borrower);
-        distributeSupplierRifi(rTokenCollateral, liquidator);
+        distributeSupplierRifi(rTokenCollateral, borrower, false);
+        distributeSupplierRifi(rTokenCollateral, liquidator, false);
 
         return uint(Error.NO_ERROR);
     }
@@ -620,8 +614,8 @@ contract Cointroller is CointrollerV7Storage, CointrollerInterface, CointrollerE
 
         // Keep the flywheel moving
         updateRifiSupplyIndex(rToken);
-        distributeSupplierRifi(rToken, src);
-        distributeSupplierRifi(rToken, dst);
+        distributeSupplierRifi(rToken, src, false);
+        distributeSupplierRifi(rToken, dst, false);
 
         return uint(Error.NO_ERROR);
     }
@@ -939,11 +933,9 @@ contract Cointroller is CointrollerV7Storage, CointrollerInterface, CointrollerE
 
         rToken.isRToken(); // Sanity check to make sure its really a RToken
 
-        // Note that isRified is not in active use anymore
         markets[address(rToken)] = Market({isListed: true, isRified: false, collateralFactorMantissa: 0});
 
         _addMarketInternal(address(rToken));
-        _initializeMarket(address(rToken));
 
         emit MarketListed(rToken);
 
@@ -957,31 +949,6 @@ contract Cointroller is CointrollerV7Storage, CointrollerInterface, CointrollerE
         allMarkets.push(RToken(rToken));
     }
 
-    function _initializeMarket(address rToken) internal {
-        uint32 blockNumber = safe32(getBlockNumber(), "block number exceeds 32 bits");
-
-        RifiMarketState storage supplyState = rifiSupplyState[rToken];
-        RifiMarketState storage borrowState = rifiBorrowState[rToken];
-
-        /*
-         * Update market state indices
-         */
-        if (supplyState.index == 0) {
-            // Initialize supply state index with default value
-            supplyState.index = rifiInitialIndex;
-        }
-
-        if (borrowState.index == 0) {
-            // Initialize borrow state index with default value
-            borrowState.index = rifiInitialIndex;
-        }
-
-        /*
-         * Update market state block numbers
-         */
-         supplyState.block = borrowState.block = blockNumber;
-    }
-
 
     /**
       * @notice Set the given borrow caps for the given rToken markets. Borrowing that brings total borrows to or above borrow cap will revert.
@@ -990,7 +957,7 @@ contract Cointroller is CointrollerV7Storage, CointrollerInterface, CointrollerE
       * @param newBorrowCaps The new borrow cap values in underlying to be set. A value of 0 corresponds to unlimited borrowing.
       */
     function _setMarketBorrowCaps(RToken[] calldata rTokens, uint[] calldata newBorrowCaps) external {
-    	  require(msg.sender == admin || msg.sender == borrowCapGuardian, "only admin or borrow cap guardian can set borrow caps"); 
+    	require(msg.sender == admin || msg.sender == borrowCapGuardian, "only admin or borrow cap guardian can set borrow caps"); 
 
         uint numMarkets = rTokens.length;
         uint numBorrowCaps = newBorrowCaps.length;
@@ -1085,54 +1052,6 @@ contract Cointroller is CointrollerV7Storage, CointrollerInterface, CointrollerE
         require(unitroller._acceptImplementation() == 0, "change not authorized");
     }
 
-    /// @notice Delete this function after proposal 65 is executed
-    function fixBadAccruals(address[] calldata affectedUsers, uint[] calldata amounts) external {
-        require(msg.sender == admin, "Only admin can call this function"); // Only the timelock can call this function
-        require(!proposal65FixExecuted, "Already executed this one-off function"); // Require that this function is only called once
-        require(affectedUsers.length == amounts.length, "Invalid input");
-
-        // Loop variables
-        address user;
-        uint currentAccrual;
-        uint amountToSubtract;
-        uint newAccrual;
-
-        // Iterate through all affected users
-        for (uint i = 0; i < affectedUsers.length; ++i) {
-            user = affectedUsers[i];
-            currentAccrual = rifiAccrued[user];
-
-            amountToSubtract = amounts[i];
-
-            // The case where the user has claimed and received an incorrect amount of RIFI.
-            // The user has less currently accrued than the amount they incorrectly received.
-            if (amountToSubtract > currentAccrual) {
-                // Amount of RIFI the user owes the protocol
-                uint accountReceivable = amountToSubtract - currentAccrual; // Underflow safe since amountToSubtract > currentAccrual
-
-                uint oldReceivable = rifiReceivable[user];
-                uint newReceivable = add_(oldReceivable, accountReceivable);
-
-                // Accounting: record the RIFI debt for the user
-                rifiReceivable[user] = newReceivable;
-
-                emit RifiReceivableUpdated(user, oldReceivable, newReceivable);
-
-                amountToSubtract = currentAccrual;
-            }
-            
-            if (amountToSubtract > 0) {
-                // Subtract the bad accrual amount from what they have accrued.
-                // Users will keep whatever they have correctly accrued.
-                rifiAccrued[user] = newAccrual = sub_(currentAccrual, amountToSubtract);
-
-                emit RifiAccruedAdjusted(user, currentAccrual, newAccrual);
-            }
-        }
-
-        proposal65FixExecuted = true; // Makes it so that this function cannot be called again
-    }
-
     /**
      * @notice Checks caller is admin, or this contract is becoming the new implementation
      */
@@ -1143,78 +1062,86 @@ contract Cointroller is CointrollerV7Storage, CointrollerInterface, CointrollerE
     /*** Rifi Distribution ***/
 
     /**
-     * @notice Set RIFI speed for a single market
-     * @param rToken The market whose RIFI speed to update
-     * @param supplySpeed New supply-side RIFI speed for market
-     * @param borrowSpeed New borrow-side RIFI speed for market
+     * @notice Recalculate and update RIFI speeds for all RIFI markets
      */
-    function setRifiSpeedInternal(RToken rToken, uint supplySpeed, uint borrowSpeed) internal {
-        Market storage market = markets[address(rToken)];
-        require(market.isListed, "rifi market is not listed");
+    function refreshRifiSpeeds() public {
+        require(msg.sender == tx.origin, "only externally owned accounts may refresh speeds");
+        refreshRifiSpeedsInternal();
+    }
 
-        if (rifiSupplySpeeds[address(rToken)] != supplySpeed) {
-            // Supply speed updated so let's update supply state to ensure that
-            //  1. RIFI accrued properly for the old speed, and
-            //  2. RIFI accrued at the new speed starts after this block.
+    function refreshRifiSpeedsInternal() internal {
+        RToken[] memory allMarkets_ = allMarkets;
+
+        for (uint i = 0; i < allMarkets_.length; i++) {
+            RToken rToken = allMarkets_[i];
+            Exp memory borrowIndex = Exp({mantissa: rToken.borrowIndex()});
             updateRifiSupplyIndex(address(rToken));
-
-            // Update speed and emit event
-            rifiSupplySpeeds[address(rToken)] = supplySpeed;
-            emit RifiSupplySpeedUpdated(rToken, supplySpeed);
+            updateRifiBorrowIndex(address(rToken), borrowIndex);
         }
 
-        if (rifiBorrowSpeeds[address(rToken)] != borrowSpeed) {
-            // Borrow speed updated so let's update borrow state to ensure that
-            //  1. RIFI accrued properly for the old speed, and
-            //  2. RIFI accrued at the new speed starts after this block.
-            Exp memory borrowIndex = Exp({mantissa: rToken.borrowIndex()});
-            updateRifiBorrowIndex(address(rToken), borrowIndex);
+        Exp memory totalUtility = Exp({mantissa: 0});
+        Exp[] memory utilities = new Exp[](allMarkets_.length);
+        for (uint i = 0; i < allMarkets_.length; i++) {
+            RToken rToken = allMarkets_[i];
+            if (markets[address(rToken)].isRified) {
+                Exp memory assetPrice = Exp({mantissa: oracle.getUnderlyingPrice(rToken)});
+                Exp memory utility = mul_(assetPrice, rToken.totalBorrows());
+                utilities[i] = utility;
+                totalUtility = add_(totalUtility, utility);
+            }
+        }
 
-            // Update speed and emit event
-            rifiBorrowSpeeds[address(rToken)] = borrowSpeed;
-            emit RifiBorrowSpeedUpdated(rToken, borrowSpeed);
+        for (uint i = 0; i < allMarkets_.length; i++) {
+            RToken rToken = allMarkets[i];
+            uint newSpeed = totalUtility.mantissa > 0 ? mul_(rifiRate, div_(utilities[i], totalUtility)) : 0;
+            rifiSpeeds[address(rToken)] = newSpeed;
+            emit RifiSpeedUpdated(rToken, newSpeed);
         }
     }
 
     /**
      * @notice Accrue RIFI to the market by updating the supply index
      * @param rToken The market whose supply index to update
-     * @dev Index is a cumulative sum of the RIFI per RToken accrued.
      */
     function updateRifiSupplyIndex(address rToken) internal {
         RifiMarketState storage supplyState = rifiSupplyState[rToken];
-        uint supplySpeed = rifiSupplySpeeds[rToken];
-        uint32 blockNumber = safe32(getBlockNumber(), "block number exceeds 32 bits");
-        uint deltaBlocks = sub_(uint(blockNumber), uint(supplyState.block));
+        uint supplySpeed = rifiSpeeds[rToken];
+        uint blockNumber = getBlockNumber();
+        uint deltaBlocks = sub_(blockNumber, uint(supplyState.block));
         if (deltaBlocks > 0 && supplySpeed > 0) {
             uint supplyTokens = RToken(rToken).totalSupply();
             uint rifiAccrued = mul_(deltaBlocks, supplySpeed);
             Double memory ratio = supplyTokens > 0 ? fraction(rifiAccrued, supplyTokens) : Double({mantissa: 0});
-            supplyState.index = safe224(add_(Double({mantissa: supplyState.index}), ratio).mantissa, "new index exceeds 224 bits");
-            supplyState.block = blockNumber;
+            Double memory index = add_(Double({mantissa: supplyState.index}), ratio);
+            rifiSupplyState[rToken] = RifiMarketState({
+                index: safe224(index.mantissa, "new index exceeds 224 bits"),
+                block: safe32(blockNumber, "block number exceeds 32 bits")
+            });
         } else if (deltaBlocks > 0) {
-            supplyState.block = blockNumber;
+            supplyState.block = safe32(blockNumber, "block number exceeds 32 bits");
         }
     }
 
     /**
      * @notice Accrue RIFI to the market by updating the borrow index
      * @param rToken The market whose borrow index to update
-     * @dev Index is a cumulative sum of the RIFI per RToken accrued.
      */
     function updateRifiBorrowIndex(address rToken, Exp memory marketBorrowIndex) internal {
         RifiMarketState storage borrowState = rifiBorrowState[rToken];
-        uint borrowSpeed = rifiBorrowSpeeds[rToken];
-        uint32 blockNumber = safe32(getBlockNumber(), "block number exceeds 32 bits");
-        uint deltaBlocks = sub_(uint(blockNumber), uint(borrowState.block));
+        uint borrowSpeed = rifiSpeeds[rToken];
+        uint blockNumber = getBlockNumber();
+        uint deltaBlocks = sub_(blockNumber, uint(borrowState.block));
         if (deltaBlocks > 0 && borrowSpeed > 0) {
             uint borrowAmount = div_(RToken(rToken).totalBorrows(), marketBorrowIndex);
             uint rifiAccrued = mul_(deltaBlocks, borrowSpeed);
             Double memory ratio = borrowAmount > 0 ? fraction(rifiAccrued, borrowAmount) : Double({mantissa: 0});
-            borrowState.index = safe224(add_(Double({mantissa: borrowState.index}), ratio).mantissa, "new index exceeds 224 bits");
-            borrowState.block = blockNumber;
+            Double memory index = add_(Double({mantissa: borrowState.index}), ratio);
+            rifiBorrowState[rToken] = RifiMarketState({
+                index: safe224(index.mantissa, "new index exceeds 224 bits"),
+                block: safe32(blockNumber, "block number exceeds 32 bits")
+            });
         } else if (deltaBlocks > 0) {
-            borrowState.block = blockNumber;
+            borrowState.block = safe32(blockNumber, "block number exceeds 32 bits");
         }
     }
 
@@ -1223,37 +1150,22 @@ contract Cointroller is CointrollerV7Storage, CointrollerInterface, CointrollerE
      * @param rToken The market in which the supplier is interacting
      * @param supplier The address of the supplier to distribute RIFI to
      */
-    function distributeSupplierRifi(address rToken, address supplier) internal {
-        // TODO: Don't distribute supplier RIFI if the user is not in the supplier market.
-        // This check should be as gas efficient as possible as distributeSupplierRifi is called in many places.
-        // - We really don't want to call an external contract as that's quite expensive.
-
+    function distributeSupplierRifi(address rToken, address supplier, bool distributeAll) internal {
         RifiMarketState storage supplyState = rifiSupplyState[rToken];
-        uint supplyIndex = supplyState.index;
-        uint supplierIndex = rifiSupplierIndex[rToken][supplier];
+        Double memory supplyIndex = Double({mantissa: supplyState.index});
+        Double memory supplierIndex = Double({mantissa: rifiSupplierIndex[rToken][supplier]});
+        rifiSupplierIndex[rToken][supplier] = supplyIndex.mantissa;
 
-        // Update supplier's index to the current index since we are distributing accrued RIFI
-        rifiSupplierIndex[rToken][supplier] = supplyIndex;
-
-        if (supplierIndex == 0 && supplyIndex >= rifiInitialIndex) {
-            // Covers the case where users supplied tokens before the market's supply state index was set.
-            // Rewards the user with RIFI accrued from the start of when supplier rewards were first
-            // set for the market.
-            supplierIndex = rifiInitialIndex;
+        if (supplierIndex.mantissa == 0 && supplyIndex.mantissa > 0) {
+            supplierIndex.mantissa = rifiInitialIndex;
         }
 
-        // Calculate change in the cumulative sum of the RIFI per rToken accrued
-        Double memory deltaIndex = Double({mantissa: sub_(supplyIndex, supplierIndex)});
-
+        Double memory deltaIndex = sub_(supplyIndex, supplierIndex);
         uint supplierTokens = RToken(rToken).balanceOf(supplier);
-
-        // Calculate RIFI accrued: rTokenAmount * accruedPerRToken
         uint supplierDelta = mul_(supplierTokens, deltaIndex);
-
         uint supplierAccrued = add_(rifiAccrued[supplier], supplierDelta);
-        rifiAccrued[supplier] = supplierAccrued;
-
-        emit DistributedSupplierRifi(RToken(rToken), supplier, supplierDelta, supplyIndex);
+        rifiAccrued[supplier] = transferRifi(supplier, supplierAccrued, distributeAll ? 0 : rifiClaimThreshold);
+        emit DistributedSupplierRifi(RToken(rToken), supplier, supplierDelta, supplyIndex.mantissa);
     }
 
     /**
@@ -1262,37 +1174,39 @@ contract Cointroller is CointrollerV7Storage, CointrollerInterface, CointrollerE
      * @param rToken The market in which the borrower is interacting
      * @param borrower The address of the borrower to distribute RIFI to
      */
-    function distributeBorrowerRifi(address rToken, address borrower, Exp memory marketBorrowIndex) internal {
-        // TODO: Don't distribute supplier RIFI if the user is not in the borrower market.
-        // This check should be as gas efficient as possible as distributeBorrowerRifi is called in many places.
-        // - We really don't want to call an external contract as that's quite expensive.
-
+    function distributeBorrowerRifi(address rToken, address borrower, Exp memory marketBorrowIndex, bool distributeAll) internal {
         RifiMarketState storage borrowState = rifiBorrowState[rToken];
-        uint borrowIndex = borrowState.index;
-        uint borrowerIndex = rifiBorrowerIndex[rToken][borrower];
+        Double memory borrowIndex = Double({mantissa: borrowState.index});
+        Double memory borrowerIndex = Double({mantissa: rifiBorrowerIndex[rToken][borrower]});
+        rifiBorrowerIndex[rToken][borrower] = borrowIndex.mantissa;
 
-        // Update borrowers's index to the current index since we are distributing accrued RIFI
-        rifiBorrowerIndex[rToken][borrower] = borrowIndex;
-
-        if (borrowerIndex == 0 && borrowIndex >= rifiInitialIndex) {
-            // Covers the case where users borrowed tokens before the market's borrow state index was set.
-            // Rewards the user with RIFI accrued from the start of when borrower rewards were first
-            // set for the market.
-            borrowerIndex = rifiInitialIndex;
+        if (borrowerIndex.mantissa > 0) {
+            Double memory deltaIndex = sub_(borrowIndex, borrowerIndex);
+            uint borrowerAmount = div_(RToken(rToken).borrowBalanceStored(borrower), marketBorrowIndex);
+            uint borrowerDelta = mul_(borrowerAmount, deltaIndex);
+            uint borrowerAccrued = add_(rifiAccrued[borrower], borrowerDelta);
+            rifiAccrued[borrower] = transferRifi(borrower, borrowerAccrued, distributeAll ? 0 : rifiClaimThreshold);
+            emit DistributedBorrowerRifi(RToken(rToken), borrower, borrowerDelta, borrowIndex.mantissa);
         }
+    }
 
-        // Calculate change in the cumulative sum of the RIFI per borrowed unit accrued
-        Double memory deltaIndex = Double({mantissa: sub_(borrowIndex, borrowerIndex)});
-
-        uint borrowerAmount = div_(RToken(rToken).borrowBalanceStored(borrower), marketBorrowIndex);
-        
-        // Calculate RIFI accrued: rTokenAmount * accruedPerBorrowedUnit
-        uint borrowerDelta = mul_(borrowerAmount, deltaIndex);
-
-        uint borrowerAccrued = add_(rifiAccrued[borrower], borrowerDelta);
-        rifiAccrued[borrower] = borrowerAccrued;
-
-        emit DistributedBorrowerRifi(RToken(rToken), borrower, borrowerDelta, borrowIndex);
+    /**
+     * @notice Transfer RIFI to the user, if they are above the threshold
+     * @dev Note: If there is not enough RIFI, we do not perform the transfer all.
+     * @param user The address of the user to transfer RIFI to
+     * @param userAccrued The amount of RIFI to (possibly) transfer
+     * @return The amount of RIFI which was NOT transferred to the user
+     */
+    function transferRifi(address user, uint userAccrued, uint threshold) internal returns (uint) {
+        if (userAccrued >= threshold && userAccrued > 0) {
+            Rifi rifi = Rifi(getRifiAddress());
+            uint rifiRemaining = rifi.balanceOf(address(this));
+            if (userAccrued <= rifiRemaining) {
+                rifi.transfer(user, userAccrued);
+                return 0;
+            }
+        }
+        return userAccrued;
     }
 
     /**
@@ -1346,18 +1260,15 @@ contract Cointroller is CointrollerV7Storage, CointrollerInterface, CointrollerE
                 Exp memory borrowIndex = Exp({mantissa: rToken.borrowIndex()});
                 updateRifiBorrowIndex(address(rToken), borrowIndex);
                 for (uint j = 0; j < holders.length; j++) {
-                    distributeBorrowerRifi(address(rToken), holders[j], borrowIndex);
+                    distributeBorrowerRifi(address(rToken), holders[j], borrowIndex, true);
                 }
             }
             if (suppliers == true) {
                 updateRifiSupplyIndex(address(rToken));
                 for (uint j = 0; j < holders.length; j++) {
-                    distributeSupplierRifi(address(rToken), holders[j]);
+                    distributeSupplierRifi(address(rToken), holders[j], true);
                 }
             }
-        }
-        for (uint j = 0; j < holders.length; j++) {
-            rifiAccrued[holders[j]] = grantRifiInternal(holders[j], rifiAccrued[holders[j]]);
         }
     }
 
@@ -1371,7 +1282,7 @@ contract Cointroller is CointrollerV7Storage, CointrollerInterface, CointrollerE
     function grantRifiInternal(address user, uint amount) internal returns (uint) {
         Rifi rifi = Rifi(getRifiAddress());
         uint rifiRemaining = rifi.balanceOf(address(this));
-        if (amount > 0 && amount <= rifiRemaining) {
+        if (amount <= rifiRemaining) {
             rifi.transfer(user, amount);
             return 0;
         }
@@ -1394,23 +1305,6 @@ contract Cointroller is CointrollerV7Storage, CointrollerInterface, CointrollerE
     }
 
     /**
-     * @notice Set RIFI borrow and supply speeds for the specified markets.
-     * @param rTokens The markets whose RIFI speed to update.
-     * @param supplySpeeds New supply-side RIFI speed for the corresponding market.
-     * @param borrowSpeeds New borrow-side RIFI speed for the corresponding market.
-     */
-    function _setRifiSpeeds(RToken[] memory rTokens, uint[] memory supplySpeeds, uint[] memory borrowSpeeds) public {
-        require(adminOrInitializing(), "only admin can set rifi speed");
-
-        uint numTokens = rTokens.length;
-        require(numTokens == supplySpeeds.length && numTokens == borrowSpeeds.length, "Cointroller::_setRifiSpeeds invalid input");
-
-        for (uint i = 0; i < numTokens; ++i) {
-            setRifiSpeedInternal(rTokens[i], supplySpeeds[i], borrowSpeeds[i]);
-        }
-    }
-
-    /**
      * @notice Set RIFI speed for a single contributor
      * @param contributor The contributor whose RIFI speed to update
      * @param rifiSpeed New RIFI speed for contributor
@@ -1423,12 +1317,78 @@ contract Cointroller is CointrollerV7Storage, CointrollerInterface, CointrollerE
         if (rifiSpeed == 0) {
             // release storage
             delete lastContributorBlock[contributor];
-        } else {
-            lastContributorBlock[contributor] = getBlockNumber();
         }
+        lastContributorBlock[contributor] = getBlockNumber();
         rifiContributorSpeeds[contributor] = rifiSpeed;
 
         emit ContributorRifiSpeedUpdated(contributor, rifiSpeed);
+    }
+
+    /**
+     * @notice Set the amount of RIFI distributed per block
+     * @param rifiRate_ The amount of RIFI wei per block to distribute
+     */
+    function _setRifiRate(uint rifiRate_) public {
+        require(adminOrInitializing(), "only admin can change rifi rate");
+
+        uint oldRate = rifiRate;
+        rifiRate = rifiRate_;
+        emit NewRifiRate(oldRate, rifiRate_);
+
+        refreshRifiSpeedsInternal();
+    }
+
+    /**
+     * @notice Add markets to rifiMarkets, allowing them to earn RIFI in the flywheel
+     * @param rTokens The addresses of the markets to add
+     */
+    function _addRifiMarkets(address[] memory rTokens) public {
+        require(adminOrInitializing(), "only admin can add rifi market");
+
+        for (uint i = 0; i < rTokens.length; i++) {
+            _addRifiMarketInternal(rTokens[i]);
+        }
+
+        refreshRifiSpeedsInternal();
+    }
+
+    function _addRifiMarketInternal(address rToken) internal {
+        Market storage market = markets[rToken];
+        require(market.isListed == true, "rifi market is not listed");
+        require(market.isRified == false, "rifi market already added");
+
+        market.isRified = true;
+        emit MarketRified(RToken(rToken), true);
+
+        if (rifiSupplyState[rToken].index == 0 && rifiSupplyState[rToken].block == 0) {
+            rifiSupplyState[rToken] = RifiMarketState({
+                index: rifiInitialIndex,
+                block: safe32(getBlockNumber(), "block number exceeds 32 bits")
+            });
+        }
+
+        if (rifiBorrowState[rToken].index == 0 && rifiBorrowState[rToken].block == 0) {
+            rifiBorrowState[rToken] = RifiMarketState({
+                index: rifiInitialIndex,
+                block: safe32(getBlockNumber(), "block number exceeds 32 bits")
+            });
+        }
+    }
+
+    /**
+     * @notice Remove a market from rifiMarkets, preventing it from earning RIFI in the flywheel
+     * @param rToken The address of the market to drop
+     */
+    function _dropRifiMarket(address rToken) public {
+        require(msg.sender == admin, "only admin can drop rifi market");
+
+        Market storage market = markets[rToken];
+        require(market.isRified == true, "market is not a rifi market");
+
+        market.isRified = false;
+        emit MarketRified(RToken(rToken), false);
+
+        refreshRifiSpeedsInternal();
     }
 
     /**
@@ -1440,19 +1400,6 @@ contract Cointroller is CointrollerV7Storage, CointrollerInterface, CointrollerE
         return allMarkets;
     }
 
-    /**
-     * @notice Returns true if the given rToken market has been deprecated
-     * @dev All borrows in a deprecated rToken market can be immediately liquidated
-     * @param rToken The market to check if deprecated
-     */
-    function isDeprecated(RToken rToken) public view returns (bool) {
-        return
-            markets[address(rToken)].collateralFactorMantissa == 0 && 
-            borrowGuardianPaused[address(rToken)] == true && 
-            rToken.reserveFactorMantissa() == 1e18
-        ;
-    }
-
     function getBlockNumber() public view returns (uint) {
         return block.number;
     }
@@ -1462,6 +1409,6 @@ contract Cointroller is CointrollerV7Storage, CointrollerInterface, CointrollerE
      * @return The address of RIFI
      */
     function getRifiAddress() public view returns (address) {
-        return 0xd7613D6E55abDf67B4eE670A56c76bF9bE9750bE;
+        return 0xc00e94Cb662C3520282E6f5717214004A7f26888;
     }
 }
