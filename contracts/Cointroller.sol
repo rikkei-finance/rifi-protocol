@@ -7,7 +7,7 @@ import "./CointrollerInterface.sol";
 import "./CointrollerStorage.sol";
 import "./Unitroller.sol";
 import "./Governance/Rifi.sol";
-import "./ITimeLock.sol";
+import "./ITimelock.sol";
 
 /**
  * @title Rifi's Cointroller Contract
@@ -97,11 +97,10 @@ contract Cointroller is CointrollerStorage, CointrollerInterface, CointrollerErr
         rifiAddress = rifi;
     }
 
-    /**
-      * @dev for some reason admin wanna set new timelock and need to authorize administration 
-      */
-    function authorizeTimeLock() public {
-        timelock.acceptAdmin();
+    function initializeTimelock(ITimelock _timelock) public {
+        require(msg.sender == admin, "Only admin");
+        require(address(timelock) == address(0), "Timelock have been set already");
+        timelock = _timelock;
     }
 
     /*** Assets You Are In ***/
@@ -1055,7 +1054,7 @@ contract Cointroller is CointrollerStorage, CointrollerInterface, CointrollerErr
     }
 
     /**
-     * @notice Checks caller is admin, or this contract is becoming the new implementation
+     * @notice Checks caller is timelock, or this contract is becoming the new implementation
      */
      function timelockOrInitializing() internal view returns (bool) {
       return msg.sender == address(timelock) || msg.sender == cointrollerImplementation;

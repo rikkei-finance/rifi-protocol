@@ -25,7 +25,10 @@
     "report": "npx run ./script/saddle/gasReport.js",
     "test": "./script/test",
     "test:prepare": "NO_RUN=true ./script/test",
-    "checksize": "npx run ./script/saddle/cointrollerSize.js"
+    "checksize": "npx run ./script/saddle/cointrollerSize.js",
+    "migrate:bsc_testnet": "npx hardhat run --network bsc_testnet ./deploy/lending.js",
+    "upgrade:bsc_testnet": "npx hardhat run --network bsc_testnet ./deploy/upgrade.js",
+    "upgrade:bsc_mainnet": "npx hardhat run --network bsc_mainnet ./deploy/upgrade.js"
   },
   "repository": "git@github.com:rifi-finance/rifi-protocol.git",
   "author": "Rikkei Finance, Inc",
