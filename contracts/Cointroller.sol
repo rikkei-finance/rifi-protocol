@@ -7,7 +7,7 @@ import "./CointrollerInterface.sol";
 import "./CointrollerStorage.sol";
 import "./Unitroller.sol";
 import "./Governance/Rifi.sol";
-import "./ITimelock.sol";
+import "./ITimeLock.sol";
 
 /**
  * @title Rifi's Cointroller Contract

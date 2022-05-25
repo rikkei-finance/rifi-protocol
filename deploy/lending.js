@@ -121,7 +121,7 @@ async function main() {
     await hre.run("verify:verify", {
       address: token.address,
       constructorArguments: [faucetInitialAmount, name, decimals, symbol],
-    });
+    }).catch(e => {});
     return token;
   };
 
@@ -194,7 +194,7 @@ async function main() {
       addresses.Cointroller = unitroller.address;
 
       await delay(waitTime);
-      await hre.run("verify:verify", { address: unitroller.address });
+      await hre.run("verify:verify", { address: unitroller.address }).catch(e => {});
     });
 
     await runWithProgressCheck("Cointroller", async () => {
@@ -204,7 +204,7 @@ async function main() {
       addresses.CointrollerImpl = cointroller.address;
 
       await delay(waitTime);
-      await hre.run("verify:verify", { address: cointroller.address });
+      await hre.run("verify:verify", { address: cointroller.address }).catch(e => {});
     });
 
     if (!unitroller && !addresses.Cointroller) {
@@ -248,7 +248,7 @@ async function main() {
       console.log(`PriceOracle address at: ${explorer}/address/${priceOracle.address}`);
       addresses.PriceFeed = priceOracle.address;
       await delay(waitTime);
-      await hre.run("verify:verify", { address: priceOracle.address });
+      await hre.run("verify:verify", { address: priceOracle.address }).catch(e => {});
     });
 
     const priceOracle = SimplePriceOracle.attach(addresses.PriceFeed);
@@ -333,7 +333,7 @@ async function main() {
             decimals,
             governance,
           ],
-        });
+        }).catch(e => {});
       });
 
       await runWithProgressCheck("rNative: unitroller._supportMarket", async () => {
@@ -398,7 +398,7 @@ async function main() {
       addresses.rBep20Delegate = rBep20Delegate.address;
       await saveAddresses();
       await delay(waitTime);
-      await hre.run("verify:verify", { address: rBep20Delegate.address });
+      await hre.run("verify:verify", { address: rBep20Delegate.address }).catch(e => {});
     }
 
     const { rTokens = {} } = config;
@@ -480,7 +480,7 @@ async function main() {
                 addresses.rBep20Delegate,
                 "0x",
               ],
-            });
+            }).catch(e => {});
           } catch (e) {
             console.log(e);
             console.log(JSON.stringify(e, null, 2));
@@ -552,7 +552,7 @@ async function main() {
 
       await delay(waitTime);
 
-      await hre.run("verify:verify", { address: lens.address });
+      await hre.run("verify:verify", { address: lens.address }).catch(e => {});
     });
 
     if (config.rNative) {
@@ -571,7 +571,7 @@ async function main() {
           constructorArguments: [
             addresses[config.rNative.symbol],
           ],
-        });
+        }).catch(e => {});
       });
     }
   } catch (e) {
