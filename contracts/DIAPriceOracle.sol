@@ -2,6 +2,8 @@ pragma solidity 0.5.16;
 
 import "./PriceOracle.sol";
 import "./ErrorReporter.sol";
+import "./RTokenInterfaces.sol";
+import "./EIP20Interface.sol";
 
 
 interface IDIAOracle {
@@ -52,7 +54,7 @@ contract DIAPriceOracle is PriceOracle, CointrollerErrorReporter {
     }
 
     function getUnderlyingPrice(RToken rToken) public view returns (uint) {
-        uint256 decimals = 8;
+        uint256 decimals = _getUnderlyingDecimals(rToken);
         string memory keyPair = pair[address(rToken)];
         (uint128 answer, ) = diaOracle.getValue(keyPair);
         return 10 ** (18 - decimals) * uint(answer);
@@ -96,5 +98,20 @@ contract DIAPriceOracle is PriceOracle, CointrollerErrorReporter {
         emit NewPendingAdmin(oldPendingAdmin, pendingAdmin);
 
         return uint(Error.NO_ERROR);
+    }
+
+
+    function _getUnderlyingDecimals(RToken rToken) internal view returns (uint256) {
+      if (compareStrings(rToken.symbol(), "rASTR")) {
+        return 18;
+      } else {
+        RBep20Storage rBep20 = RBep20Storage(address(rToken));
+        EIP20Interface underlying = EIP20Interface(rBep20.underlying());
+        return underlying.decimals();
+      }
+    }
+
+    function compareStrings(string memory a, string memory b) internal pure returns (bool) {
+        return (keccak256(abi.encodePacked((a))) == keccak256(abi.encodePacked((b))));
     }
 }
