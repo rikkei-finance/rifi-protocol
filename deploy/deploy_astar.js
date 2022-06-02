@@ -47,7 +47,7 @@ async function main() {
     RBep20Delegate,
     RBep20Delegator,
     DIAPriceOracle,
-    RBinance,
+    RAstar,
     FaucetToken,
     RifiLens,
     Timelock
@@ -55,11 +55,11 @@ async function main() {
     ethers.getContractFactory("Unitroller"),
     ethers.getContractFactory("Maximillion"),
     ethers.getContractFactory("Cointroller"),
-    ethers.getContractFactory("JumpRateModel"),
+    ethers.getContractFactory("JumpRateModelV2"),
     ethers.getContractFactory("RBep20Delegate"),
     ethers.getContractFactory("RBep20Delegator"),
     ethers.getContractFactory("DIAPriceOracle"),
-    ethers.getContractFactory("RBinance"),
+    ethers.getContractFactory("RAstar"),
     ethers.getContractFactory("FaucetToken"),
     ethers.getContractFactory("RifiLens"),
     ethers.getContractFactory("Timelock"),
@@ -76,11 +76,11 @@ async function main() {
     } = params;
     const model = await JumpRateModel.deploy(
       web3.utils.toWei(baseRatePerYear, "ether"),
-      web3.utils.toWei(lowerBaseRatePerYear, "ether"),
+      // web3.utils.toWei(lowerBaseRatePerYear, "ether"),
       web3.utils.toWei(multiplierPerYear, "ether"),
       web3.utils.toWei(jumpMultiplierPerYear, "ether"),
       web3.utils.toWei(kink_, "ether"),
-      web3.utils.toWei(lowerKink_, "ether"),
+      // web3.utils.toWei(lowerKink_, "ether"),
       governance
     );
 
@@ -90,11 +90,11 @@ async function main() {
       address: model.address,
       constructorArguments: [
         web3.utils.toWei(baseRatePerYear, "ether"),
-        web3.utils.toWei(lowerBaseRatePerYear, "ether"),
+        // web3.utils.toWei(lowerBaseRatePerYear, "ether"),
         web3.utils.toWei(multiplierPerYear, "ether"),
         web3.utils.toWei(jumpMultiplierPerYear, "ether"),
         web3.utils.toWei(kink_, "ether"),
-        web3.utils.toWei(lowerKink_, "ether"),
+        // web3.utils.toWei(lowerKink_, "ether"),
         governance,
       ],
     }).catch(e => console.log(e.message));
@@ -301,7 +301,7 @@ async function main() {
           config.rNative.interestRateModel.address = modelAddress;
         }
 
-        const rBinance = await RBinance.deploy(
+        const rAstar = await RAstar.deploy(
           addresses.Cointroller,
           modelAddress,
           web3.utils.toWei(initialExchangeRateMantissa, "ether"),
@@ -310,14 +310,14 @@ async function main() {
           decimals,
           governance
         );
-        await rBinance.deployed();
+        await rAstar.deployed();
 
-        console.log(`rNative address at: ${explorer}/address/${rBinance.address}`);
+        console.log(`rNative address at: ${explorer}/address/${rAstar.address}`);
 
-        addresses[symbol] = rBinance.address;
+        addresses[symbol] = rAstar.address;
 
         await hre.run("verify:verify", {
-          address: rBinance.address,
+          address: rAstar.address,
           constructorArguments: [
             addresses.Cointroller,
             modelAddress,
@@ -418,6 +418,10 @@ async function main() {
           }
 
           let underlyingAddress = underlying.address || addresses[underlying.symbol];
+          const underlyingDecimals = underlying.decimals;
+          if (!underlyingDecimals){
+            throw new Error(`undefined decimals of ${underlying.symbol}`)
+          }
           if (!underlyingAddress) {
             const faucetToken = await deployFaucetToken(underlying);
             console.log(
@@ -434,7 +438,7 @@ async function main() {
             underlyingAddress,
             addresses.Cointroller,
             modelAddress,
-            web3.utils.toWei(initialExchangeRateMantissa, "ether"),
+            ethers.utils.parseUnits(initialExchangeRateMantissa, underlyingDecimals),
             name,
             symbol,
             decimals,
@@ -453,7 +457,7 @@ async function main() {
                 underlyingAddress,
                 addresses.Cointroller,
                 modelAddress,
-                web3.utils.toWei(initialExchangeRateMantissa, "ether"),
+                ethers.utils.parseUnits(initialExchangeRateMantissa, underlyingDecimals),
                 name,
                 symbol,
                 decimals,

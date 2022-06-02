@@ -49,7 +49,15 @@ module.exports = {
     ],
   },
   etherscan: {
-    apiKey: API_KEYS[HARDHAT_NETWORK],
+    apiKey: {
+      mainnet: ETHER_API_KEY,
+      ropsten: ETHER_API_KEY,
+      rinkeby: ETHER_API_KEY,
+      goerli: ETHER_API_KEY,
+      kovan: ETHER_API_KEY,
+      bsc: BSC_API_KEY,
+      bscTestnet: BSC_API_KEY,
+    },
   },
   networks: {
     localhost: {
@@ -106,6 +114,15 @@ module.exports = {
       url: `https://kovan.infura.io/v3/${INFURA_PROJECT_ID}`,
       accounts: [`0x${TESTNET_KEY}`],
       network_id: 42, // Kovan's id
+      gas: 7000000, // Kovan has a lower block limit than mainnet
+      confirmations: 2, // # of confs to wait between deployments. (default: 0)
+      timeoutBlocks: 200000000, // # of blocks before a deployment times out  (minimum/default: 50)
+      skipDryRun: true, // Skip dry run before migrations? (default: false for public nets )
+    },
+    shibuya: {
+      url: `https://evm.shibuya.astar.network`,
+      accounts: [`0x${TESTNET_KEY}`],
+      network_id: 81, // Moonbase's id
       gas: 7000000, // Kovan has a lower block limit than mainnet
       confirmations: 2, // # of confs to wait between deployments. (default: 0)
       timeoutBlocks: 200000000, // # of blocks before a deployment times out  (minimum/default: 50)

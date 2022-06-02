@@ -58,12 +58,6 @@ contract RifiLens {
         uint underlyingDecimals;
     }
 
-    struct RTokenMetadataAll {
-      RTokenMetadata[] rTokens;
-      uint blockNumber;
-      uint blockTimestamp;
-    }
-
     function rTokenMetadata(RToken rToken) public returns (RTokenMetadata memory) {
         uint exchangeRateCurrent = rToken.exchangeRateCurrent();
         CointrollerLensInterface cointroller = CointrollerLensInterface(address(rToken.cointroller()));
@@ -75,9 +69,9 @@ contract RifiLens {
             underlyingAssetAddress = address(0);
             underlyingDecimals = 18;
         } else {
-            RBep20 rBep20 = RBep20(address(rToken));
-            underlyingAssetAddress = rBep20.underlying();
-            underlyingDecimals = EIP20Interface(rBep20.underlying()).decimals();
+            RBep20 cErc20 = RBep20(address(rToken));
+            underlyingAssetAddress = cErc20.underlying();
+            underlyingDecimals = EIP20Interface(cErc20.underlying()).decimals();
         }
 
         return RTokenMetadata({
@@ -98,17 +92,13 @@ contract RifiLens {
         });
     }
 
-    function rTokenMetadataAll(RToken[] calldata rTokens) external returns (RTokenMetadataAll memory) {
+    function rTokenMetadataAll(RToken[] calldata rTokens) external returns (RTokenMetadata[] memory) {
         uint rTokenCount = rTokens.length;
         RTokenMetadata[] memory res = new RTokenMetadata[](rTokenCount);
         for (uint i = 0; i < rTokenCount; i++) {
             res[i] = rTokenMetadata(rTokens[i]);
         }
-        return RTokenMetadataAll({
-          rTokens: res,
-          blockNumber: block.number,
-          blockTimestamp: block.timestamp
-        });
+        return res;
     }
 
     struct RTokenBalances {
@@ -131,8 +121,8 @@ contract RifiLens {
             tokenBalance = account.balance;
             tokenAllowance = account.balance;
         } else {
-            RBep20 rBep20 = RBep20(address(rToken));
-            EIP20Interface underlying = EIP20Interface(rBep20.underlying());
+            RBep20 cErc20 = RBep20(address(rToken));
+            EIP20Interface underlying = EIP20Interface(cErc20.underlying());
             tokenBalance = underlying.balanceOf(account);
             tokenAllowance = underlying.allowance(account, address(rToken));
         }

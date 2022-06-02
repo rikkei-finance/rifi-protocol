@@ -1,6 +1,6 @@
 pragma solidity ^0.5.16;
 
-import "./RBinance.sol";
+import "./RAstar.sol";
 
 /**
  * @title Rifi's Maximillion Contract
@@ -8,40 +8,40 @@ import "./RBinance.sol";
  */
 contract Maximillion {
     /**
-     * @notice The default rBinance market to repay in
+     * @notice The default rAstar market to repay in
      */
-    RBinance public rBinance;
+    RAstar public rAstar;
 
     /**
-     * @notice Construct a Maximillion to repay max in a RBinance market
+     * @notice Construct a Maximillion to repay max in a RAstar market
      */
-    constructor(RBinance rBinance_) public {
-        rBinance = rBinance_;
+    constructor(RAstar rAstar_) public {
+        rAstar = rAstar_;
     }
 
     /**
-     * @notice msg.sender sends Ether to repay an account's borrow in the rBinance market
+     * @notice msg.sender sends Ether to repay an account's borrow in the rAstar market
      * @dev The provided Ether is applied towards the borrow balance, any excess is refunded
      * @param borrower The address of the borrower account to repay on behalf of
      */
     function repayBehalf(address borrower) public payable {
-        repayBehalfExplicit(borrower, rBinance);
+        repayBehalfExplicit(borrower, rAstar);
     }
 
     /**
-     * @notice msg.sender sends Ether to repay an account's borrow in a rBinance market
+     * @notice msg.sender sends Ether to repay an account's borrow in a rAstar market
      * @dev The provided Ether is applied towards the borrow balance, any excess is refunded
      * @param borrower The address of the borrower account to repay on behalf of
-     * @param rBinance_ The address of the rBinance contract to repay in
+     * @param rAstar_ The address of the rAstar contract to repay in
      */
-    function repayBehalfExplicit(address borrower, RBinance rBinance_) public payable {
+    function repayBehalfExplicit(address borrower, RAstar rAstar_) public payable {
         uint received = msg.value;
-        uint borrows = rBinance_.borrowBalanceCurrent(borrower);
+        uint borrows = rAstar_.borrowBalanceCurrent(borrower);
         if (received > borrows) {
-            rBinance_.repayBorrowBehalf.value(borrows)(borrower);
+            rAstar_.repayBorrowBehalf.value(borrows)(borrower);
             msg.sender.transfer(received - borrows);
         } else {
-            rBinance_.repayBorrowBehalf.value(received)(borrower);
+            rAstar_.repayBorrowBehalf.value(received)(borrower);
         }
     }
 }

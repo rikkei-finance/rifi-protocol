@@ -1,6 +1,6 @@
 pragma solidity ^0.5.16;
 
-import "./BaseJumpRateModelV2.sol";
+import "./BaseJumpRateModelASTR.sol";
 import "./InterestRateModel.sol";
 
 
@@ -9,7 +9,7 @@ import "./InterestRateModel.sol";
   * @author Rifi
   * @notice Supports only for V2 rTokens
   */
-contract JumpRateModelV2 is InterestRateModel, BaseJumpRateModelV2  {
+contract JumpRateModelV2 is InterestRateModel, BaseJumpRateModelASTR  {
 
 	/**
      * @notice Calculates the current borrow rate per block
@@ -23,5 +23,5 @@ contract JumpRateModelV2 is InterestRateModel, BaseJumpRateModelV2  {
     }
 
     constructor(uint baseRatePerYear, uint multiplierPerYear, uint jumpMultiplierPerYear, uint kink_, address owner_) 
-    	BaseJumpRateModelV2(baseRatePerYear,multiplierPerYear,jumpMultiplierPerYear,kink_,owner_) public {}
+    	BaseJumpRateModelASTR(baseRatePerYear,multiplierPerYear,jumpMultiplierPerYear,kink_,owner_) public {}
 }
