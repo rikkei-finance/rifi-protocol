@@ -1,0 +1,7 @@
+{
+  "rNative._setInterestRateModel": true,
+  "rBTC._setInterestRateModel": true,
+  "rBUSD._setInterestRateModel": true,
+  "rUSDC._setInterestRateModel": true,
+  "rUSDT._setInterestRateModel": true
+}

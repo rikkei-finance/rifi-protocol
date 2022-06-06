@@ -8,7 +8,7 @@ import "./InterestRateModel.sol";
  * @author Arr00
  * @notice Supports only for rTokens
  */
-contract JumpRateModel is InterestRateModel, BaseJumpRateModel {
+contract JumpRateModel is InterestRateModel, BaseJumpRateModelBSC {
     /**
      * @notice Calculates the current borrow rate per block
      * @param cash The amount of cash in the market
@@ -34,7 +34,7 @@ contract JumpRateModel is InterestRateModel, BaseJumpRateModel {
         address owner_
     )
         public
-        BaseJumpRateModel(
+        BaseJumpRateModelBSC(
             baseRatePerYear,
             lowerBaseRatePerYear,
             multiplierPerYear,
