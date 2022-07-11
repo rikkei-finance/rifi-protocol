@@ -1,0 +1,84 @@
+{
+  "RIFI": "",
+  "DIA": "",
+  "rNative": {
+    "name": "Rifi ASTR",
+    "symbol": "rASTR",
+    "decimals": 8,
+    "underlying": {
+      "symbol": "ASTR",
+      "decimals": 18,
+      "address": ""
+    },
+    "interestRateModel": {
+      "address": "",
+      "model": "JumpRateModel",
+      "params": {
+        "baseRatePerYear": "0.02",
+        "lowerBaseRatePerYear": "0.01",
+        "multiplierPerYear": "0.04",
+        "jumpMultiplierPerYear": "1.09",
+        "kink_": "0.8",
+        "lowerKink_": "0.4"
+      }
+    },
+    "initialExchangeRateMantissa": "200000000",
+    "collateralFactor": "0.7",
+    "reserveFactor": "0.1",
+    "rifiSpeed": "0.04"
+  },
+  "rTokens": {
+    "rBTC": {
+      "name": "Rifi BTC",
+      "symbol": "rBTC",
+      "decimals": 8,
+      "underlying": {
+        "symbol": "BTC",
+        "decimals": 8,
+        "address": ""
+      },
+      "interestRateModel": {
+        "address": "",
+        "model": "JumpRateModel",
+        "params": {
+          "baseRatePerYear": "0.02",
+          "lowerBaseRatePerYear": "0.01",
+          "multiplierPerYear": "4",
+          "jumpMultiplierPerYear": "1.09",
+          "kink_": "0.8",
+          "lowerKink_": "0.4"
+        }
+      },
+      "initialExchangeRateMantissa": "200000000",
+      "collateralFactor": "0.6",
+      "rifiSpeed": "0.00000000645"
+    },
+    "rUSDC": {
+      "name": "Rifi USDC",
+      "symbol": "rUSDC",
+      "decimals": 8,
+      "underlying": {
+        "symbol": "USDC",
+        "decimals": "6",
+        "address": ""
+      },
+      "interestRateModel": {
+        "address": "",
+        "model": "JumpRateModel",
+        "params": {
+          "baseRatePerYear": "0.02",
+          "lowerBaseRatePerYear": "0.01",
+          "multiplierPerYear": "4",
+          "jumpMultiplierPerYear": "1.09",
+          "kink_": "0.8",
+          "lowerKink_": "0.4"
+        }
+      },
+      "initialExchangeRateMantissa": "200000000",
+      "collateralFactor": "0.6",
+      "rifiSpeed": "0.00000000645"
+    }
+  },
+  "closeFactor": "0.25",
+  "liquidationIncentive": "1.08"
+}
