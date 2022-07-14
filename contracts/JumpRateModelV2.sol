@@ -22,7 +22,24 @@ contract JumpRateModelV2 is InterestRateModel, BaseJumpRateModelV2  {
         return getBorrowRateInternal(cash, borrows, reserves);
     }
 
-    constructor(uint baseRatePerYear, uint multiplierPerYear, uint jumpMultiplierPerYear, uint kink_, address owner_)
-
-    BaseJumpRateModelV2(baseRatePerYear,multiplierPerYear,jumpMultiplierPerYear,kink_,owner_) public {}
+    constructor(
+        uint256 baseRatePerYear,
+        uint256 lowerBaseRatePerYear,
+        uint256 multiplierPerYear,
+        uint256 jumpMultiplierPerYear,
+        uint256 kink_,
+        uint256 lowerKink_,
+        address owner_
+    )
+        public
+        BaseJumpRateModelV2(
+            baseRatePerYear,
+            lowerBaseRatePerYear,
+            multiplierPerYear,
+            jumpMultiplierPerYear,
+            kink_,
+            lowerKink_,
+            owner_
+        )
+    {}
 }

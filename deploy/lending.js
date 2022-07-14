@@ -70,11 +70,11 @@ async function main() {
     } = params;
     const model = await JumpRateModel.deploy(
       web3.utils.toWei(baseRatePerYear, "ether"),
-      // web3.utils.toWei(lowerBaseRatePerYear, "ether"),
+      web3.utils.toWei(lowerBaseRatePerYear, "ether"),
       web3.utils.toWei(multiplierPerYear, "ether"),
       web3.utils.toWei(jumpMultiplierPerYear, "ether"),
       web3.utils.toWei(kink_, "ether"),
-      // web3.utils.toWei(lowerKink_, "ether"),
+      web3.utils.toWei(lowerKink_, "ether"),
       governance
     );
 

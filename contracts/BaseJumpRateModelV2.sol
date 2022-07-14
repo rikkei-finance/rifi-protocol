@@ -8,7 +8,14 @@ import "./InterestRateModel.sol";
   * @notice Version 2 modifies Version 1 by enabling updateable parameters.
   */
 abstract contract BaseJumpRateModelV2 is InterestRateModel {
-    event NewInterestParams(uint baseRatePerBlock, uint multiplierPerBlock, uint jumpMultiplierPerBlock, uint kink);
+    event NewInterestParams(
+      uint baseRatePerBlock,
+      uint256 lowerBaseRatePerBlock,
+      uint multiplierPerBlock, 
+      uint jumpMultiplierPerBlock, 
+      uint kink,
+      uint256 lowerKink
+    );
 
     uint256 private constant BASE = 1e18;
 
@@ -33,6 +40,11 @@ abstract contract BaseJumpRateModelV2 is InterestRateModel {
     uint public baseRatePerBlock;
 
     /**
+     * @notice The base interest rate which is the y-intercept when utilization rate is 0
+     */
+     uint256 public lowerBaseRatePerBlock;
+
+    /**
      * @notice The multiplierPerBlock after hitting a specified utilization point
      */
     uint public jumpMultiplierPerBlock;
@@ -43,6 +55,11 @@ abstract contract BaseJumpRateModelV2 is InterestRateModel {
     uint public kink;
 
     /**
+     * @notice The utilization point at which the jump multiplier is applied
+     */
+     uint256 public lowerKink;
+
+    /**
      * @notice Construct an interest rate model
      * @param baseRatePerYear The approximate target base APR, as a mantissa (scaled by BASE)
      * @param multiplierPerYear The rate of increase in interest rate wrt utilization (scaled by BASE)
@@ -50,10 +67,25 @@ abstract contract BaseJumpRateModelV2 is InterestRateModel {
      * @param kink_ The utilization point at which the jump multiplier is applied
      * @param owner_ The address of the owner, i.e. the Timelock contract (which has the ability to update parameters directly)
      */
-    constructor(uint baseRatePerYear, uint multiplierPerYear, uint jumpMultiplierPerYear, uint kink_, address owner_) internal {
+    constructor(
+      uint baseRatePerYear,
+      uint256 lowerBaseRatePerYear,
+      uint multiplierPerYear,
+      uint jumpMultiplierPerYear,
+      uint kink_,
+      uint256 lowerKink_,
+      address owner_
+    ) internal {
         owner = owner_;
 
-        updateJumpRateModelInternal(baseRatePerYear,  multiplierPerYear, jumpMultiplierPerYear, kink_);
+        updateJumpRateModelInternal(
+          baseRatePerYear,
+          lowerBaseRatePerYear,
+          multiplierPerYear,
+          jumpMultiplierPerYear,
+          kink_,
+          lowerKink_
+        );
     }
 
     /**
@@ -63,10 +95,24 @@ abstract contract BaseJumpRateModelV2 is InterestRateModel {
      * @param jumpMultiplierPerYear The multiplierPerBlock after hitting a specified utilization point
      * @param kink_ The utilization point at which the jump multiplier is applied
      */
-    function updateJumpRateModel(uint baseRatePerYear, uint multiplierPerYear, uint jumpMultiplierPerYear, uint kink_) virtual external {
+    function updateJumpRateModel(
+      uint256 baseRatePerYear,
+      uint256 lowerBaseRatePerYear,
+      uint256 multiplierPerYear,
+      uint256 jumpMultiplierPerYear,
+      uint256 kink_,
+      uint256 lowerKink_
+    ) virtual external {
         require(msg.sender == owner, "only the owner may call this function.");
 
-        updateJumpRateModelInternal(baseRatePerYear, multiplierPerYear, jumpMultiplierPerYear, kink_);
+        updateJumpRateModelInternal(
+          baseRatePerYear,
+          lowerBaseRatePerYear,
+          multiplierPerYear,
+          jumpMultiplierPerYear,
+          kink_,
+          lowerKink_
+        );
     }
 
     /**
@@ -94,6 +140,13 @@ abstract contract BaseJumpRateModelV2 is InterestRateModel {
      */
     function getBorrowRateInternal(uint cash, uint borrows, uint reserves) internal view returns (uint) {
         uint util = utilizationRate(cash, borrows, reserves);
+
+        if (util <= lowerKink) {
+            uint baseChange = (baseRatePerBlock - lowerBaseRatePerBlock) / lowerKink;
+            uint lowerMultiplierPerBlock = multiplierPerBlock + baseChange;
+            return
+                util * lowerMultiplierPerBlock / 1e18 + lowerBaseRatePerBlock;
+        }
 
         if (util <= kink) {
             return ((util * multiplierPerBlock) / BASE) + baseRatePerBlock;
@@ -126,12 +179,28 @@ abstract contract BaseJumpRateModelV2 is InterestRateModel {
      * @param jumpMultiplierPerYear The multiplierPerBlock after hitting a specified utilization point
      * @param kink_ The utilization point at which the jump multiplier is applied
      */
-    function updateJumpRateModelInternal(uint baseRatePerYear, uint multiplierPerYear, uint jumpMultiplierPerYear, uint kink_) internal {
+    function updateJumpRateModelInternal(
+      uint baseRatePerYear,
+      uint lowerBaseRatePerYear,
+      uint multiplierPerYear,
+      uint jumpMultiplierPerYear,
+      uint kink_,
+      uint256 lowerKink_
+    ) internal {
+        lowerBaseRatePerBlock = lowerBaseRatePerYear/ blocksPerYear;
         baseRatePerBlock = baseRatePerYear / blocksPerYear;
         multiplierPerBlock = (multiplierPerYear * BASE) / (blocksPerYear * kink_);
         jumpMultiplierPerBlock = jumpMultiplierPerYear / blocksPerYear;
         kink = kink_;
+        lowerKink = lowerKink_;
 
-        emit NewInterestParams(baseRatePerBlock, multiplierPerBlock, jumpMultiplierPerBlock, kink);
+        emit NewInterestParams(
+          baseRatePerBlock,
+          lowerBaseRatePerBlock,
+          multiplierPerBlock,
+          jumpMultiplierPerBlock,
+          kink,
+          lowerKink
+      );
     }
 }

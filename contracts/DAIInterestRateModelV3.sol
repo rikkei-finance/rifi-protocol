@@ -36,7 +36,7 @@ contract DAIInterestRateModelV3 is JumpRateModelV2 {
      * @param jug_ The address of the Dai jug (where SF is kept)
      * @param owner_ The address of the owner, i.e. the Timelock contract (which has the ability to update parameters directly)
      */
-    constructor(uint jumpMultiplierPerYear, uint kink_, address pot_, address jug_, address owner_) JumpRateModelV2(0, 0, jumpMultiplierPerYear, kink_, owner_) public {
+    constructor(uint jumpMultiplierPerYear, uint kink_, address pot_, address jug_, address owner_) JumpRateModelV2(0, 0, 0, jumpMultiplierPerYear, kink_, 0, owner_) public {
         gapPerBlock = 4e16 / blocksPerYear;
         pot = PotLike(pot_);
         jug = JugLike(jug_);
@@ -50,10 +50,10 @@ contract DAIInterestRateModelV3 is JumpRateModelV2 {
      * @param jumpMultiplierPerYear The jumpMultiplierPerYear after hitting a specified utilization point
      * @param kink_ The utilization point at which the jump multiplier is applied
      */
-    function updateJumpRateModel(uint baseRatePerYear, uint gapPerYear, uint jumpMultiplierPerYear, uint kink_) override external {
+    function updateJumpRateModel(uint baseRatePerYear, uint gapPerYear, uint jumpMultiplierPerYear, uint kink_) external {
         require(msg.sender == owner, "only the owner may call this function.");
         gapPerBlock = gapPerYear / blocksPerYear;
-        updateJumpRateModelInternal(0, 0, jumpMultiplierPerYear, kink_);
+        updateJumpRateModelInternal(0, 0, 0, jumpMultiplierPerYear, kink_, 0);
         poke();
     }
 
@@ -104,7 +104,7 @@ contract DAIInterestRateModelV3 is JumpRateModelV2 {
             multiplierPerBlock = gapPerBlock * BASE / kink;
         }
 
-        emit NewInterestParams(baseRatePerBlock, multiplierPerBlock, jumpMultiplierPerBlock, kink);
+        emit NewInterestParams(baseRatePerBlock, baseRatePerBlock / 2, multiplierPerBlock, jumpMultiplierPerBlock, kink, 0);
     }
 }
 
