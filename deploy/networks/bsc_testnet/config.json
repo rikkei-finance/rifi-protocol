@@ -1,8 +1,8 @@
 {
   "RIFI": "0x3816b86AbED8B7F69d8AB4b7a9B5eB866c0b0F18",
   "rNative": {
-    "name": "Rifi BNB",
-    "symbol": "rBNB",
+    "name": "Rifi Native",
+    "symbol": "rNative",
     "decimals": 8,
     "underlying": {
       "symbol": "BNB",
@@ -10,7 +10,7 @@
       "address": ""
     },
     "interestRateModel": {
-      "address": "0xfD447A0B1BfF4387fdb8b423659c8B7C7A251e83",
+      "address": "0xe19C3FF9e0DD2F9c75516f7CECa0edF26D243780",
       "model": "JumpRateModel",
       "params": {
         "baseRatePerYear": "0.02",
@@ -22,9 +22,10 @@
       }
     },
     "initialExchangeRateMantissa": "200000000",
-    "collateralFactor": "0.6",
+    "collateralFactor": "0.7",
     "reserveFactor": "0.1",
-    "rifiSpeed": "0.000645"
+    "rifiSupplySpeed": "0.04",
+    "rifiBorrowSpeed": "0.04"
   },
   "rTokens": {
     "rBUSD": {
@@ -37,12 +38,12 @@
         "address": ""
       },
       "interestRateModel": {
-        "address": "0xc728957bF452618Ff4C14F4aB53c166378565BFf",
+        "address": "0xFBaf041Da9871D81eCD000d12ce63475993aA0A6",
         "model": "JumpRateModel",
         "params": {
           "baseRatePerYear": "0.02",
           "lowerBaseRatePerYear": "0.01",
-          "multiplierPerYear": "0.04",
+          "multiplierPerYear": "4",
           "jumpMultiplierPerYear": "1.09",
           "kink_": "0.8",
           "lowerKink_": "0.4"
@@ -50,8 +51,8 @@
       },
       "initialExchangeRateMantissa": "200000000",
       "collateralFactor": "0.6",
-      "reserveFactor": "0.1",
-      "rifiSpeed": "0.000645"
+      "rifiSupplySpeed": "0.00000000645",
+      "rifiBorrowSpeed": "0.00000000645"
     },
     "rUSDC": {
       "name": "Rifi USDC",
@@ -63,12 +64,12 @@
         "address": ""
       },
       "interestRateModel": {
-        "address": "0x655EdD3e89C924FeebA9a8A98F6e337557E4776F",
+        "address": "0xbABD8daBf74c460AA82a810c8BfF007B22b90415",
         "model": "JumpRateModel",
         "params": {
           "baseRatePerYear": "0.02",
           "lowerBaseRatePerYear": "0.01",
-          "multiplierPerYear": "0.04",
+          "multiplierPerYear": "4",
           "jumpMultiplierPerYear": "1.09",
           "kink_": "0.8",
           "lowerKink_": "0.4"
@@ -76,34 +77,8 @@
       },
       "initialExchangeRateMantissa": "200000000",
       "collateralFactor": "0.6",
-      "reserveFactor": "0.1",
-      "rifiSpeed": "0.000645"
-    },
-    "rBTC": {
-      "name": "Rifi BTC",
-      "symbol": "rBTC",
-      "decimals": 8,
-      "underlying": {
-        "symbol": "BTC",
-        "decimals": "18",
-        "address": ""
-      },
-      "interestRateModel": {
-        "address": "0x51E9312079ED8FAe321d59467721C0406Deb853b",
-        "model": "JumpRateModel",
-        "params": {
-          "baseRatePerYear": "0.02",
-          "lowerBaseRatePerYear": "0.01",
-          "multiplierPerYear": "0.04",
-          "jumpMultiplierPerYear": "1.09",
-          "kink_": "0.8",
-          "lowerKink_": "0.4"
-        }
-      },
-      "initialExchangeRateMantissa": "200000000",
-      "collateralFactor": "0.6",
-      "reserveFactor": "0.1",
-      "rifiSpeed": "0.000645"
+      "rifiSupplySpeed": "0.00000000645",
+      "rifiBorrowSpeed": "0.00000000645"
     }
   },
   "closeFactor": "0.25",

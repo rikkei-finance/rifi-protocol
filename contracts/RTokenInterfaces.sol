@@ -1,8 +1,9 @@
-pragma solidity ^0.5.16;
+pragma solidity ^0.8.10;
 
 import "./CointrollerInterface.sol";
 import "./InterestRateModel.sol";
 import "./EIP20NonStandardInterface.sol";
+import "./ErrorReporter.sol";
 
 contract RTokenStorage {
     /**
@@ -25,15 +26,10 @@ contract RTokenStorage {
      */
     uint8 public decimals;
 
-    /**
-     * @notice Maximum borrow rate that can ever be applied (.0005% / block)
-     */
-
+    // Maximum borrow rate that can ever be applied (.0005% / block)
     uint internal constant borrowRateMaxMantissa = 0.0005e16;
 
-    /**
-     * @notice Maximum fraction of interest that can be set aside for reserves
-     */
+    // Maximum fraction of interest that can be set aside for reserves
     uint internal constant reserveFactorMaxMantissa = 1e18;
 
     /**
@@ -56,9 +52,7 @@ contract RTokenStorage {
      */
     InterestRateModel public interestRateModel;
 
-    /**
-     * @notice Initial exchange rate used when minting the first RTokens (used when totalSupply = 0)
-     */
+    // Initial exchange rate used when minting the first rTokens (used when totalSupply = 0)
     uint internal initialExchangeRateMantissa;
 
     /**
@@ -91,14 +85,10 @@ contract RTokenStorage {
      */
     uint public totalSupply;
 
-    /**
-     * @notice Official record of token balances for each account
-     */
+    // Official record of token balances for each account
     mapping (address => uint) internal accountTokens;
 
-    /**
-     * @notice Approved token transfer amounts on behalf of others
-     */
+    // Approved token transfer amounts on behalf of others
     mapping (address => mapping (address => uint)) internal transferAllowances;
 
     /**
@@ -111,21 +101,18 @@ contract RTokenStorage {
         uint interestIndex;
     }
 
-    /**
-     * @notice Mapping of account addresses to outstanding borrow balances
-     */
+    // Mapping of account addresses to outstanding borrow balances
     mapping(address => BorrowSnapshot) internal accountBorrows;
 
     /**
      * @notice Share of seized collateral that is added to reserves
      */
     uint public constant protocolSeizeShareMantissa = 2.8e16; //2.8%
-
 }
 
-contract RTokenInterface is RTokenStorage {
+abstract contract RTokenInterface is RTokenStorage {
     /**
-     * @notice Indicator that this is a RToken contract (for inspection)
+     * @notice Indicator that this is a rToken contract (for inspection)
      */
     bool public constant isRToken = true;
 
@@ -210,67 +197,62 @@ contract RTokenInterface is RTokenStorage {
      */
     event Approval(address indexed owner, address indexed spender, uint amount);
 
-    /**
-     * @notice Failure event
-     */
-    event Failure(uint error, uint info, uint detail);
-
 
     /*** User Interface ***/
 
-    function transfer(address dst, uint amount) external returns (bool);
-    function transferFrom(address src, address dst, uint amount) external returns (bool);
-    function approve(address spender, uint amount) external returns (bool);
-    function allowance(address owner, address spender) external view returns (uint);
-    function balanceOf(address owner) external view returns (uint);
-    function balanceOfUnderlying(address owner) external returns (uint);
-    function getAccountSnapshot(address account) external view returns (uint, uint, uint, uint);
-    function borrowRatePerBlock() external view returns (uint);
-    function supplyRatePerBlock() external view returns (uint);
-    function totalBorrowsCurrent() external returns (uint);
-    function borrowBalanceCurrent(address account) external returns (uint);
-    function borrowBalanceStored(address account) public view returns (uint);
-    function exchangeRateCurrent() public returns (uint);
-    function exchangeRateStored() public view returns (uint);
-    function getCash() external view returns (uint);
-    function accrueInterest() public returns (uint);
-    function seize(address liquidator, address borrower, uint seizeTokens) external returns (uint);
+    function transfer(address dst, uint amount) virtual external returns (bool);
+    function transferFrom(address src, address dst, uint amount) virtual external returns (bool);
+    function approve(address spender, uint amount) virtual external returns (bool);
+    function allowance(address owner, address spender) virtual external view returns (uint);
+    function balanceOf(address owner) virtual external view returns (uint);
+    function balanceOfUnderlying(address owner) virtual external returns (uint);
+    function getAccountSnapshot(address account) virtual external view returns (uint, uint, uint, uint);
+    function borrowRatePerBlock() virtual external view returns (uint);
+    function supplyRatePerBlock() virtual external view returns (uint);
+    function totalBorrowsCurrent() virtual external returns (uint);
+    function borrowBalanceCurrent(address account) virtual external returns (uint);
+    function borrowBalanceStored(address account) virtual external view returns (uint);
+    function exchangeRateCurrent() virtual external returns (uint);
+    function exchangeRateStored() virtual external view returns (uint);
+    function getCash() virtual external view returns (uint);
+    function accrueInterest() virtual external returns (uint);
+    function seize(address liquidator, address borrower, uint seizeTokens) virtual external returns (uint);
 
 
     /*** Admin Functions ***/
 
-    function _setPendingAdmin(address payable newPendingAdmin) external returns (uint);
-    function _acceptAdmin() external returns (uint);
-    function _setCointroller(CointrollerInterface newCointroller) public returns (uint);
-    function _setReserveFactor(uint newReserveFactorMantissa) external returns (uint);
-    function _reduceReserves(uint reduceAmount) external returns (uint);
-    function _setInterestRateModel(InterestRateModel newInterestRateModel) public returns (uint);
+    function _setPendingAdmin(address payable newPendingAdmin) virtual external returns (uint);
+    function _acceptAdmin() virtual external returns (uint);
+    function _setCointroller(CointrollerInterface newCointroller) virtual external returns (uint);
+    function _setReserveFactor(uint newReserveFactorMantissa) virtual external returns (uint);
+    function _reduceReserves(uint reduceAmount) virtual external returns (uint);
+    function _setInterestRateModel(InterestRateModel newInterestRateModel) virtual external returns (uint);
 }
 
-contract RBep20Storage {
+contract RErc20Storage {
     /**
-     * @notice Underlying asset for this RToken
+     * @notice Underlying asset for this rToken
      */
     address public underlying;
 }
 
-contract RBep20Interface is RBep20Storage {
+abstract contract RErc20Interface is RErc20Storage {
 
     /*** User Interface ***/
 
-    function mint(uint mintAmount) external returns (uint);
-    function redeem(uint redeemTokens) external returns (uint);
-    function redeemUnderlying(uint redeemAmount) external returns (uint);
-    function borrow(uint borrowAmount) external returns (uint);
-    function repayBorrow(uint repayAmount) external returns (uint);
-    function repayBorrowBehalf(address borrower, uint repayAmount) external returns (uint);
-    function liquidateBorrow(address borrower, uint repayAmount, RTokenInterface rTokenCollateral) external returns (uint);
-    function sweepToken(EIP20NonStandardInterface token) external;
+    function mint(uint mintAmount) virtual external returns (uint);
+    function redeem(uint redeemTokens) virtual external returns (uint);
+    function redeemUnderlying(uint redeemAmount) virtual external returns (uint);
+    function borrow(uint borrowAmount) virtual external returns (uint);
+    function repayBorrow(uint repayAmount) virtual external returns (uint);
+    function repayBorrowBehalf(address borrower, uint repayAmount) virtual external returns (uint);
+    function liquidateBorrow(address borrower, uint repayAmount, RTokenInterface rTokenCollateral) virtual external returns (uint);
+    function sweepToken(EIP20NonStandardInterface token) virtual external;
 
 
     /*** Admin Functions ***/
 
-    function _addReserves(uint addAmount) external returns (uint);
+    function _addReserves(uint addAmount) virtual external returns (uint);
 }
 
 contract RDelegationStorage {
@@ -280,7 +262,7 @@ contract RDelegationStorage {
     address public implementation;
 }
 
-contract RDelegatorInterface is RDelegationStorage {
+abstract contract RDelegatorInterface is RDelegationStorage {
     /**
      * @notice Emitted when implementation is changed
      */
@@ -292,19 +274,19 @@ contract RDelegatorInterface is RDelegationStorage {
      * @param allowResign Flag to indicate whether to call _resignImplementation on the old implementation
      * @param becomeImplementationData The encoded bytes data to be passed to _becomeImplementation
      */
-    function _setImplementation(address implementation_, bool allowResign, bytes memory becomeImplementationData) public;
+    function _setImplementation(address implementation_, bool allowResign, bytes memory becomeImplementationData) virtual external;
 }
 
-contract RDelegateInterface is RDelegationStorage {
+abstract contract RDelegateInterface is RDelegationStorage {
     /**
      * @notice Called by the delegator on a delegate to initialize it for duty
      * @dev Should revert if any issues arise which make it unfit for delegation
      * @param data The encoded bytes data for any initialization
      */
-    function _becomeImplementation(bytes memory data) public;
+    function _becomeImplementation(bytes memory data) virtual external;
 
     /**
      * @notice Called by the delegator on a delegate to forfeit its responsibility
      */
-    function _resignImplementation() public;
+    function _resignImplementation() virtual external;
 }

@@ -10,6 +10,7 @@ const {
   TESTNET_KEY,
   ETHER_API_KEY,
   BSC_API_KEY,
+  MOONBEAM_API_KEY,
   HARDHAT_NETWORK,
 } = process.env;
 
@@ -20,6 +21,7 @@ const API_KEYS = {
   ropsten: ETHER_API_KEY,
   rinkeby: ETHER_API_KEY,
   kovan: ETHER_API_KEY,
+  moonbase: MOONBEAM_API_KEY,
 };
 
 /**
@@ -38,7 +40,7 @@ module.exports = {
         },
       },
       {
-        version: "0.8.9",
+        version: "0.8.10",
         settings: {
           optimizer: {
             enabled: true,
@@ -55,19 +57,59 @@ module.exports = {
       rinkeby: ETHER_API_KEY,
       goerli: ETHER_API_KEY,
       kovan: ETHER_API_KEY,
+      // binance smart chain
       bsc: BSC_API_KEY,
       bscTestnet: BSC_API_KEY,
+      // // huobi eco chain
+      // heco: "YOUR_HECOINFO_API_KEY",
+      // hecoTestnet: "YOUR_HECOINFO_API_KEY",
+
+      // // fantom mainnet
+      // opera: "YOUR_FTMSCAN_API_KEY",
+      // ftmTestnet: "YOUR_FTMSCAN_API_KEY",
+
+      // // optimism
+      // optimisticEthereum: "YOUR_OPTIMISTIC_ETHERSCAN_API_KEY",
+      // optimisticKovan: "YOUR_OPTIMISTIC_ETHERSCAN_API_KEY",
+
+      // // polygon
+      // polygon: "YOUR_POLYGONSCAN_API_KEY",
+      // polygonMumbai: "YOUR_POLYGONSCAN_API_KEY",
+
+      // // arbitrum
+      // arbitrumOne: "YOUR_ARBISCAN_API_KEY",
+      // arbitrumTestnet: "YOUR_ARBISCAN_API_KEY",
+
+      // // avalanche
+      // avalanche: "YOUR_SNOWTRACE_API_KEY",
+      // avalancheFujiTestnet: "YOUR_SNOWTRACE_API_KEY",
+
+      // moonbeam
+      moonbeam: MOONBEAM_API_KEY,
+      // moonriver: "YOUR_MOONRIVER_MOONSCAN_API_KEY",
+      moonbaseAlpha: MOONBEAM_API_KEY,
+
+      // // harmony
+      // harmony: "YOUR_HARMONY_API_KEY",
+      // harmonyTest: "YOUR_HARMONY_API_KEY",
+      // // xdai and sokol don't need an API key, but you still need
+      // // to specify one; any string placeholder will work
+      // xdai: "api-key",
+      // sokol: "api-key",
+      // aurora: "api-key",
+      // auroraTestnet: "api-key",
     },
   },
   networks: {
     localhost: {
       // url: `wss://data-seed-prebsc-2-s2.binance.org:8545`,
+      url: "http://127.0.0.1:7545",
       accounts: [`0x${LOCAL_KEY}`],
+      network_id: 5777,
     },
     bsc_mainnet: {
-      // url: `https://bsc-dataseed.binance.org/`,
-      url: `https://bsc-dataseed1.defibit.io/`,
-      // url: `https://bsc-dataseed1.ninicoin.io/`,
+      url: `https://bsc-dataseed.binance.org/`,
+      // url: `wss://bsc-ws-node.nariox.org:443`,
       accounts: [`0x${MAINNET_KEY}`],
       network_id: 56,
       confirmations: 2,
@@ -76,7 +118,7 @@ module.exports = {
       production: true,
     },
     bsc_testnet: {
-      url: `https://data-seed-prebsc-2-s3.binance.org:8545`,
+      url: `https://data-seed-prebsc-2-s2.binance.org:8545`,
       accounts: [`0x${TESTNET_KEY}`],
       network_id: 97,
       confirmations: 2,
@@ -119,19 +161,19 @@ module.exports = {
       timeoutBlocks: 200000000, // # of blocks before a deployment times out  (minimum/default: 50)
       skipDryRun: true, // Skip dry run before migrations? (default: false for public nets )
     },
-    shibuya: {
-      url: `https://evm.shibuya.astar.network`,
+    moonbase: {
+      url: `https://rpc.testnet.moonbeam.network`,
       accounts: [`0x${TESTNET_KEY}`],
-      network_id: 81, // Moonbase's id
-      gas: 7000000, // Kovan has a lower block limit than mainnet
+      network_id: 1287, // Moonbase's id
+      gas: 7000000, // Moonbase has a lower block limit than mainnet
       confirmations: 2, // # of confs to wait between deployments. (default: 0)
       timeoutBlocks: 200000000, // # of blocks before a deployment times out  (minimum/default: 50)
       skipDryRun: true, // Skip dry run before migrations? (default: false for public nets )
     },
-    astar: {
-      url: `https://evm.astar.network`,
-      accounts: [`0x${MAINNET_KEY}`],
-      network_id: 592, // Moonbase's id
+    shibuya: {
+      url: `https://evm.shibuya.astar.network`,
+      accounts: [`0x${TESTNET_KEY}`],
+      network_id: 81, // Moonbase's id
       gas: 7000000, // Kovan has a lower block limit than mainnet
       confirmations: 2, // # of confs to wait between deployments. (default: 0)
       timeoutBlocks: 200000000, // # of blocks before a deployment times out  (minimum/default: 50)

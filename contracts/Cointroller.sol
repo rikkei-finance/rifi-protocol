@@ -1,4 +1,4 @@
-pragma solidity ^0.5.16;
+pragma solidity ^0.8.10;
 
 import "./RToken.sol";
 import "./ErrorReporter.sol";
@@ -85,7 +85,7 @@ contract Cointroller is CointrollerV7Storage, CointrollerInterface, CointrollerE
     // No collateralFactorMantissa may exceed this value
     uint internal constant collateralFactorMaxMantissa = 0.9e18; // 0.9
 
-    constructor() public {
+    constructor() {
         admin = msg.sender;
     }
 
@@ -117,7 +117,7 @@ contract Cointroller is CointrollerV7Storage, CointrollerInterface, CointrollerE
      * @param rTokens The list of addresses of the rToken markets to be enabled
      * @return Success indicator for whether each corresponding market was entered
      */
-    function enterMarkets(address[] memory rTokens) public returns (uint[] memory) {
+    function enterMarkets(address[] memory rTokens) override public returns (uint[] memory) {
         uint len = rTokens.length;
 
         uint[] memory results = new uint[](len);
@@ -169,7 +169,7 @@ contract Cointroller is CointrollerV7Storage, CointrollerInterface, CointrollerE
      * @param rTokenAddress The address of the asset to be removed
      * @return Whether or not the account successfully exited the market
      */
-    function exitMarket(address rTokenAddress) external returns (uint) {
+    function exitMarket(address rTokenAddress) override external returns (uint) {
         RToken rToken = RToken(rTokenAddress);
         /* Get sender tokensHeld and amountOwed underlying from the rToken */
         (uint oErr, uint tokensHeld, uint amountOwed, ) = rToken.getAccountSnapshot(msg.sender);
@@ -214,7 +214,7 @@ contract Cointroller is CointrollerV7Storage, CointrollerInterface, CointrollerE
         // copy last item in list to location of item to be removed, reduce length by 1
         RToken[] storage storedList = accountAssets[msg.sender];
         storedList[assetIndex] = storedList[storedList.length - 1];
-        storedList.length--;
+        storedList.pop();
 
         emit MarketExited(rToken, msg.sender);
 
@@ -230,7 +230,7 @@ contract Cointroller is CointrollerV7Storage, CointrollerInterface, CointrollerE
      * @param mintAmount The amount of underlying being supplied to the market in exchange for tokens
      * @return 0 if the mint is allowed, otherwise a semi-opaque error code (See ErrorReporter.sol)
      */
-    function mintAllowed(address rToken, address minter, uint mintAmount) external returns (uint) {
+    function mintAllowed(address rToken, address minter, uint mintAmount) override external returns (uint) {
         // Pausing is a very serious situation - we revert to sound the alarms
         require(!mintGuardianPaused[rToken], "mint is paused");
 
@@ -256,7 +256,7 @@ contract Cointroller is CointrollerV7Storage, CointrollerInterface, CointrollerE
      * @param actualMintAmount The amount of the underlying asset being minted
      * @param mintTokens The number of tokens being minted
      */
-    function mintVerify(address rToken, address minter, uint actualMintAmount, uint mintTokens) external {
+    function mintVerify(address rToken, address minter, uint actualMintAmount, uint mintTokens) override external {
         // Shh - currently unused
         rToken;
         minter;
@@ -276,7 +276,7 @@ contract Cointroller is CointrollerV7Storage, CointrollerInterface, CointrollerE
      * @param redeemTokens The number of rTokens to exchange for the underlying asset in the market
      * @return 0 if the redeem is allowed, otherwise a semi-opaque error code (See ErrorReporter.sol)
      */
-    function redeemAllowed(address rToken, address redeemer, uint redeemTokens) external returns (uint) {
+    function redeemAllowed(address rToken, address redeemer, uint redeemTokens) override external returns (uint) {
         uint allowed = redeemAllowedInternal(rToken, redeemer, redeemTokens);
         if (allowed != uint(Error.NO_ERROR)) {
             return allowed;
@@ -318,7 +318,7 @@ contract Cointroller is CointrollerV7Storage, CointrollerInterface, CointrollerE
      * @param redeemAmount The amount of the underlying asset being redeemed
      * @param redeemTokens The number of tokens being redeemed
      */
-    function redeemVerify(address rToken, address redeemer, uint redeemAmount, uint redeemTokens) external {
+    function redeemVerify(address rToken, address redeemer, uint redeemAmount, uint redeemTokens) override external {
         // Shh - currently unused
         rToken;
         redeemer;
@@ -336,7 +336,7 @@ contract Cointroller is CointrollerV7Storage, CointrollerInterface, CointrollerE
      * @param borrowAmount The amount of underlying the account would borrow
      * @return 0 if the borrow is allowed, otherwise a semi-opaque error code (See ErrorReporter.sol)
      */
-    function borrowAllowed(address rToken, address borrower, uint borrowAmount) external returns (uint) {
+    function borrowAllowed(address rToken, address borrower, uint borrowAmount) override external returns (uint) {
         // Pausing is a very serious situation - we revert to sound the alarms
         require(!borrowGuardianPaused[rToken], "borrow is paused");
 
@@ -393,7 +393,7 @@ contract Cointroller is CointrollerV7Storage, CointrollerInterface, CointrollerE
      * @param borrower The address borrowing the underlying
      * @param borrowAmount The amount of the underlying asset requested to borrow
      */
-    function borrowVerify(address rToken, address borrower, uint borrowAmount) external {
+    function borrowVerify(address rToken, address borrower, uint borrowAmount) override external {
         // Shh - currently unused
         rToken;
         borrower;
@@ -417,7 +417,7 @@ contract Cointroller is CointrollerV7Storage, CointrollerInterface, CointrollerE
         address rToken,
         address payer,
         address borrower,
-        uint repayAmount) external returns (uint) {
+        uint repayAmount) override external returns (uint) {
         // Shh - currently unused
         payer;
         borrower;
@@ -447,7 +447,7 @@ contract Cointroller is CointrollerV7Storage, CointrollerInterface, CointrollerE
         address payer,
         address borrower,
         uint actualRepayAmount,
-        uint borrowerIndex) external {
+        uint borrowerIndex) override external {
         // Shh - currently unused
         rToken;
         payer;
@@ -474,7 +474,7 @@ contract Cointroller is CointrollerV7Storage, CointrollerInterface, CointrollerE
         address rTokenCollateral,
         address liquidator,
         address borrower,
-        uint repayAmount) external returns (uint) {
+        uint repayAmount) override external returns (uint) {
         // Shh - currently unused
         liquidator;
 
@@ -521,7 +521,7 @@ contract Cointroller is CointrollerV7Storage, CointrollerInterface, CointrollerE
         address liquidator,
         address borrower,
         uint actualRepayAmount,
-        uint seizeTokens) external {
+        uint seizeTokens) override external {
         // Shh - currently unused
         rTokenBorrowed;
         rTokenCollateral;
@@ -549,7 +549,7 @@ contract Cointroller is CointrollerV7Storage, CointrollerInterface, CointrollerE
         address rTokenBorrowed,
         address liquidator,
         address borrower,
-        uint seizeTokens) external returns (uint) {
+        uint seizeTokens) override external returns (uint) {
         // Pausing is a very serious situation - we revert to sound the alarms
         require(!seizeGuardianPaused, "seize is paused");
 
@@ -585,7 +585,7 @@ contract Cointroller is CointrollerV7Storage, CointrollerInterface, CointrollerE
         address rTokenBorrowed,
         address liquidator,
         address borrower,
-        uint seizeTokens) external {
+        uint seizeTokens) override external {
         // Shh - currently unused
         rTokenCollateral;
         rTokenBorrowed;
@@ -607,7 +607,7 @@ contract Cointroller is CointrollerV7Storage, CointrollerInterface, CointrollerE
      * @param transferTokens The number of rTokens to transfer
      * @return 0 if the transfer is allowed, otherwise a semi-opaque error code (See ErrorReporter.sol)
      */
-    function transferAllowed(address rToken, address src, address dst, uint transferTokens) external returns (uint) {
+    function transferAllowed(address rToken, address src, address dst, uint transferTokens) override external returns (uint) {
         // Pausing is a very serious situation - we revert to sound the alarms
         require(!transferGuardianPaused, "transfer is paused");
 
@@ -633,7 +633,7 @@ contract Cointroller is CointrollerV7Storage, CointrollerInterface, CointrollerE
      * @param dst The account which receives the tokens
      * @param transferTokens The number of rTokens to transfer
      */
-    function transferVerify(address rToken, address src, address dst, uint transferTokens) external {
+    function transferVerify(address rToken, address src, address dst, uint transferTokens) override external {
         // Shh - currently unused
         rToken;
         src;
@@ -673,7 +673,7 @@ contract Cointroller is CointrollerV7Storage, CointrollerInterface, CointrollerE
      *          account shortfall below collateral requirements)
      */
     function getAccountLiquidity(address account) public view returns (uint, uint, uint) {
-        (Error err, uint liquidity, uint shortfall) = getHypotheticalAccountLiquidityInternal(account, RToken(0), 0, 0);
+        (Error err, uint liquidity, uint shortfall) = getHypotheticalAccountLiquidityInternal(account, RToken(address(0)), 0, 0);
 
         return (uint(err), liquidity, shortfall);
     }
@@ -685,7 +685,7 @@ contract Cointroller is CointrollerV7Storage, CointrollerInterface, CointrollerE
      *          account shortfall below collateral requirements)
      */
     function getAccountLiquidityInternal(address account) internal view returns (Error, uint, uint) {
-        return getHypotheticalAccountLiquidityInternal(account, RToken(0), 0, 0);
+        return getHypotheticalAccountLiquidityInternal(account, RToken(address(0)), 0, 0);
     }
 
     /**
@@ -785,7 +785,7 @@ contract Cointroller is CointrollerV7Storage, CointrollerInterface, CointrollerE
      * @param actualRepayAmount The amount of rTokenBorrowed underlying to convert into rTokenCollateral tokens
      * @return (errorCode, number of rTokenCollateral tokens to be seized in a liquidation)
      */
-    function liquidateCalculateSeizeTokens(address rTokenBorrowed, address rTokenCollateral, uint actualRepayAmount) external view returns (uint, uint) {
+    function liquidateCalculateSeizeTokens(address rTokenBorrowed, address rTokenCollateral, uint actualRepayAmount) override external view returns (uint, uint) {
         /* Read oracle prices for borrowed and collateral markets */
         uint priceBorrowedMantissa = oracle.getUnderlyingPrice(RToken(rTokenBorrowed));
         uint priceCollateralMantissa = oracle.getUnderlyingPrice(RToken(rTokenCollateral));
@@ -940,7 +940,10 @@ contract Cointroller is CointrollerV7Storage, CointrollerInterface, CointrollerE
         rToken.isRToken(); // Sanity check to make sure its really a RToken
 
         // Note that isRified is not in active use anymore
-        markets[address(rToken)] = Market({isListed: true, isRified: false, collateralFactorMantissa: 0});
+        Market storage newMarket = markets[address(rToken)];
+        newMarket.isListed = true;
+        newMarket.isRified = false;
+        newMarket.collateralFactorMantissa = 0;
 
         _addMarketInternal(address(rToken));
         _initializeMarket(address(rToken));
@@ -1120,7 +1123,7 @@ contract Cointroller is CointrollerV7Storage, CointrollerInterface, CointrollerE
 
                 amountToSubtract = currentAccrual;
             }
-            
+
             if (amountToSubtract > 0) {
                 // Subtract the bad accrual amount from what they have accrued.
                 // Users will keep whatever they have correctly accrued.
@@ -1179,7 +1182,7 @@ contract Cointroller is CointrollerV7Storage, CointrollerInterface, CointrollerE
     /**
      * @notice Accrue RIFI to the market by updating the supply index
      * @param rToken The market whose supply index to update
-     * @dev Index is a cumulative sum of the RIFI per RToken accrued.
+     * @dev Index is a cumulative sum of the RIFI per rToken accrued.
      */
     function updateRifiSupplyIndex(address rToken) internal {
         RifiMarketState storage supplyState = rifiSupplyState[rToken];
@@ -1200,7 +1203,7 @@ contract Cointroller is CointrollerV7Storage, CointrollerInterface, CointrollerE
     /**
      * @notice Accrue RIFI to the market by updating the borrow index
      * @param rToken The market whose borrow index to update
-     * @dev Index is a cumulative sum of the RIFI per RToken accrued.
+     * @dev Index is a cumulative sum of the RIFI per rToken accrued.
      */
     function updateRifiBorrowIndex(address rToken, Exp memory marketBorrowIndex) internal {
         RifiMarketState storage borrowState = rifiBorrowState[rToken];
@@ -1285,7 +1288,7 @@ contract Cointroller is CointrollerV7Storage, CointrollerInterface, CointrollerE
         Double memory deltaIndex = Double({mantissa: sub_(borrowIndex, borrowerIndex)});
 
         uint borrowerAmount = div_(RToken(rToken).borrowBalanceStored(borrower), marketBorrowIndex);
-        
+
         // Calculate RIFI accrued: rTokenAmount * accruedPerBorrowedUnit
         uint borrowerDelta = mul_(borrowerAmount, deltaIndex);
 
@@ -1447,13 +1450,13 @@ contract Cointroller is CointrollerV7Storage, CointrollerInterface, CointrollerE
      */
     function isDeprecated(RToken rToken) public view returns (bool) {
         return
-            markets[address(rToken)].collateralFactorMantissa == 0 && 
-            borrowGuardianPaused[address(rToken)] == true && 
+            markets[address(rToken)].collateralFactorMantissa == 0 &&
+            borrowGuardianPaused[address(rToken)] == true &&
             rToken.reserveFactorMantissa() == 1e18
         ;
     }
 
-    function getBlockNumber() public view returns (uint) {
+    function getBlockNumber() virtual public view returns (uint) {
         return block.number;
     }
 
@@ -1461,7 +1464,7 @@ contract Cointroller is CointrollerV7Storage, CointrollerInterface, CointrollerE
      * @notice Return the address of the RIFI token
      * @return The address of RIFI
      */
-    function getRifiAddress() public view returns (address) {
-        return 0xd7613D6E55abDf67B4eE670A56c76bF9bE9750bE;
+    function getRifiAddress() virtual public view returns (address) {
+        return 0x3816b86AbED8B7F69d8AB4b7a9B5eB866c0b0F18;
     }
 }

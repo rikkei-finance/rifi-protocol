@@ -1,4 +1,4 @@
-pragma solidity ^0.5.16;
+pragma solidity ^0.8.10;
 
 import "./RToken.sol";
 import "./PriceOracle.sol";
@@ -56,25 +56,23 @@ contract CointrollerV1Storage is UnitrollerAdminStorage {
 
 contract CointrollerV2Storage is CointrollerV1Storage {
     struct Market {
-        /// @notice Whether or not this market is listed
+        // Whether or not this market is listed
         bool isListed;
 
-        /**
-         * @notice Multiplier representing the most one can borrow against their collateral in this market.
-         *  For instance, 0.9 to allow borrowing 90% of collateral value.
-         *  Must be between 0 and 1, and stored as a mantissa.
-         */
+        //  Multiplier representing the most one can borrow against their collateral in this market.
+        //  For instance, 0.9 to allow borrowing 90% of collateral value.
+        //  Must be between 0 and 1, and stored as a mantissa.
         uint collateralFactorMantissa;
 
-        /// @notice Per-market mapping of "accounts in this asset"
+        // Per-market mapping of "accounts in this asset"
         mapping(address => bool) accountMembership;
 
-        /// @notice Whether or not this market receives RIFI
+        // Whether or not this market receives RIFI
         bool isRified;
     }
 
     /**
-     * @notice Official mapping of rTokens -> Market metadata
+     * @notice Official mapping of RTokens -> Market metadata
      * @dev Used e.g. to determine if a market is supported
      */
     mapping(address => Market) public markets;
@@ -96,10 +94,10 @@ contract CointrollerV2Storage is CointrollerV1Storage {
 
 contract CointrollerV3Storage is CointrollerV2Storage {
     struct RifiMarketState {
-        /// @notice The market's last updated rifiBorrowIndex or rifiSupplyIndex
+        // The market's last updated rifiBorrowIndex or rifiSupplyIndex
         uint224 index;
 
-        /// @notice The block number the index was last updated at
+        // The block number the index was last updated at
         uint32 block;
     }
 
@@ -121,7 +119,7 @@ contract CointrollerV3Storage is CointrollerV2Storage {
     /// @notice The RIFI borrow index for each market for each supplier as of the last time they accrued RIFI
     mapping(address => mapping(address => uint)) public rifiSupplierIndex;
 
-    /// @notice The RIFI borrow index for each market for each borrower as of the last time they accrued rifi
+    /// @notice The RIFI borrow index for each market for each borrower as of the last time they accrued RIFI
     mapping(address => mapping(address => uint)) public rifiBorrowerIndex;
 
     /// @notice The RIFI accrued but not yet transferred to each user
@@ -132,7 +130,7 @@ contract CointrollerV4Storage is CointrollerV3Storage {
     // @notice The borrowCapGuardian can set borrowCaps to any number for any market. Lowering the borrow cap could disable borrowing on the given market.
     address public borrowCapGuardian;
 
-    // @notice Borrow caps enforced by borrowAllowed for each rToken address. Defaults to zero which corresponds to unlimited borrowing.
+    // @notice Borrow caps enforced by borrowAllowed for each RToken address. Defaults to zero which corresponds to unlimited borrowing.
     mapping(address => uint) public borrowCaps;
 }
 

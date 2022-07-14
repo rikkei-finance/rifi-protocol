@@ -42,22 +42,20 @@ async function main() {
     Maximillion,
     Cointroller,
     JumpRateModel,
-    RBep20Delegate,
-    RBep20Delegator,
+    RErc20Delegate,
+    RErc20Delegator,
     SimplePriceOracle,
-    RBinance,
-    FaucetToken,
+    RNative,
     RifiLens,
   ] = await Promise.all([
     ethers.getContractFactory("Unitroller"),
     ethers.getContractFactory("Maximillion"),
     ethers.getContractFactory("Cointroller"),
-    ethers.getContractFactory("JumpRateModel"),
-    ethers.getContractFactory("RBep20Delegate"),
-    ethers.getContractFactory("RBep20Delegator"),
+    ethers.getContractFactory("JumpRateModelV2"),
+    ethers.getContractFactory("RErc20Delegate"),
+    ethers.getContractFactory("RErc20Delegator"),
     ethers.getContractFactory("SimplePriceOracle"),
-    ethers.getContractFactory("RBinance"),
-    ethers.getContractFactory("FaucetToken"),
+    ethers.getContractFactory("RNative"),
     ethers.getContractFactory("RifiLens"),
   ]);
 
@@ -72,11 +70,11 @@ async function main() {
     } = params;
     const model = await JumpRateModel.deploy(
       web3.utils.toWei(baseRatePerYear, "ether"),
-      web3.utils.toWei(lowerBaseRatePerYear, "ether"),
+      // web3.utils.toWei(lowerBaseRatePerYear, "ether"),
       web3.utils.toWei(multiplierPerYear, "ether"),
       web3.utils.toWei(jumpMultiplierPerYear, "ether"),
       web3.utils.toWei(kink_, "ether"),
-      web3.utils.toWei(lowerKink_, "ether"),
+      // web3.utils.toWei(lowerKink_, "ether"),
       governance
     );
 
@@ -96,20 +94,6 @@ async function main() {
     }).catch(e => console.log(e.message));
 
     return model;
-  };
-
-  const deployFaucetToken = async (params) => {
-    const { symbol, decimals } = params;
-    const name = `Rifi Test ${symbol}`;
-    const token = await FaucetToken.deploy(faucetInitialAmount, name, decimals, symbol);
-    await token.deployed();
-    await hre
-      .run("verify:verify", {
-        address: token.address,
-        constructorArguments: [faucetInitialAmount, name, decimals, symbol],
-      })
-      .catch((e) => console.log(e.message));
-    return token;
   };
 
   const saveAddresses = async () => {
@@ -221,10 +205,6 @@ async function main() {
 
     unitroller = Cointroller.attach(addresses.Cointroller);
 
-    await runWithProgressCheck("unitroller.initialize", async () => {
-      const transaction = await unitroller.initialize(config.RIFI);
-      console.log(`unitroller.initialize transaction: ${explorer}/tx/${transaction.tx}`);
-    });
 
     await runWithProgressCheck("SimplePriceOracle", async () => {
       const priceOracle = await SimplePriceOracle.deploy();
@@ -284,7 +264,7 @@ async function main() {
           config.rNative.interestRateModel.address = modelAddress;
         }
 
-        const rBinance = await RBinance.deploy(
+        const rNative = await RNative.deploy(
           addresses.Cointroller,
           modelAddress,
           web3.utils.toWei(initialExchangeRateMantissa, "ether"),
@@ -293,14 +273,14 @@ async function main() {
           decimals,
           governance
         );
-        await rBinance.deployed();
+        await rNative.deployed();
 
-        console.log(`rNative address at: ${explorer}/address/${rBinance.address}`);
+        console.log(`rNative address at: ${explorer}/address/${rNative.address}`);
 
-        addresses[symbol] = rBinance.address;
+        addresses[symbol] = rNative.address;
 
         await hre.run("verify:verify", {
-          address: rBinance.address,
+          address: rNative.address,
           constructorArguments: [
             addresses.Cointroller,
             modelAddress,
@@ -338,12 +318,13 @@ async function main() {
         );
       });
 
-      await runWithProgressCheck("rNative: unitroller._setRifiSpeed", async () => {
-        transaction = await unitroller._setRifiSpeed(
-          addresses[symbol],
-          web3.utils.toWei(config.rNative.rifiSpeed, "ether")
+      await runWithProgressCheck("rNative: unitroller._setRifiSpeeds", async () => {
+        transaction = await unitroller._setRifiSpeeds(
+          [addresses[symbol]],
+          [web3.utils.toWei(config.rNative.rifiSupplySpeed, "ether")],
+          [web3.utils.toWei(config.rNative.rifiBorrowSpeed, "ether")]
         );
-        console.log(`rBNB Unitroller._setRifiSpeed transaction: ${explorer}/tx/${transaction.tx}`);
+        console.log(`rBNB Unitroller._setRifiSpeeds transaction: ${explorer}/tx/${transaction.tx}`);
       });
 
       tokenDecimals[symbol] = parseInt(decimals);
@@ -356,15 +337,15 @@ async function main() {
       console.log("rNative is not configured.");
     }
 
-    if (!addresses.rBep20Delegate) {
-      console.log("Creating RBep20Delegate");
-      const rBep20Delegate = await RBep20Delegate.deploy();
-      await rBep20Delegate.deployed();
-      console.log(`RBep20Delegate address at: ${explorer}/address/${rBep20Delegate.address}`);
-      addresses.rBep20Delegate = rBep20Delegate.address;
+    if (!addresses.rErc20Delegate) {
+      console.log("Creating RErc20Delegate");
+      const rErc20Delegate = await RErc20Delegate.deploy();
+      await rErc20Delegate.deployed();
+      console.log(`RErc20Delegate address at: ${explorer}/address/${rErc20Delegate.address}`);
+      addresses.rErc20Delegate = rErc20Delegate.address;
       await saveAddresses();
       await hre
-        .run("verify:verify", { address: rBep20Delegate.address })
+        .run("verify:verify", { address: rErc20Delegate.address })
         .catch((e) => console.log(e.message));
     }
 
@@ -380,7 +361,8 @@ async function main() {
           underlying,
           initialExchangeRateMantissa,
           collateralFactor,
-          rifiSpeed,
+          rifiSupplySpeed,
+          rifiBorrowSpeed,
           interestRateModel: { address, params },
         } = token;
         console.log(`Deploying ${symbol} (${name})`);
@@ -409,8 +391,8 @@ async function main() {
           addresses[underlying.symbol] = underlyingAddress;
           await saveAddresses();
 
-          console.log("Creating RBep20Delegator");
-          const rBep20Delegator = await RBep20Delegator.deploy(
+          console.log("Creating RErc20Delegator");
+          const rErc20Delegator = await RErc20Delegator.deploy(
             underlyingAddress,
             addresses.Cointroller,
             modelAddress,
@@ -419,16 +401,16 @@ async function main() {
             symbol,
             decimals,
             governance,
-            addresses.rBep20Delegate,
+            addresses.rErc20Delegate,
             "0x"
           );
-          await rBep20Delegator.deployed();
-          console.log(`${symbol} address at: ${explorer}/address/${rBep20Delegator.address}`);
-          addresses[symbol] = rBep20Delegator.address;
+          await rErc20Delegator.deployed();
+          console.log(`${symbol} address at: ${explorer}/address/${rErc20Delegator.address}`);
+          addresses[symbol] = rErc20Delegator.address;
 
           await hre
             .run("verify:verify", {
-              address: rBep20Delegator.address,
+              address: rErc20Delegator.address,
               constructorArguments: [
                 underlyingAddress,
                 addresses.Cointroller,
@@ -438,7 +420,7 @@ async function main() {
                 symbol,
                 decimals,
                 governance,
-                addresses.rBep20Delegate,
+                addresses.rErc20Delegate,
                 "0x",
               ],
             })
@@ -472,13 +454,14 @@ async function main() {
           );
         });
 
-        await runWithProgressCheck(`${symbol}: unitroller._setRifiSpeed`, async () => {
-          transaction = await unitroller._setRifiSpeed(
-            addresses[symbol],
-            web3.utils.toWei(rifiSpeed, "ether")
+        await runWithProgressCheck(`${symbol}: unitroller._setRifiSpeeds`, async () => {
+          transaction = await unitroller._setRifiSpeeds(
+            [addresses[symbol]],
+            [web3.utils.toWei(rifiSupplySpeed, "ether")],
+            [web3.utils.toWei(rifiBorrowSpeed, "ether")]
           );
           console.log(
-            `${symbol} Unitroller._setRifiSpeed transaction: ${explorer}/tx/${transaction.tx}`
+            `${symbol} Unitroller._setRifiSpeeds transaction: ${explorer}/tx/${transaction.tx}`
           );
         });
 

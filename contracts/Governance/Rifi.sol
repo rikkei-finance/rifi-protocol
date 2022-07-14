@@ -1,5 +1,4 @@
-pragma solidity ^0.5.16;
-pragma experimental ABIEncoderV2;
+pragma solidity ^0.8.10;
 
 contract Rifi {
     /// @notice EIP-20 token name for this token
@@ -85,8 +84,8 @@ contract Rifi {
      */
     function approve(address spender, uint rawAmount) external returns (bool) {
         uint96 amount;
-        if (rawAmount == uint(-1)) {
-            amount = uint96(-1);
+        if (rawAmount == type(uint).max) {
+            amount = type(uint96).max;
         } else {
             amount = safe96(rawAmount, "Rifi::approve: amount exceeds 96 bits");
         }
@@ -130,7 +129,7 @@ contract Rifi {
         uint96 spenderAllowance = allowances[src][spender];
         uint96 amount = safe96(rawAmount, "Rifi::approve: amount exceeds 96 bits");
 
-        if (spender != src && spenderAllowance != uint96(-1)) {
+        if (spender != src && spenderAllowance != type(uint96).max) {
             uint96 newAllowance = sub96(spenderAllowance, amount, "Rifi::transferFrom: transfer amount exceeds spender allowance");
             allowances[src][spender] = newAllowance;
 
@@ -165,7 +164,7 @@ contract Rifi {
         address signatory = ecrecover(digest, v, r, s);
         require(signatory != address(0), "Rifi::delegateBySig: invalid signature");
         require(nonce == nonces[signatory]++, "Rifi::delegateBySig: invalid nonce");
-        require(now <= expiry, "Rifi::delegateBySig: signature expired");
+        require(block.timestamp <= expiry, "Rifi::delegateBySig: signature expired");
         return _delegate(signatory, delegatee);
     }
 
@@ -293,7 +292,7 @@ contract Rifi {
         return a - b;
     }
 
-    function getChainId() internal pure returns (uint) {
+    function getChainId() internal view returns (uint) {
         uint256 chainId;
         assembly { chainId := chainid() }
         return chainId;

@@ -19,9 +19,9 @@
   "rUSDC: unitroller._setCollateralFactor": true,
   "rUSDC: unitroller._setRifiSpeed": true,
   "RifiLens": true,
-  "rUSDT": true,
-  "rUSDT: unitroller._supportMarket": true,
-  "rUSDT: priceOracle.setOracleData": true,
-  "rUSDT: unitroller._setCollateralFactor": true,
-  "rUSDT: unitroller._setRifiSpeed": true
+  "rNative": true,
+  "rNative: unitroller._supportMarket": true,
+  "rNative: priceOracle.setOracleData": true,
+  "rNative: unitroller._setCollateralFactor": true,
+  "rNative: unitroller._setRifiSpeed": true
 }

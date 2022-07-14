@@ -15,6 +15,10 @@
     "decimals": "8",
     "pair": "USDC/USD"
   },
+  "USDT": {
+    "decimals": "8",
+    "pair": "USDC/USD"
+  },
   "FTM": {
     "decimals": "8",
     "pair": "FTM/USD"

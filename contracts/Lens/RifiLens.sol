@@ -1,7 +1,6 @@
-pragma solidity ^0.5.16;
-pragma experimental ABIEncoderV2;
+pragma solidity ^0.8.10;
 
-import "../RBep20.sol";
+import "../RErc20.sol";
 import "../RToken.sol";
 import "../PriceOracle.sol";
 import "../EIP20Interface.sol";
@@ -65,13 +64,13 @@ contract RifiLens {
         address underlyingAssetAddress;
         uint underlyingDecimals;
 
-        if (compareStrings(rToken.symbol(), "rASTR")) {
+        if (compareStrings(rToken.symbol(), "rNative")) {
             underlyingAssetAddress = address(0);
             underlyingDecimals = 18;
         } else {
-            RBep20 cErc20 = RBep20(address(rToken));
-            underlyingAssetAddress = cErc20.underlying();
-            underlyingDecimals = EIP20Interface(cErc20.underlying()).decimals();
+            RErc20 rErc20 = RErc20(address(rToken));
+            underlyingAssetAddress = rErc20.underlying();
+            underlyingDecimals = EIP20Interface(rErc20.underlying()).decimals();
         }
 
         return RTokenMetadata({
@@ -117,12 +116,12 @@ contract RifiLens {
         uint tokenBalance;
         uint tokenAllowance;
 
-        if (compareStrings(rToken.symbol(), "rASTR")) {
+        if (compareStrings(rToken.symbol(), "rNative")) {
             tokenBalance = account.balance;
             tokenAllowance = account.balance;
         } else {
-            RBep20 cErc20 = RBep20(address(rToken));
-            EIP20Interface underlying = EIP20Interface(cErc20.underlying());
+            RErc20 rErc20 = RErc20(address(rToken));
+            EIP20Interface underlying = EIP20Interface(rErc20.underlying());
             tokenBalance = underlying.balanceOf(account);
             tokenAllowance = underlying.allowance(account, address(rToken));
         }

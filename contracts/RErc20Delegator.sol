@@ -1,22 +1,22 @@
-pragma solidity ^0.5.16;
+pragma solidity ^0.8.10;
 
 import "./RTokenInterfaces.sol";
 
 /**
- * @title Rifi's RBep20Delegator Contract
+ * @title Rifi's RErc20Delegator Contract
  * @notice RTokens which wrap an EIP-20 underlying and delegate to an implementation
  * @author Rifi
  */
-contract RBep20Delegator is RTokenInterface, RBep20Interface, RDelegatorInterface {
+contract RErc20Delegator is RTokenInterface, RErc20Interface, RDelegatorInterface {
     /**
      * @notice Construct a new money market
      * @param underlying_ The address of the underlying asset
      * @param cointroller_ The address of the Cointroller
      * @param interestRateModel_ The address of the interest rate model
      * @param initialExchangeRateMantissa_ The initial exchange rate, scaled by 1e18
-     * @param name_ BEP-20 name of this token
-     * @param symbol_ BEP-20 symbol of this token
-     * @param decimals_ BEP-20 decimal precision of this token
+     * @param name_ ERC-20 name of this token
+     * @param symbol_ ERC-20 symbol of this token
+     * @param decimals_ ERC-20 decimal precision of this token
      * @param admin_ Address of the administrator of this token
      * @param implementation_ The address of the implementation the contract delegates to
      * @param becomeImplementationData The encoded args for becomeImplementation
@@ -30,9 +30,9 @@ contract RBep20Delegator is RTokenInterface, RBep20Interface, RDelegatorInterfac
                 uint8 decimals_,
                 address payable admin_,
                 address implementation_,
-                bytes memory becomeImplementationData) public {
+                bytes memory becomeImplementationData) {
         // Creator of the contract is admin during initialization
-        admin = msg.sender;
+        admin = payable(msg.sender);
 
         // First delegate gets to initialize the delegator (i.e. storage contract)
         delegateTo(implementation_, abi.encodeWithSignature("initialize(address,address,address,uint256,string,string,uint8)",
@@ -57,8 +57,8 @@ contract RBep20Delegator is RTokenInterface, RBep20Interface, RDelegatorInterfac
      * @param allowResign Flag to indicate whether to call _resignImplementation on the old implementation
      * @param becomeImplementationData The encoded bytes data to be passed to _becomeImplementation
      */
-    function _setImplementation(address implementation_, bool allowResign, bytes memory becomeImplementationData) public {
-        require(msg.sender == admin, "RBep20Delegator::_setImplementation: Caller must be admin");
+    function _setImplementation(address implementation_, bool allowResign, bytes memory becomeImplementationData)override public {
+        require(msg.sender == admin, "RErc20Delegator::_setImplementation: Caller must be admin");
 
         if (allowResign) {
             delegateToImplementation(abi.encodeWithSignature("_resignImplementation()"));
@@ -78,7 +78,7 @@ contract RBep20Delegator is RTokenInterface, RBep20Interface, RDelegatorInterfac
      * @param mintAmount The amount of the underlying asset to supply
      * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
      */
-    function mint(uint mintAmount) external returns (uint) {
+    function mint(uint mintAmount) override external returns (uint) {
         bytes memory data = delegateToImplementation(abi.encodeWithSignature("mint(uint256)", mintAmount));
         return abi.decode(data, (uint));
     }
@@ -89,7 +89,7 @@ contract RBep20Delegator is RTokenInterface, RBep20Interface, RDelegatorInterfac
      * @param redeemTokens The number of rTokens to redeem into underlying
      * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
      */
-    function redeem(uint redeemTokens) external returns (uint) {
+    function redeem(uint redeemTokens) override external returns (uint) {
         bytes memory data = delegateToImplementation(abi.encodeWithSignature("redeem(uint256)", redeemTokens));
         return abi.decode(data, (uint));
     }
@@ -100,7 +100,7 @@ contract RBep20Delegator is RTokenInterface, RBep20Interface, RDelegatorInterfac
      * @param redeemAmount The amount of underlying to redeem
      * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
      */
-    function redeemUnderlying(uint redeemAmount) external returns (uint) {
+    function redeemUnderlying(uint redeemAmount) override external returns (uint) {
         bytes memory data = delegateToImplementation(abi.encodeWithSignature("redeemUnderlying(uint256)", redeemAmount));
         return abi.decode(data, (uint));
     }
@@ -110,17 +110,17 @@ contract RBep20Delegator is RTokenInterface, RBep20Interface, RDelegatorInterfac
       * @param borrowAmount The amount of the underlying asset to borrow
       * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
       */
-    function borrow(uint borrowAmount) external returns (uint) {
+    function borrow(uint borrowAmount) override external returns (uint) {
         bytes memory data = delegateToImplementation(abi.encodeWithSignature("borrow(uint256)", borrowAmount));
         return abi.decode(data, (uint));
     }
 
     /**
      * @notice Sender repays their own borrow
-     * @param repayAmount The amount to repay
+     * @param repayAmount The amount to repay, or -1 for the full outstanding amount
      * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
      */
-    function repayBorrow(uint repayAmount) external returns (uint) {
+    function repayBorrow(uint repayAmount) override external returns (uint) {
         bytes memory data = delegateToImplementation(abi.encodeWithSignature("repayBorrow(uint256)", repayAmount));
         return abi.decode(data, (uint));
     }
@@ -128,10 +128,10 @@ contract RBep20Delegator is RTokenInterface, RBep20Interface, RDelegatorInterfac
     /**
      * @notice Sender repays a borrow belonging to borrower
      * @param borrower the account with the debt being payed off
-     * @param repayAmount The amount to repay
+     * @param repayAmount The amount to repay, or -1 for the full outstanding amount
      * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
      */
-    function repayBorrowBehalf(address borrower, uint repayAmount) external returns (uint) {
+    function repayBorrowBehalf(address borrower, uint repayAmount) override external returns (uint) {
         bytes memory data = delegateToImplementation(abi.encodeWithSignature("repayBorrowBehalf(address,uint256)", borrower, repayAmount));
         return abi.decode(data, (uint));
     }
@@ -144,7 +144,7 @@ contract RBep20Delegator is RTokenInterface, RBep20Interface, RDelegatorInterfac
      * @param repayAmount The amount of the underlying borrowed asset to repay
      * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
      */
-    function liquidateBorrow(address borrower, uint repayAmount, RTokenInterface rTokenCollateral) external returns (uint) {
+    function liquidateBorrow(address borrower, uint repayAmount, RTokenInterface rTokenCollateral) override external returns (uint) {
         bytes memory data = delegateToImplementation(abi.encodeWithSignature("liquidateBorrow(address,uint256,address)", borrower, repayAmount, rTokenCollateral));
         return abi.decode(data, (uint));
     }
@@ -155,7 +155,7 @@ contract RBep20Delegator is RTokenInterface, RBep20Interface, RDelegatorInterfac
      * @param amount The number of tokens to transfer
      * @return Whether or not the transfer succeeded
      */
-    function transfer(address dst, uint amount) external returns (bool) {
+    function transfer(address dst, uint amount) override external returns (bool) {
         bytes memory data = delegateToImplementation(abi.encodeWithSignature("transfer(address,uint256)", dst, amount));
         return abi.decode(data, (bool));
     }
@@ -167,7 +167,7 @@ contract RBep20Delegator is RTokenInterface, RBep20Interface, RDelegatorInterfac
      * @param amount The number of tokens to transfer
      * @return Whether or not the transfer succeeded
      */
-    function transferFrom(address src, address dst, uint256 amount) external returns (bool) {
+    function transferFrom(address src, address dst, uint256 amount) override external returns (bool) {
         bytes memory data = delegateToImplementation(abi.encodeWithSignature("transferFrom(address,address,uint256)", src, dst, amount));
         return abi.decode(data, (bool));
     }
@@ -180,7 +180,7 @@ contract RBep20Delegator is RTokenInterface, RBep20Interface, RDelegatorInterfac
      * @param amount The number of tokens that are approved (-1 means infinite)
      * @return Whether or not the approval succeeded
      */
-    function approve(address spender, uint256 amount) external returns (bool) {
+    function approve(address spender, uint256 amount) override external returns (bool) {
         bytes memory data = delegateToImplementation(abi.encodeWithSignature("approve(address,uint256)", spender, amount));
         return abi.decode(data, (bool));
     }
@@ -191,7 +191,7 @@ contract RBep20Delegator is RTokenInterface, RBep20Interface, RDelegatorInterfac
      * @param spender The address of the account which may transfer tokens
      * @return The number of tokens allowed to be spent (-1 means infinite)
      */
-    function allowance(address owner, address spender) external view returns (uint) {
+    function allowance(address owner, address spender) override external view returns (uint) {
         bytes memory data = delegateToViewImplementation(abi.encodeWithSignature("allowance(address,address)", owner, spender));
         return abi.decode(data, (uint));
     }
@@ -201,7 +201,7 @@ contract RBep20Delegator is RTokenInterface, RBep20Interface, RDelegatorInterfac
      * @param owner The address of the account to query
      * @return The number of tokens owned by `owner`
      */
-    function balanceOf(address owner) external view returns (uint) {
+    function balanceOf(address owner) override external view returns (uint) {
         bytes memory data = delegateToViewImplementation(abi.encodeWithSignature("balanceOf(address)", owner));
         return abi.decode(data, (uint));
     }
@@ -212,7 +212,7 @@ contract RBep20Delegator is RTokenInterface, RBep20Interface, RDelegatorInterfac
      * @param owner The address of the account to query
      * @return The amount of underlying owned by `owner`
      */
-    function balanceOfUnderlying(address owner) external returns (uint) {
+    function balanceOfUnderlying(address owner) override external returns (uint) {
         bytes memory data = delegateToImplementation(abi.encodeWithSignature("balanceOfUnderlying(address)", owner));
         return abi.decode(data, (uint));
     }
@@ -223,7 +223,7 @@ contract RBep20Delegator is RTokenInterface, RBep20Interface, RDelegatorInterfac
      * @param account Address of the account to snapshot
      * @return (possible error, token balance, borrow balance, exchange rate mantissa)
      */
-    function getAccountSnapshot(address account) external view returns (uint, uint, uint, uint) {
+    function getAccountSnapshot(address account) override external view returns (uint, uint, uint, uint) {
         bytes memory data = delegateToViewImplementation(abi.encodeWithSignature("getAccountSnapshot(address)", account));
         return abi.decode(data, (uint, uint, uint, uint));
     }
@@ -232,7 +232,7 @@ contract RBep20Delegator is RTokenInterface, RBep20Interface, RDelegatorInterfac
      * @notice Returns the current per-block borrow interest rate for this rToken
      * @return The borrow interest rate per block, scaled by 1e18
      */
-    function borrowRatePerBlock() external view returns (uint) {
+    function borrowRatePerBlock() override external view returns (uint) {
         bytes memory data = delegateToViewImplementation(abi.encodeWithSignature("borrowRatePerBlock()"));
         return abi.decode(data, (uint));
     }
@@ -241,7 +241,7 @@ contract RBep20Delegator is RTokenInterface, RBep20Interface, RDelegatorInterfac
      * @notice Returns the current per-block supply interest rate for this rToken
      * @return The supply interest rate per block, scaled by 1e18
      */
-    function supplyRatePerBlock() external view returns (uint) {
+    function supplyRatePerBlock() override external view returns (uint) {
         bytes memory data = delegateToViewImplementation(abi.encodeWithSignature("supplyRatePerBlock()"));
         return abi.decode(data, (uint));
     }
@@ -250,7 +250,7 @@ contract RBep20Delegator is RTokenInterface, RBep20Interface, RDelegatorInterfac
      * @notice Returns the current total borrows plus accrued interest
      * @return The total borrows with interest
      */
-    function totalBorrowsCurrent() external returns (uint) {
+    function totalBorrowsCurrent() override external returns (uint) {
         bytes memory data = delegateToImplementation(abi.encodeWithSignature("totalBorrowsCurrent()"));
         return abi.decode(data, (uint));
     }
@@ -260,7 +260,7 @@ contract RBep20Delegator is RTokenInterface, RBep20Interface, RDelegatorInterfac
      * @param account The address whose balance should be calculated after updating borrowIndex
      * @return The calculated balance
      */
-    function borrowBalanceCurrent(address account) external returns (uint) {
+    function borrowBalanceCurrent(address account) override external returns (uint) {
         bytes memory data = delegateToImplementation(abi.encodeWithSignature("borrowBalanceCurrent(address)", account));
         return abi.decode(data, (uint));
     }
@@ -270,16 +270,16 @@ contract RBep20Delegator is RTokenInterface, RBep20Interface, RDelegatorInterfac
      * @param account The address whose balance should be calculated
      * @return The calculated balance
      */
-    function borrowBalanceStored(address account) public view returns (uint) {
+    function borrowBalanceStored(address account) override public view returns (uint) {
         bytes memory data = delegateToViewImplementation(abi.encodeWithSignature("borrowBalanceStored(address)", account));
         return abi.decode(data, (uint));
     }
 
-   /**
+    /**
      * @notice Accrue interest then return the up-to-date exchange rate
      * @return Calculated exchange rate scaled by 1e18
      */
-    function exchangeRateCurrent() public returns (uint) {
+    function exchangeRateCurrent() override public returns (uint) {
         bytes memory data = delegateToImplementation(abi.encodeWithSignature("exchangeRateCurrent()"));
         return abi.decode(data, (uint));
     }
@@ -289,7 +289,7 @@ contract RBep20Delegator is RTokenInterface, RBep20Interface, RDelegatorInterfac
      * @dev This function does not accrue interest before calculating the exchange rate
      * @return Calculated exchange rate scaled by 1e18
      */
-    function exchangeRateStored() public view returns (uint) {
+    function exchangeRateStored() override public view returns (uint) {
         bytes memory data = delegateToViewImplementation(abi.encodeWithSignature("exchangeRateStored()"));
         return abi.decode(data, (uint));
     }
@@ -298,7 +298,7 @@ contract RBep20Delegator is RTokenInterface, RBep20Interface, RDelegatorInterfac
      * @notice Get cash balance of this rToken in the underlying asset
      * @return The quantity of underlying asset owned by this contract
      */
-    function getCash() external view returns (uint) {
+    function getCash() override external view returns (uint) {
         bytes memory data = delegateToViewImplementation(abi.encodeWithSignature("getCash()"));
         return abi.decode(data, (uint));
     }
@@ -308,7 +308,7 @@ contract RBep20Delegator is RTokenInterface, RBep20Interface, RDelegatorInterfac
       * @dev This calculates interest accrued from the last checkpointed block
       *      up to the current block and writes new checkpoint to storage.
       */
-    function accrueInterest() public returns (uint) {
+    function accrueInterest() override public returns (uint) {
         bytes memory data = delegateToImplementation(abi.encodeWithSignature("accrueInterest()"));
         return abi.decode(data, (uint));
     }
@@ -322,16 +322,16 @@ contract RBep20Delegator is RTokenInterface, RBep20Interface, RDelegatorInterfac
      * @param seizeTokens The number of rTokens to seize
      * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
      */
-    function seize(address liquidator, address borrower, uint seizeTokens) external returns (uint) {
+    function seize(address liquidator, address borrower, uint seizeTokens) override external returns (uint) {
         bytes memory data = delegateToImplementation(abi.encodeWithSignature("seize(address,address,uint256)", liquidator, borrower, seizeTokens));
         return abi.decode(data, (uint));
     }
 
     /**
-     * @notice A public function to sweep accidental BEP-20 transfers to this contract. Tokens are sent to admin (timelock)
-     * @param token The address of the BEP-20 token to sweep
+     * @notice A public function to sweep accidental ERC-20 transfers to this contract. Tokens are sent to admin (timelock)
+     * @param token The address of the ERC-20 token to sweep
      */
-    function sweepToken(EIP20NonStandardInterface token) external {
+    function sweepToken(EIP20NonStandardInterface token) override external {
         delegateToImplementation(abi.encodeWithSignature("sweepToken(address)", token));
     }
 
@@ -344,7 +344,7 @@ contract RBep20Delegator is RTokenInterface, RBep20Interface, RDelegatorInterfac
       * @param newPendingAdmin New pending admin.
       * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
       */
-    function _setPendingAdmin(address payable newPendingAdmin) external returns (uint) {
+    function _setPendingAdmin(address payable newPendingAdmin) override external returns (uint) {
         bytes memory data = delegateToImplementation(abi.encodeWithSignature("_setPendingAdmin(address)", newPendingAdmin));
         return abi.decode(data, (uint));
     }
@@ -354,7 +354,7 @@ contract RBep20Delegator is RTokenInterface, RBep20Interface, RDelegatorInterfac
       * @dev Admin function to set a new cointroller
       * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
       */
-    function _setCointroller(CointrollerInterface newCointroller) public returns (uint) {
+    function _setCointroller(CointrollerInterface newCointroller) override public returns (uint) {
         bytes memory data = delegateToImplementation(abi.encodeWithSignature("_setCointroller(address)", newCointroller));
         return abi.decode(data, (uint));
     }
@@ -364,7 +364,7 @@ contract RBep20Delegator is RTokenInterface, RBep20Interface, RDelegatorInterfac
       * @dev Admin function to accrue interest and set a new reserve factor
       * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
       */
-    function _setReserveFactor(uint newReserveFactorMantissa) external returns (uint) {
+    function _setReserveFactor(uint newReserveFactorMantissa) override external returns (uint) {
         bytes memory data = delegateToImplementation(abi.encodeWithSignature("_setReserveFactor(uint256)", newReserveFactorMantissa));
         return abi.decode(data, (uint));
     }
@@ -374,7 +374,7 @@ contract RBep20Delegator is RTokenInterface, RBep20Interface, RDelegatorInterfac
       * @dev Admin function for pending admin to accept role and update admin
       * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
       */
-    function _acceptAdmin() external returns (uint) {
+    function _acceptAdmin() override external returns (uint) {
         bytes memory data = delegateToImplementation(abi.encodeWithSignature("_acceptAdmin()"));
         return abi.decode(data, (uint));
     }
@@ -384,7 +384,7 @@ contract RBep20Delegator is RTokenInterface, RBep20Interface, RDelegatorInterfac
      * @param addAmount Amount of reserves to add
      * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
      */
-    function _addReserves(uint addAmount) external returns (uint) {
+    function _addReserves(uint addAmount) override external returns (uint) {
         bytes memory data = delegateToImplementation(abi.encodeWithSignature("_addReserves(uint256)", addAmount));
         return abi.decode(data, (uint));
     }
@@ -394,7 +394,7 @@ contract RBep20Delegator is RTokenInterface, RBep20Interface, RDelegatorInterfac
      * @param reduceAmount Amount of reduction to reserves
      * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
      */
-    function _reduceReserves(uint reduceAmount) external returns (uint) {
+    function _reduceReserves(uint reduceAmount) override external returns (uint) {
         bytes memory data = delegateToImplementation(abi.encodeWithSignature("_reduceReserves(uint256)", reduceAmount));
         return abi.decode(data, (uint));
     }
@@ -405,7 +405,7 @@ contract RBep20Delegator is RTokenInterface, RBep20Interface, RDelegatorInterfac
      * @param newInterestRateModel the new interest rate model to use
      * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
      */
-    function _setInterestRateModel(InterestRateModel newInterestRateModel) public returns (uint) {
+    function _setInterestRateModel(InterestRateModel newInterestRateModel) override public returns (uint) {
         bytes memory data = delegateToImplementation(abi.encodeWithSignature("_setInterestRateModel(address)", newInterestRateModel));
         return abi.decode(data, (uint));
     }
@@ -421,7 +421,7 @@ contract RBep20Delegator is RTokenInterface, RBep20Interface, RDelegatorInterfac
         (bool success, bytes memory returnData) = callee.delegatecall(data);
         assembly {
             if eq(success, 0) {
-                revert(add(returnData, 0x20), returndatasize)
+                revert(add(returnData, 0x20), returndatasize())
             }
         }
         return returnData;
@@ -448,7 +448,7 @@ contract RBep20Delegator is RTokenInterface, RBep20Interface, RDelegatorInterfac
         (bool success, bytes memory returnData) = address(this).staticcall(abi.encodeWithSignature("delegateToImplementation(bytes)", data));
         assembly {
             if eq(success, 0) {
-                revert(add(returnData, 0x20), returndatasize)
+                revert(add(returnData, 0x20), returndatasize())
             }
         }
         return abi.decode(returnData, (bytes));
@@ -458,19 +458,19 @@ contract RBep20Delegator is RTokenInterface, RBep20Interface, RDelegatorInterfac
      * @notice Delegates execution to an implementation contract
      * @dev It returns to the external caller whatever the implementation returns or forwards reverts
      */
-    function () external payable {
-        require(msg.value == 0,"RBep20Delegator:fallback: cannot send value to fallback");
+    fallback() external payable {
+        require(msg.value == 0,"RErc20Delegator:fallback: cannot send value to fallback");
 
         // delegate all other functions to current implementation
         (bool success, ) = implementation.delegatecall(msg.data);
 
         assembly {
             let free_mem_ptr := mload(0x40)
-            returndatacopy(free_mem_ptr, 0, returndatasize)
+            returndatacopy(free_mem_ptr, 0, returndatasize())
 
             switch success
-            case 0 { revert(free_mem_ptr, returndatasize) }
-            default { return(free_mem_ptr, returndatasize) }
+            case 0 { revert(free_mem_ptr, returndatasize()) }
+            default { return(free_mem_ptr, returndatasize()) }
         }
     }
 }

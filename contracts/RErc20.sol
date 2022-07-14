@@ -1,26 +1,26 @@
-pragma solidity ^0.5.16;
+pragma solidity ^0.8.10;
 
 import "./RToken.sol";
 
 interface RifiLike {
-  function delegate(address delegatee) external;
+    function delegate(address delegatee) external;
 }
 
 /**
- * @title Rifi's RBep20 Contract
+ * @title Rifi's RErc20 Contract
  * @notice RTokens which wrap an EIP-20 underlying
  * @author Rifi
  */
-contract RBep20 is RToken, RBep20Interface {
+contract RErc20 is RToken, RErc20Interface {
     /**
      * @notice Initialize the new money market
      * @param underlying_ The address of the underlying asset
      * @param cointroller_ The address of the Cointroller
      * @param interestRateModel_ The address of the interest rate model
      * @param initialExchangeRateMantissa_ The initial exchange rate, scaled by 1e18
-     * @param name_ BEP-20 name of this token
-     * @param symbol_ BEP-20 symbol of this token
-     * @param decimals_ BEP-20 decimal precision of this token
+     * @param name_ ERC-20 name of this token
+     * @param symbol_ ERC-20 symbol of this token
+     * @param decimals_ ERC-20 decimal precision of this token
      */
     function initialize(address underlying_,
                         CointrollerInterface cointroller_,
@@ -45,9 +45,9 @@ contract RBep20 is RToken, RBep20Interface {
      * @param mintAmount The amount of the underlying asset to supply
      * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
      */
-    function mint(uint mintAmount) external returns (uint) {
-        (uint err,) = mintInternal(mintAmount);
-        return err;
+    function mint(uint mintAmount) override external returns (uint) {
+        mintInternal(mintAmount);
+        return NO_ERROR;
     }
 
     /**
@@ -56,8 +56,9 @@ contract RBep20 is RToken, RBep20Interface {
      * @param redeemTokens The number of rTokens to redeem into underlying
      * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
      */
-    function redeem(uint redeemTokens) external returns (uint) {
-        return redeemInternal(redeemTokens);
+    function redeem(uint redeemTokens) override external returns (uint) {
+        redeemInternal(redeemTokens);
+        return NO_ERROR;
     }
 
     /**
@@ -66,8 +67,9 @@ contract RBep20 is RToken, RBep20Interface {
      * @param redeemAmount The amount of underlying to redeem
      * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
      */
-    function redeemUnderlying(uint redeemAmount) external returns (uint) {
-        return redeemUnderlyingInternal(redeemAmount);
+    function redeemUnderlying(uint redeemAmount) override external returns (uint) {
+        redeemUnderlyingInternal(redeemAmount);
+        return NO_ERROR;
     }
 
     /**
@@ -75,29 +77,30 @@ contract RBep20 is RToken, RBep20Interface {
       * @param borrowAmount The amount of the underlying asset to borrow
       * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
       */
-    function borrow(uint borrowAmount) external returns (uint) {
-        return borrowInternal(borrowAmount);
+    function borrow(uint borrowAmount) override external returns (uint) {
+        borrowInternal(borrowAmount);
+        return NO_ERROR;
     }
 
     /**
      * @notice Sender repays their own borrow
-     * @param repayAmount The amount to repay
+     * @param repayAmount The amount to repay, or -1 for the full outstanding amount
      * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
      */
-    function repayBorrow(uint repayAmount) external returns (uint) {
-        (uint err,) = repayBorrowInternal(repayAmount);
-        return err;
+    function repayBorrow(uint repayAmount) override external returns (uint) {
+        repayBorrowInternal(repayAmount);
+        return NO_ERROR;
     }
 
     /**
      * @notice Sender repays a borrow belonging to borrower
      * @param borrower the account with the debt being payed off
-     * @param repayAmount The amount to repay
+     * @param repayAmount The amount to repay, or -1 for the full outstanding amount
      * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
      */
-    function repayBorrowBehalf(address borrower, uint repayAmount) external returns (uint) {
-        (uint err,) = repayBorrowBehalfInternal(borrower, repayAmount);
-        return err;
+    function repayBorrowBehalf(address borrower, uint repayAmount) override external returns (uint) {
+        repayBorrowBehalfInternal(borrower, repayAmount);
+        return NO_ERROR;
     }
 
     /**
@@ -108,19 +111,20 @@ contract RBep20 is RToken, RBep20Interface {
      * @param rTokenCollateral The market in which to seize collateral from the borrower
      * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
      */
-    function liquidateBorrow(address borrower, uint repayAmount, RTokenInterface rTokenCollateral) external returns (uint) {
-        (uint err,) = liquidateBorrowInternal(borrower, repayAmount, rTokenCollateral);
-        return err;
+    function liquidateBorrow(address borrower, uint repayAmount, RTokenInterface rTokenCollateral) override external returns (uint) {
+        liquidateBorrowInternal(borrower, repayAmount, rTokenCollateral);
+        return NO_ERROR;
     }
 
     /**
-     * @notice A public function to sweep accidental BEP-20 transfers to this contract. Tokens are sent to admin (timelock)
-     * @param token The address of the BEP-20 token to sweep
+     * @notice A public function to sweep accidental ERC-20 transfers to this contract. Tokens are sent to admin (timelock)
+     * @param token The address of the ERC-20 token to sweep
      */
-    function sweepToken(EIP20NonStandardInterface token) external {
-    	require(address(token) != underlying, "RBep20::sweepToken: can not sweep underlying token");
-    	uint256 balance = token.balanceOf(address(this));
-    	token.transfer(admin, balance);
+    function sweepToken(EIP20NonStandardInterface token) override external {
+        require(msg.sender == admin, "RErc20::sweepToken: only admin can sweep tokens");
+        require(address(token) != underlying, "RErc20::sweepToken: can not sweep underlying token");
+        uint256 balance = token.balanceOf(address(this));
+        token.transfer(admin, balance);
     }
 
     /**
@@ -128,7 +132,7 @@ contract RBep20 is RToken, RBep20Interface {
      * @param addAmount The amount fo underlying token to add as reserves
      * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
      */
-    function _addReserves(uint addAmount) external returns (uint) {
+    function _addReserves(uint addAmount) override external returns (uint) {
         return _addReservesInternal(addAmount);
     }
 
@@ -139,7 +143,7 @@ contract RBep20 is RToken, RBep20Interface {
      * @dev This excludes the value of the current message, if any
      * @return The quantity of underlying tokens owned by this contract
      */
-    function getCashPrior() internal view returns (uint) {
+    function getCashPrior() virtual override internal view returns (uint) {
         EIP20Interface token = EIP20Interface(underlying);
         return token.balanceOf(address(this));
     }
@@ -150,33 +154,34 @@ contract RBep20 is RToken, RBep20Interface {
      *      This function returns the actual amount received,
      *      which may be less than `amount` if there is a fee attached to the transfer.
      *
-     *      Note: This wrapper safely handles non-standard BEP-20 tokens that do not return a value.
+     *      Note: This wrapper safely handles non-standard ERC-20 tokens that do not return a value.
      *            See here: https://medium.com/coinmonks/missing-return-value-bug-at-least-130-tokens-affected-d67bf08521ca
      */
-    function doTransferIn(address from, uint amount) internal returns (uint) {
-        EIP20NonStandardInterface token = EIP20NonStandardInterface(underlying);
-        uint balanceBefore = EIP20Interface(underlying).balanceOf(address(this));
+    function doTransferIn(address from, uint amount) virtual override internal returns (uint) {
+        // Read from storage once
+        address underlying_ = underlying;
+        EIP20NonStandardInterface token = EIP20NonStandardInterface(underlying_);
+        uint balanceBefore = EIP20Interface(underlying_).balanceOf(address(this));
         token.transferFrom(from, address(this), amount);
 
         bool success;
         assembly {
             switch returndatasize()
-                case 0 {                       // This is a non-standard BEP-20
+                case 0 {                       // This is a non-standard ERC-20
                     success := not(0)          // set success to true
                 }
-                case 32 {                      // This is a compliant BEP-20
+                case 32 {                      // This is a compliant ERC-20
                     returndatacopy(0, 0, 32)
-                    success := mload(0)        // Set `success = returndata` of external call
+                    success := mload(0)        // Set `success = returndata` of override external call
                 }
-                default {                      // This is an excessively non-compliant BEP-20, revert.
+                default {                      // This is an excessively non-compliant ERC-20, revert.
                     revert(0, 0)
                 }
         }
         require(success, "TOKEN_TRANSFER_IN_FAILED");
 
         // Calculate the amount that was *actually* transferred
-        uint balanceAfter = EIP20Interface(underlying).balanceOf(address(this));
-        require(balanceAfter >= balanceBefore, "TOKEN_TRANSFER_IN_OVERFLOW");
+        uint balanceAfter = EIP20Interface(underlying_).balanceOf(address(this));
         return balanceAfter - balanceBefore;   // underflow already checked above, just subtract
     }
 
@@ -186,24 +191,24 @@ contract RBep20 is RToken, RBep20Interface {
      *      insufficient cash held in this contract. If caller has checked protocol's balance prior to this call, and verified
      *      it is >= amount, this should not revert in normal conditions.
      *
-     *      Note: This wrapper safely handles non-standard BEP-20 tokens that do not return a value.
+     *      Note: This wrapper safely handles non-standard ERC-20 tokens that do not return a value.
      *            See here: https://medium.com/coinmonks/missing-return-value-bug-at-least-130-tokens-affected-d67bf08521ca
      */
-    function doTransferOut(address payable to, uint amount) internal {
+    function doTransferOut(address payable to, uint amount) virtual override internal {
         EIP20NonStandardInterface token = EIP20NonStandardInterface(underlying);
         token.transfer(to, amount);
 
         bool success;
         assembly {
             switch returndatasize()
-                case 0 {                      // This is a non-standard BEP-20
+                case 0 {                      // This is a non-standard ERC-20
                     success := not(0)          // set success to true
                 }
-                case 32 {                     // This is a compliant BEP-20
+                case 32 {                     // This is a compliant ERC-20
                     returndatacopy(0, 0, 32)
-                    success := mload(0)        // Set `success = returndata` of external call
+                    success := mload(0)        // Set `success = returndata` of override external call
                 }
-                default {                     // This is an excessively non-compliant BEP-20, revert.
+                default {                     // This is an excessively non-compliant ERC-20, revert.
                     revert(0, 0)
                 }
         }

@@ -11,7 +11,7 @@
       "address": ""
     },
     "interestRateModel": {
-      "address": "0xd74dAdE3833932B8A043A7a0253A9DB262EB4868",
+      "address": "0x57A66CE8EEa69629221b7126f202f067722aa99c",
       "model": "JumpRateModel",
       "params": {
         "baseRatePerYear": "0.02",
@@ -38,12 +38,12 @@
         "address": "0x880057d85311Ac8dC395851103457780B0d53408"
       },
       "interestRateModel": {
-        "address": "0x82Cee661CF2E4B03bDbB1c7Aa8E74c5eA954538A",
+        "address": "0xA7aFE6e1343e978ddDb5D7D1Ec1AFDF6bdedDCcd",
         "model": "JumpRateModel",
         "params": {
           "baseRatePerYear": "0.02",
           "lowerBaseRatePerYear": "0.01",
-          "multiplierPerYear": "4",
+          "multiplierPerYear": "0.04",
           "jumpMultiplierPerYear": "1.09",
           "kink_": "0.8",
           "lowerKink_": "0.4"
@@ -59,22 +59,22 @@
       "decimals": 8,
       "underlying": {
         "symbol": "USDC",
-        "decimals": "6",
+        "decimals": 6,
         "address": "0xE8CCeE0161512dCf6f2fFd2435062ff214B41f01"
       },
       "interestRateModel": {
-        "address": "0xAb587474861204b26CD9c2F486785772B1386544",
+        "address": "0x5B7c1B7075C564dD345FD0111751Be6E25722EDB",
         "model": "JumpRateModel",
         "params": {
           "baseRatePerYear": "0.02",
           "lowerBaseRatePerYear": "0.01",
-          "multiplierPerYear": "4",
+          "multiplierPerYear": "0.04",
           "jumpMultiplierPerYear": "1.09",
           "kink_": "0.8",
           "lowerKink_": "0.4"
         }
       },
-      "initialExchangeRateMantissa": "200000000",
+      "initialExchangeRateMantissa": "2047100.67574",
       "collateralFactor": "0.6",
       "rifiSpeed": "0.00000000645"
     }

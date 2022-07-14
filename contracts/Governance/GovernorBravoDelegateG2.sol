@@ -1,4 +1,5 @@
-pragma solidity ^0.8.10;
+pragma solidity ^0.8.0;
+pragma experimental ABIEncoderV2;
 
 import "./GovernorBravoInterfaces.sol";
 
@@ -38,14 +39,14 @@ contract GovernorBravoDelegate is GovernorBravoDelegateStorageV2, GovernorBravoE
     bytes32 public constant BALLOT_TYPEHASH = keccak256("Ballot(uint256 proposalId,uint8 support)");
 
     /**
-      * @notice Used to initialize the contract during delegator constructor
+      * @notice Used to initialize the contract during delegator contructor
       * @param timelock_ The address of the Timelock
       * @param rifi_ The address of the RIFI token
       * @param votingPeriod_ The initial voting period
       * @param votingDelay_ The initial voting delay
       * @param proposalThreshold_ The initial proposal threshold
       */
-    function initialize(address timelock_, address rifi_, uint votingPeriod_, uint votingDelay_, uint proposalThreshold_) virtual public {
+    function initialize(address timelock_, address rifi_, uint votingPeriod_, uint votingDelay_, uint proposalThreshold_) public {
         require(address(timelock) == address(0), "GovernorBravo::initialize: can only initialize once");
         require(msg.sender == admin, "GovernorBravo::initialize: admin only");
         require(timelock_ != address(0), "GovernorBravo::initialize: invalid timelock address");
@@ -90,11 +91,8 @@ contract GovernorBravoDelegate is GovernorBravoDelegateStorageV2, GovernorBravoE
         uint endBlock = add256(startBlock, votingPeriod);
 
         proposalCount++;
-        uint newProposalID = proposalCount;
-        Proposal storage newProposal = proposals[newProposalID];
-        // This should never happen but add a check in case.
-        require(newProposal.id == 0, "GovernorBravo::propose: ProposalID collsion");
-        newProposal.id = newProposalID;
+        Proposal storage newProposal = proposals[proposalCount];
+        newProposal.id = proposalCount;
         newProposal.proposer = msg.sender;
         newProposal.eta = 0;
         newProposal.targets = targets;
@@ -168,7 +166,7 @@ contract GovernorBravoDelegate is GovernorBravoDelegateStorageV2, GovernorBravoE
                 require((rifi.getPriorVotes(proposal.proposer, sub256(block.number, 1)) < proposalThreshold), "GovernorBravo::cancel: proposer above threshold");
             }
         }
-
+        
         proposal.canceled = true;
         for (uint i = 0; i < proposal.targets.length; i++) {
             timelock.cancelTransaction(proposal.targets[i], proposal.values[i], proposal.signatures[i], proposal.calldatas[i], proposal.eta);

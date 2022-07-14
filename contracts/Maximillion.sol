@@ -1,6 +1,6 @@
-pragma solidity ^0.5.16;
+pragma solidity ^0.8.10;
 
-import "./RAstar.sol";
+import "./RNative.sol";
 
 /**
  * @title Rifi's Maximillion Contract
@@ -8,40 +8,40 @@ import "./RAstar.sol";
  */
 contract Maximillion {
     /**
-     * @notice The default rAstar market to repay in
+     * @notice The default rNative market to repay in
      */
-    RAstar public rAstar;
+    RNative public rNative;
 
     /**
-     * @notice Construct a Maximillion to repay max in a RAstar market
+     * @notice Construct a Maximillion to repay max in a RNative market
      */
-    constructor(RAstar rAstar_) public {
-        rAstar = rAstar_;
+    constructor(RNative rNative_) public {
+        rNative = rNative_;
     }
 
     /**
-     * @notice msg.sender sends Ether to repay an account's borrow in the rAstar market
-     * @dev The provided Ether is applied towards the borrow balance, any excess is refunded
+     * @notice msg.sender sends Native token to repay an account's borrow in the rNative market
+     * @dev The provided Native token is applied towards the borrow balance, any excess is refunded
      * @param borrower The address of the borrower account to repay on behalf of
      */
     function repayBehalf(address borrower) public payable {
-        repayBehalfExplicit(borrower, rAstar);
+        repayBehalfExplicit(borrower, rNative);
     }
 
     /**
-     * @notice msg.sender sends Ether to repay an account's borrow in a rAstar market
-     * @dev The provided Ether is applied towards the borrow balance, any excess is refunded
+     * @notice msg.sender sends Native token to repay an account's borrow in a rNative market
+     * @dev The provided Native token is applied towards the borrow balance, any excess is refunded
      * @param borrower The address of the borrower account to repay on behalf of
-     * @param rAstar_ The address of the rAstar contract to repay in
+     * @param rNative_ The address of the rNative contract to repay in
      */
-    function repayBehalfExplicit(address borrower, RAstar rAstar_) public payable {
+    function repayBehalfExplicit(address borrower, RNative rNative_) public payable {
         uint received = msg.value;
-        uint borrows = rAstar_.borrowBalanceCurrent(borrower);
+        uint borrows = rNative_.borrowBalanceCurrent(borrower);
         if (received > borrows) {
-            rAstar_.repayBorrowBehalf.value(borrows)(borrower);
-            msg.sender.transfer(received - borrows);
+            rNative_.repayBorrowBehalf{value: borrows}(borrower);
+            payable(msg.sender).transfer(received - borrows);
         } else {
-            rAstar_.repayBorrowBehalf.value(received)(borrower);
+            rNative_.repayBorrowBehalf{value: received}(borrower);
         }
     }
 }

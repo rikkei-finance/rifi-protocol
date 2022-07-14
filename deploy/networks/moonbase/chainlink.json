@@ -1,0 +1,78 @@
+{
+  "ADA": {
+    "decimals": "8",
+    "address": "0xbaf185d33e5c724e3c0b880abc0ff2fd7bae875a"
+  },
+  "BCH": {
+    "decimals": "8",
+    "address": "0xbaf185d33e5c724e3c0b880abc0ff2fd7bae875a"
+  },
+  "BNB": {
+    "decimals": "8",
+    "address": "0xbaf185d33e5c724e3c0b880abc0ff2fd7bae875a"
+  },
+  "GLMR": {
+    "decimals": "8",
+    "address": "0xbaf185d33e5c724e3c0b880abc0ff2fd7bae875a"
+  },
+  "BTC": {
+    "decimals": "8",
+    "address": "0xbaf185d33e5c724e3c0b880abc0ff2fd7bae875a"
+  },
+  "BUSD": {
+    "decimals": "8",
+    "address": "0xbaf185d33e5c724e3c0b880abc0ff2fd7bae875a"
+  },
+  "DAI": {
+    "decimals": "8",
+    "address": "0xbaf185d33e5c724e3c0b880abc0ff2fd7bae875a"
+  },
+  "DOGE": {
+    "decimals": "8",
+    "address": "0xbaf185d33e5c724e3c0b880abc0ff2fd7bae875a"
+  },
+  "DOT": {
+    "decimals": "8",
+    "address": "0xbaf185d33e5c724e3c0b880abc0ff2fd7bae875a"
+  },
+  "ETH": {
+    "decimals": "8",
+    "address": "0xbaf185d33e5c724e3c0b880abc0ff2fd7bae875a"
+  },
+  "FIL": {
+    "decimals": "8",
+    "address": "0xbaf185d33e5c724e3c0b880abc0ff2fd7bae875a"
+  },
+  "LINK": {
+    "decimals": "8",
+    "address": "0xbaf185d33e5c724e3c0b880abc0ff2fd7bae875a"
+  },
+  "LTC": {
+    "decimals": "8",
+    "address": "0xbaf185d33e5c724e3c0b880abc0ff2fd7bae875a"
+  },
+  "SXP": {
+    "decimals": "8",
+    "address": "0xbaf185d33e5c724e3c0b880abc0ff2fd7bae875a"
+  },
+  "USDC": {
+    "decimals": "8",
+    "address": "0xbaf185d33e5c724e3c0b880abc0ff2fd7bae875a"
+  },
+  "USDT": {
+    "decimals": "8",
+    "address": "0xbaf185d33e5c724e3c0b880abc0ff2fd7bae875a"
+  },
+  "VAI": {
+    "decimals": "8",
+    "address": "0xbaf185d33e5c724e3c0b880abc0ff2fd7bae875a"
+  },
+  "XRP": {
+    "decimals": "8",
+    "address": "0xbaf185d33e5c724e3c0b880abc0ff2fd7bae875a"
+  },
+  "XVS": {
+    "decimals": "8",
+    "address": "0xbaf185d33e5c724e3c0b880abc0ff2fd7bae875a"
+  }
+}

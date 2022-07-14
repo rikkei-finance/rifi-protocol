@@ -4,7 +4,7 @@
   "description": "Rikkei Finance Market",
   "main": "index.js",
   "scripts": {
-    "compile": "hardhat compile",
+    "compile": "./script/compile",
     "console": "if node -v | grep -E \"v(12|13)\" > /dev/null; then flags=\"-n --experimental-repl-await\"; fi; npx $flags saddle console",
     "coverage": "./script/coverage",
     "deploy": "./scenario/script/repl -s ./script/scen/deploy.scen",
@@ -16,10 +16,10 @@
     "test:prepare": "NO_RUN=true ./script/test",
     "checksize": "npx run ./script/saddle/cointrollerSize.js",
     "migrate:bsc_testnet": "npx hardhat run --network bsc_testnet ./deploy/lending.js",
+    "migrate:moonbase": "npx hardhat run --network moonbase ./deploy/lending.js",
     "migrate:localhost": "npx hardhat run --network localhost ./deploy/lending.js",
     "upgrade:bsc_testnet": "npx hardhat run --network bsc_testnet ./deploy/upgrade.js",
-    "migrate:shibuya": "npx hardhat run --network shibuya ./deploy/deploy_astar.js",
-    "migrate:astar": "npx hardhat run --network astar ./deploy/deploy_astar.js"
+    "upgrade:moonbase": "npx hardhat run --network moonbase ./deploy/upgrade.js"
   },
   "repository": "git@github.com:rifi-finance/rifi-protocol.git",
   "author": "Rikkei Finance, Inc",

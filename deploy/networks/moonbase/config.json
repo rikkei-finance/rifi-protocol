@@ -1,17 +1,16 @@
 {
-  "RIFI": "",
-  "DIA": "",
+  "RIFI": "0xD7c271AC4eB765705B32EdbA75CB6d3243c731F6",
   "rNative": {
-    "name": "Rifi ASTR",
-    "symbol": "rASTR",
+    "name": "Rifi GLMR",
+    "symbol": "rGLMR",
     "decimals": 8,
     "underlying": {
-      "symbol": "ASTR",
+      "symbol": "GLMR",
       "decimals": 18,
       "address": ""
     },
     "interestRateModel": {
-      "address": "",
+      "address": "0x6793bb24c5a8Da221b07eCC07B1D13F6dC6129e3",
       "model": "JumpRateModel",
       "params": {
         "baseRatePerYear": "0.02",
@@ -28,17 +27,17 @@
     "rifiSpeed": "0.04"
   },
   "rTokens": {
-    "rBTC": {
-      "name": "Rifi BTC",
-      "symbol": "rBTC",
+    "rBUSD": {
+      "name": "Rifi BUSD",
+      "symbol": "rBUSD",
       "decimals": 8,
       "underlying": {
-        "symbol": "BTC",
-        "decimals": 8,
+        "symbol": "BUSD",
+        "decimals": 18,
         "address": ""
       },
       "interestRateModel": {
-        "address": "",
+        "address": "0x6793bb24c5a8Da221b07eCC07B1D13F6dC6129e3",
         "model": "JumpRateModel",
         "params": {
           "baseRatePerYear": "0.02",
@@ -59,11 +58,11 @@
       "decimals": 8,
       "underlying": {
         "symbol": "USDC",
-        "decimals": "6",
+        "decimals": "18",
         "address": ""
       },
       "interestRateModel": {
-        "address": "",
+        "address": "0x6793bb24c5a8Da221b07eCC07B1D13F6dC6129e3",
         "model": "JumpRateModel",
         "params": {
           "baseRatePerYear": "0.02",

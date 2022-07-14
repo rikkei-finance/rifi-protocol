@@ -1,13 +1,13 @@
-pragma solidity ^0.5.16;
+pragma solidity ^0.8.10;
 
-import "./RBep20Delegate.sol";
+import "./RErc20Delegate.sol";
 
 /**
  * @title Rifi's RDai Contract
  * @notice RToken which wraps Multi-Collateral DAI
  * @author Rifi
  */
-contract RDaiDelegate is RBep20Delegate {
+contract RDaiDelegate is RErc20Delegate {
     /**
      * @notice DAI adapter address
      */
@@ -27,7 +27,7 @@ contract RDaiDelegate is RBep20Delegate {
      * @notice Delegate interface to become the implementation
      * @param data The encoded arguments for becoming
      */
-    function _becomeImplementation(bytes memory data) public {
+    function _becomeImplementation(bytes memory data) override public {
         require(msg.sender == admin, "only the admin may initialize the implementation");
 
         (address daiJoinAddress_, address potAddress_) = abi.decode(data, (address, address));
@@ -53,7 +53,7 @@ contract RDaiDelegate is RBep20Delegate {
         vatAddress = address(vat);
 
         // Approve moving our DAI into the vat through daiJoin
-        dai.approve(daiJoinAddress, uint(-1));
+        dai.approve(daiJoinAddress, type(uint).max);
 
         // Approve the pot to transfer our funds within the vat
         vat.hope(potAddress);
@@ -69,7 +69,7 @@ contract RDaiDelegate is RBep20Delegate {
     /**
      * @notice Delegate interface to resign the implementation
      */
-    function _resignImplementation() public {
+    function _resignImplementation() override public {
         require(msg.sender == admin, "only the admin may abandon the implementation");
 
         // Transfer all cash out of the DSR - note that this relies on self-transfer
@@ -98,7 +98,7 @@ contract RDaiDelegate is RBep20Delegate {
       * @dev This calculates interest accrued from the last checkpointed block
       *      up to the current block and writes new checkpoint to storage.
       */
-    function accrueInterest() public returns (uint) {
+    function accrueInterest() override public returns (uint) {
         // Accumulate DSR interest
         PotLike(potAddress).drip();
 
@@ -113,7 +113,7 @@ contract RDaiDelegate is RBep20Delegate {
      * @dev This excludes the value of the current message, if any
      * @return The quantity of underlying tokens owned by this contract
      */
-    function getCashPrior() internal view returns (uint) {
+    function getCashPrior() override internal view returns (uint) {
         PotLike pot = PotLike(potAddress);
         uint pie = pot.pie(address(this));
         return mul(pot.chi(), pie) / RAY;
@@ -125,13 +125,15 @@ contract RDaiDelegate is RBep20Delegate {
      * @param amount Amount of underlying to transfer
      * @return The actual amount that is transferred
      */
-    function doTransferIn(address from, uint amount) internal returns (uint) {
+    function doTransferIn(address from, uint amount) override internal returns (uint) {
+        // Read from storage once
+        address underlying_ = underlying;
         // Perform the EIP-20 transfer in
-        EIP20Interface token = EIP20Interface(underlying);
+        EIP20Interface token = EIP20Interface(underlying_);
         require(token.transferFrom(from, address(this), amount), "unexpected EIP-20 transfer in return");
 
         DaiJoinLike daiJoin = DaiJoinLike(daiJoinAddress);
-        GemLike dai = GemLike(underlying);
+        GemLike dai = GemLike(underlying_);
         PotLike pot = PotLike(potAddress);
         VatLike vat = VatLike(vatAddress);
 
@@ -154,7 +156,7 @@ contract RDaiDelegate is RBep20Delegate {
      * @param to Address to transfer funds to
      * @param amount Amount of underlying to transfer
      */
-    function doTransferOut(address payable to, uint amount) internal {
+    function doTransferOut(address payable to, uint amount) override internal {
         DaiJoinLike daiJoin = DaiJoinLike(daiJoinAddress);
         PotLike pot = PotLike(potAddress);
 
