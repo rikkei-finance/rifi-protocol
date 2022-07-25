@@ -181,8 +181,8 @@ module.exports = {
     },
     astar: {
       url: `https://astar.public.blastapi.io`,
-      accounts: [`0x${TESTNET_KEY}`],
-      network_id: 81, // Astar's id
+      accounts: [`0x${MAINNET_KEY}`],
+      network_id: 592, // Astar's id
       gas: 7000000,
       confirmations: 2, // # of confs to wait between deployments. (default: 0)
       timeoutBlocks: 200000000, // # of blocks before a deployment times out  (minimum/default: 50)
