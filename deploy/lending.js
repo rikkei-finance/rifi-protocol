@@ -205,6 +205,11 @@ async function main() {
 
     unitroller = Cointroller.attach(addresses.Cointroller);
 
+    await runWithProgressCheck("unitroller.initialize", async () => {
+      const transaction = await unitroller.initialize(config.RIFI);
+      console.log(`unitroller.initialize transaction: ${explorer}/tx/${transaction.tx}`);
+    });
+
 
     await runWithProgressCheck("SimplePriceOracle", async () => {
       const priceOracle = await SimplePriceOracle.deploy();
