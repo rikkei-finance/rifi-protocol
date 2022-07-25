@@ -64,7 +64,7 @@ contract RifiLens {
         address underlyingAssetAddress;
         uint underlyingDecimals;
 
-        if (compareStrings(rToken.symbol(), "rNative")) {
+        if (compareStrings(rToken.symbol(), "rASTR")) {
             underlyingAssetAddress = address(0);
             underlyingDecimals = 18;
         } else {
@@ -116,7 +116,7 @@ contract RifiLens {
         uint tokenBalance;
         uint tokenAllowance;
 
-        if (compareStrings(rToken.symbol(), "rNative")) {
+        if (compareStrings(rToken.symbol(), "rASTR")) {
             tokenBalance = account.balance;
             tokenAllowance = account.balance;
         } else {

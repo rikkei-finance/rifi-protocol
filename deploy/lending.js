@@ -11,8 +11,7 @@ const {
 const addressOutput = `${__dirname}/networks/${network}/address.json`;
 const deployConfig = `${__dirname}/networks/${network}/config.json`;
 const deployProgress = `${__dirname}/networks/${network}/progress.json`;
-const chainlinkOracle = `${__dirname}/networks/${network}/chainlink.json`;
-const faucetInitialAmount = 10 ** 7;
+const diaOracle = `${__dirname}/networks/${network}/dia.json`;
 
 const explorers = {
   bsc_mainnet: "https://bscscan.com",
@@ -21,6 +20,8 @@ const explorers = {
   ropsten: "https://ropsten.etherscan.io",
   rinkeby: "https://rinkeby.etherscan.io",
   kovan: "https://kovan.etherscan.io",
+  shibuya: "https://blockscout.com/shibuya/",
+  astar: "https://blockscout.com/astar/",
 };
 
 async function main() {
@@ -32,7 +33,7 @@ async function main() {
 
   const addresses = {};
   const config = {};
-  const chainlink = {};
+  const dia = {};
   const progress = {};
 
   const explorer = explorers[network];
@@ -44,8 +45,8 @@ async function main() {
     JumpRateModel,
     RErc20Delegate,
     RErc20Delegator,
-    SimplePriceOracle,
-    RNative,
+    DIAPriceOracle,
+    RAstar,
     RifiLens,
   ] = await Promise.all([
     ethers.getContractFactory("Unitroller"),
@@ -54,8 +55,8 @@ async function main() {
     ethers.getContractFactory("JumpRateModelV2"),
     ethers.getContractFactory("RErc20Delegate"),
     ethers.getContractFactory("RErc20Delegator"),
-    ethers.getContractFactory("SimplePriceOracle"),
-    ethers.getContractFactory("RNative"),
+    ethers.getContractFactory("DIAPriceOracle"),
+    ethers.getContractFactory("RAstar"),
     ethers.getContractFactory("RifiLens"),
   ]);
 
@@ -138,10 +139,10 @@ async function main() {
   const progressData = fs.readFileSync(deployProgress);
   Object.assign(progress, JSON.parse(progressData.toString()));
 
-  const chainlinkData = fs.readFileSync(chainlinkOracle);
-  Object.assign(chainlink, JSON.parse(chainlinkData.toString()));
+  const diaData = fs.readFileSync(diaOracle);
+  Object.assign(dia, JSON.parse(diaData.toString()));
 
-  console.log(chainlink);
+  console.log(dia);
   console.log(config);
   console.log(addresses);
 
@@ -210,9 +211,9 @@ async function main() {
       console.log(`unitroller.initialize transaction: ${explorer}/tx/${transaction.tx}`);
     });
 
-
-    await runWithProgressCheck("SimplePriceOracle", async () => {
-      const priceOracle = await SimplePriceOracle.deploy();
+    await runWithProgressCheck("DIAPriceOracle", async () => {
+      if (!config.DIA) throw new Error("can not found DIA");
+      const priceOracle = await DIAPriceOracle.deploy(config.DIA);
       await priceOracle.deployed();
       console.log(`PriceOracle address at: ${explorer}/address/${priceOracle.address}`);
       addresses.PriceFeed = priceOracle.address;
@@ -221,7 +222,7 @@ async function main() {
         .catch((e) => console.log(e.message));
     });
 
-    const priceOracle = SimplePriceOracle.attach(addresses.PriceFeed);
+    const priceOracle = DIAPriceOracle.attach(addresses.PriceFeed);
 
     await runWithProgressCheck("unitroller._setPriceOracle", async () => {
       const transaction = await unitroller._setPriceOracle(priceOracle.address);
@@ -269,7 +270,7 @@ async function main() {
           config.rNative.interestRateModel.address = modelAddress;
         }
 
-        const rNative = await RNative.deploy(
+        const rNative = await RAstar.deploy(
           addresses.Cointroller,
           modelAddress,
           web3.utils.toWei(initialExchangeRateMantissa, "ether"),
@@ -280,37 +281,41 @@ async function main() {
         );
         await rNative.deployed();
 
-        console.log(`rNative address at: ${explorer}/address/${rNative.address}`);
+        console.log(`rAstar address at: ${explorer}/address/${rNative.address}`);
 
         addresses[symbol] = rNative.address;
 
-        await hre.run("verify:verify", {
-          address: rNative.address,
-          constructorArguments: [
-            addresses.Cointroller,
-            modelAddress,
-            web3.utils.toWei(initialExchangeRateMantissa, "ether"),
-            name,
-            symbol,
-            decimals,
-            governance,
-          ],
-        }).catch(err => console.log(err.message));
+        await hre
+          .run("verify:verify", {
+            address: rNative.address,
+            constructorArguments: [
+              addresses.Cointroller,
+              modelAddress,
+              web3.utils.toWei(initialExchangeRateMantissa, "ether"),
+              name,
+              symbol,
+              decimals,
+              governance,
+            ],
+          })
+          .catch((err) => console.log(err.message));
       });
 
       await runWithProgressCheck("rNative: unitroller._supportMarket", async () => {
         let transaction = await unitroller._supportMarket(addresses[symbol]);
         console.log(
-          `rNative Unitroller._supportMarket transaction: ${explorer}/tx/${transaction.tx}`
+          `rAstar Unitroller._supportMarket transaction: ${explorer}/tx/${transaction.tx}`
         );
       });
 
       await runWithProgressCheck("rNative: priceOracle.setOracleData", async () => {
         transaction = await priceOracle.setOracleData(
           addresses[symbol],
-          chainlink[underlying.symbol].address
+          dia[underlying.symbol].pair
         );
-        console.log(`rBNB priceOracle.setOracleData transaction: ${explorer}/tx/${transaction.tx}`);
+        console.log(
+          `rAstar priceOracle.setOracleData transaction: ${explorer}/tx/${transaction.tx}`
+        );
       });
 
       await runWithProgressCheck("rNative: unitroller._setCollateralFactor", async () => {
@@ -319,7 +324,7 @@ async function main() {
           web3.utils.toWei(config.rNative.collateralFactor, "ether")
         );
         console.log(
-          `rNative Unitroller._setCollateralFactor transaction: ${explorer}/tx/${transaction.tx}`
+          `rAstar Unitroller._setCollateralFactor transaction: ${explorer}/tx/${transaction.tx}`
         );
       });
 
@@ -329,7 +334,9 @@ async function main() {
           [web3.utils.toWei(config.rNative.rifiSupplySpeed, "ether")],
           [web3.utils.toWei(config.rNative.rifiBorrowSpeed, "ether")]
         );
-        console.log(`rBNB Unitroller._setRifiSpeeds transaction: ${explorer}/tx/${transaction.tx}`);
+        console.log(
+          `rAstar Unitroller._setRifiSpeeds transaction: ${explorer}/tx/${transaction.tx}`
+        );
       });
 
       tokenDecimals[symbol] = parseInt(decimals);
@@ -339,7 +346,7 @@ async function main() {
 
       await saveAddresses();
     } else {
-      console.log("rNative is not configured.");
+      console.log("rAstar is not configured.");
     }
 
     if (!addresses.rErc20Delegate) {
@@ -385,12 +392,12 @@ async function main() {
           }
 
           let underlyingAddress = underlying.address || addresses[underlying.symbol];
+          const underlyingDecimals = underlying.decimals;
+          if (!underlyingDecimals) {
+            throw new Error(`undefined decimals of ${underlying.symbol}`);
+          }
           if (!underlyingAddress) {
-            const faucetToken = await deployFaucetToken(underlying);
-            console.log(
-              `${underlying.symbol} address at: ${explorer}/address/${faucetToken.address}`
-            );
-            underlyingAddress = faucetToken.address;
+            throw new Error(`undefined address of ${underlying.symbol}`);
           }
 
           addresses[underlying.symbol] = underlyingAddress;
@@ -401,7 +408,7 @@ async function main() {
             underlyingAddress,
             addresses.Cointroller,
             modelAddress,
-            web3.utils.toWei(initialExchangeRateMantissa, "ether"),
+            ethers.utils.parseUnits(initialExchangeRateMantissa, underlyingDecimals),
             name,
             symbol,
             decimals,
@@ -420,7 +427,7 @@ async function main() {
                 underlyingAddress,
                 addresses.Cointroller,
                 modelAddress,
-                web3.utils.toWei(initialExchangeRateMantissa, "ether"),
+                ethers.utils.parseUnits(initialExchangeRateMantissa, underlyingDecimals),
                 name,
                 symbol,
                 decimals,
@@ -442,7 +449,7 @@ async function main() {
         await runWithProgressCheck(`${symbol}: priceOracle.setOracleData`, async () => {
           const transaction = await priceOracle.setOracleData(
             addresses[symbol],
-            chainlink[underlying.symbol].address
+            dia[underlying.symbol].pair
           );
           console.log(
             `${symbol} priceOracle.setOracleData transaction: ${explorer}/tx/${transaction.tx}`

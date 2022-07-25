@@ -1,23 +1,16 @@
-pragma solidity ^0.8.10;
+pragma solidity ^0.8.0;
 
 import "./PriceOracle.sol";
-import "./RErc20.sol";
+import "./ErrorReporter.sol";
+import "./RTokenInterfaces.sol";
+import "./EIP20Interface.sol";
 
-interface oracleChainlink {
-    function decimals() external view returns (uint8);
-    function latestRoundData()
-    external
-    view
-    returns (
-        uint80 roundId,
-        int256 answer,
-        uint256 startedAt,
-        uint256 updatedAt,
-        uint80 answeredInRound
-    );
+
+interface IDIAOracle {
+    function getValue(string calldata) external view returns (uint128, uint128);
 }
 
-contract SimplePriceOracle is PriceOracle, CointrollerErrorReporter {
+contract DIAPriceOracle is PriceOracle, CointrollerErrorReporter {
     /**
      * @notice Administrator for this contract
      */
@@ -32,35 +25,38 @@ contract SimplePriceOracle is PriceOracle, CointrollerErrorReporter {
 
     event PricePosted(address asset, uint previousPriceMantissa, uint requestedPriceMantissa, uint newPriceMantissa);
 
-    event OracleChanged(address rToken, address oldOracle, address newOracle);
+    event OracleChanged(address rToken, string oldOracle, string newOracle);
 
     event NewPendingAdmin(address oldPendingAdmin, address newPendingAdmin);
     event NewAdmin(address oldAdmin, address newAdmin);
+    event NewOracle(address oldOracle, address newOracle);
 
-    mapping(address => oracleChainlink) public oracleData;
+    IDIAOracle public diaOracle;
+    mapping(address => string) public pair;
 
-    constructor() {
-      admin = msg.sender;
+    constructor(IDIAOracle oracle) public {
+        admin = msg.sender;
+        diaOracle = oracle;
     }
 
-    function setOracleData(address rToken, oracleChainlink _oracle) external {
+    function setOracle(IDIAOracle newOracle) external {
         require(msg.sender == admin, "only admin can set");
-        address oldOracle = address(oracleData[rToken]);
-        oracleData[rToken] = _oracle;
-        emit OracleChanged(rToken, oldOracle, address(oracleData[rToken]));
+        IDIAOracle old = diaOracle;
+        diaOracle = newOracle;
+        emit NewOracle(address(old), address(newOracle));
     }
 
-    function getUnderlyingDecimals(RToken rToken) internal view returns (uint256 decimals) {
-        if (compareStrings(rToken.symbol(), "rASTR")) {
-            decimals = 18;
-        } else {
-            decimals = EIP20Interface(RErc20(address(rToken)).underlying()).decimals();
-        }
+    function setOracleData(address rToken, string calldata newKeyPair) external {
+        require(msg.sender == admin, "only admin can set");
+        string memory oldKeyPair = pair[rToken];
+        pair[rToken] = newKeyPair;
+        emit OracleChanged(rToken, oldKeyPair, pair[rToken]);
     }
 
-    function getUnderlyingPrice(RToken rToken) override public view returns (uint) {
-        uint decimals = getUnderlyingDecimals(rToken);
-        ( , int256 answer, , , ) = oracleData[address(rToken)].latestRoundData();
+    function getUnderlyingPrice(RToken rToken) public override view returns (uint) {
+        uint256 decimals = _getUnderlyingDecimals(rToken);
+        string memory keyPair = pair[address(rToken)];
+        (uint128 answer, ) = diaOracle.getValue(keyPair);
         return 10 ** (18 - decimals) * uint(answer);
     }
 
@@ -104,8 +100,18 @@ contract SimplePriceOracle is PriceOracle, CointrollerErrorReporter {
         return uint(Error.NO_ERROR);
     }
 
+
+    function _getUnderlyingDecimals(RToken rToken) internal view returns (uint256) {
+      if (compareStrings(rToken.symbol(), "rASTR")) {
+        return 18;
+      } else {
+        RErc20Storage rErc20 = RErc20Storage(address(rToken));
+        EIP20Interface underlying = EIP20Interface(rErc20.underlying());
+        return underlying.decimals();
+      }
+    }
+
     function compareStrings(string memory a, string memory b) internal pure returns (bool) {
         return (keccak256(abi.encodePacked((a))) == keccak256(abi.encodePacked((b))));
     }
 }
-

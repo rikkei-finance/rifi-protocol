@@ -41,7 +41,7 @@ contract GovernorBravoDelegateG1 is GovernorBravoDelegateStorageV1, GovernorBrav
     /**
       * @notice Used to initialize the contract during delegator constructor
       * @param timelock_ The address of the Timelock
-      * @param rifi_ The address of the COMP token
+      * @param rifi_ The address of the RIFI token
       * @param votingPeriod_ The initial voting period
       * @param votingDelay_ The initial voting delay
       * @param proposalThreshold_ The initial proposal threshold
