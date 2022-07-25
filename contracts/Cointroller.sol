@@ -89,6 +89,14 @@ contract Cointroller is CointrollerV7Storage, CointrollerInterface, CointrollerE
         admin = msg.sender;
     }
 
+    /**
+     * @notice Set and return the address of the RIFI token
+     */
+     function initialize(address _rifi) virtual public {
+      require(adminOrInitializing(), "only admin or initializer can set rifi address");
+      rifi = _rifi;
+    }
+
     /*** Assets You Are In ***/
 
     /**
@@ -1417,6 +1425,6 @@ contract Cointroller is CointrollerV7Storage, CointrollerInterface, CointrollerE
      * @return The address of RIFI
      */
     function getRifiAddress() virtual public view returns (address) {
-        return 0x3816b86AbED8B7F69d8AB4b7a9B5eB866c0b0F18;
+        return rifi;
     }
 }

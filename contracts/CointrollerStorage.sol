@@ -156,4 +156,6 @@ contract CointrollerV7Storage is CointrollerV6Storage {
 
     /// @notice Accounting storage mapping account addresses to how much RIFI they owe the protocol.
     mapping(address => uint) public rifiReceivable;
+
+    address internal rifi;
 }
