@@ -17,6 +17,7 @@
     "checksize": "npx run ./script/saddle/cointrollerSize.js",
     "migrate:bsc_testnet": "npx hardhat run --network bsc_testnet ./deploy/lending.js",
     "migrate:moonbase": "npx hardhat run --network moonbase ./deploy/lending.js",
+    "migrate:shibuya": "npx hardhat run --network shibuya ./deploy/lending.js",
     "migrate:localhost": "npx hardhat run --network localhost ./deploy/lending.js",
     "upgrade:bsc_testnet": "npx hardhat run --network bsc_testnet ./deploy/upgrade.js",
     "upgrade:moonbase": "npx hardhat run --network moonbase ./deploy/upgrade.js"
