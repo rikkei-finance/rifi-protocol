@@ -25,7 +25,8 @@
     "initialExchangeRateMantissa": "200000000",
     "collateralFactor": "0.7",
     "reserveFactor": "0.1",
-    "rifiSpeed": "0.04"
+    "rifiSupplySpeed": "0.04",
+    "rifiBorrowSpeed": "0.04"
   },
   "rTokens": {
     "rBTC": {
@@ -51,7 +52,8 @@
       },
       "initialExchangeRateMantissa": "200000000",
       "collateralFactor": "0.6",
-      "rifiSpeed": "0.00000000645"
+      "rifiSupplySpeed": "0.00000000645",
+      "rifiBorrowSpeed": "0.00000000645"
     },
     "rUSDC": {
       "name": "Rifi USDC",
@@ -76,7 +78,8 @@
       },
       "initialExchangeRateMantissa": "2047100.67574",
       "collateralFactor": "0.6",
-      "rifiSpeed": "0.00000000645"
+      "rifiSupplySpeed": "0.00000000645",
+      "rifiBorrowSpeed": "0.00000000645"
     }
   },
   "closeFactor": "0.25",
