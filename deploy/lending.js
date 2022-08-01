@@ -142,10 +142,7 @@ async function main() {
   const diaData = fs.readFileSync(diaOracle);
   Object.assign(dia, JSON.parse(diaData.toString()));
 
-  console.log(dia);
-  console.log(config);
-  console.log(addresses);
-
+  console.log("Deployer account:", accounts[0].address);
   console.log("Deploying...");
 
   const tokenDecimals = {};
