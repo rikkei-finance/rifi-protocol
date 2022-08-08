@@ -57,6 +57,12 @@ contract RifiLens {
         uint underlyingDecimals;
     }
 
+    struct RTokenMetadataAll {
+      RTokenMetadata[] rTokens;
+      uint blockNumber;
+      uint blockTimestamp;
+    }
+
     function rTokenMetadata(RToken rToken) public returns (RTokenMetadata memory) {
         uint exchangeRateCurrent = rToken.exchangeRateCurrent();
         CointrollerLensInterface cointroller = CointrollerLensInterface(address(rToken.cointroller()));
@@ -91,13 +97,17 @@ contract RifiLens {
         });
     }
 
-    function rTokenMetadataAll(RToken[] calldata rTokens) external returns (RTokenMetadata[] memory) {
+    function rTokenMetadataAll(RToken[] calldata rTokens) external returns (RTokenMetadataAll memory) {
         uint rTokenCount = rTokens.length;
         RTokenMetadata[] memory res = new RTokenMetadata[](rTokenCount);
         for (uint i = 0; i < rTokenCount; i++) {
             res[i] = rTokenMetadata(rTokens[i]);
         }
-        return res;
+        return RTokenMetadataAll({
+          rTokens: res,
+          blockNumber: block.number,
+          blockTimestamp: block.timestamp
+        });
     }
 
     struct RTokenBalances {
