@@ -1,6 +1,6 @@
 {
   "RIFI": "0x0000000000000000000000000000000000000000",
-  "DIA": "0xd79357ebb0cd724e391f2b49a8De0E31688fEc75",
+  "DIA": "0xc9018AD95C9b3b62074eF22B44F7038E0523e0a2",
   "rNative": {
     "name": "Rifi ASTR",
     "symbol": "rASTR",
@@ -25,8 +25,8 @@
     "initialExchangeRateMantissa": "200000000",
     "collateralFactor": "0.7",
     "reserveFactor": "0.1",
-    "rifiSupplySpeed": "0.04",
-    "rifiBorrowSpeed": "0.04"
+    "rifiSupplySpeed": "0.000004",
+    "rifiBorrowSpeed": "0.000008"
   },
   "rTokens": {
     "rUSDC": {
@@ -52,8 +52,60 @@
       },
       "initialExchangeRateMantissa": "2047100.67574",
       "collateralFactor": "0.6",
-      "rifiSupplySpeed": "0.00000000645",
-      "rifiBorrowSpeed": "0.00000000645"
+      "rifiSupplySpeed": "0.000008",
+      "rifiBorrowSpeed": "0.000008"
+    },
+    "rBTC": {
+      "name": "Rifi BTC",
+      "symbol": "rBTC",
+      "decimals": 8,
+      "underlying": {
+        "symbol": "WBTC",
+        "decimals": 8,
+        "address": "0xad543f18cFf85c77E140E3E5E3c3392f6Ba9d5CA"
+      },
+      "interestRateModel": {
+        "address": "",
+        "model": "JumpRateModel",
+        "params": {
+          "baseRatePerYear": "0.02",
+          "lowerBaseRatePerYear": "0.01",
+          "multiplierPerYear": "0.04",
+          "jumpMultiplierPerYear": "1.09",
+          "kink_": "0.8",
+          "lowerKink_": "0.4"
+        }
+      },
+      "initialExchangeRateMantissa": "2047100.67574",
+      "collateralFactor": "0.6",
+      "rifiSupplySpeed": "0.000004",
+      "rifiBorrowSpeed": "0.000004"
+    },
+    "rETH": {
+      "name": "Rifi ETH",
+      "symbol": "rETH",
+      "decimals": 8,
+      "underlying": {
+        "symbol": "WETH",
+        "decimals": 18,
+        "address": "0x81ECac0D6Be0550A00FF064a4f9dd2400585FE9c"
+      },
+      "interestRateModel": {
+        "address": "",
+        "model": "JumpRateModel",
+        "params": {
+          "baseRatePerYear": "0.02",
+          "lowerBaseRatePerYear": "0.01",
+          "multiplierPerYear": "0.04",
+          "jumpMultiplierPerYear": "1.09",
+          "kink_": "0.8",
+          "lowerKink_": "0.4"
+        }
+      },
+      "initialExchangeRateMantissa": "2047100.67574",
+      "collateralFactor": "0.6",
+      "rifiSupplySpeed": "0.000008",
+      "rifiBorrowSpeed": "0.000008"
     }
   },
   "closeFactor": "0.25",
