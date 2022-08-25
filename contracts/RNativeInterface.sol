@@ -7,7 +7,7 @@ interface RNativeInterface {
      * @notice Sender supplies assets into the market and receives rTokens in exchange
      * @dev Reverts upon any failure
      */
-    function mint() external;
+    function mint() payable external;
 
     /**
      * @notice Sender redeems rTokens in exchange for the underlying asset

@@ -1,0 +1,16 @@
+{
+  "name": "liquidate",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "node test/index.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@ethereumjs/tx": "^3.5.2",
+    "dotenv": "^16.0.1",
+    "web3": "^1.7.3"
+  }
+}

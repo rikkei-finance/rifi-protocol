@@ -1,0 +1,838 @@
+[
+	{
+		"inputs": [
+			{
+				"internalType": "contract CointrollerLensInterface",
+				"name": "cointroller",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "account",
+				"type": "address"
+			}
+		],
+		"name": "getAccountLimits",
+		"outputs": [
+			{
+				"components": [
+					{
+						"internalType": "contract RToken[]",
+						"name": "markets",
+						"type": "address[]"
+					},
+					{
+						"internalType": "uint256",
+						"name": "liquidity",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "shortfall",
+						"type": "uint256"
+					}
+				],
+				"internalType": "struct RifiLens.AccountLimits",
+				"name": "",
+				"type": "tuple"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "contract GovernorBravoInterface",
+				"name": "governor",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256[]",
+				"name": "proposalIds",
+				"type": "uint256[]"
+			}
+		],
+		"name": "getGovBravoProposals",
+		"outputs": [
+			{
+				"components": [
+					{
+						"internalType": "uint256",
+						"name": "proposalId",
+						"type": "uint256"
+					},
+					{
+						"internalType": "address",
+						"name": "proposer",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "eta",
+						"type": "uint256"
+					},
+					{
+						"internalType": "address[]",
+						"name": "targets",
+						"type": "address[]"
+					},
+					{
+						"internalType": "uint256[]",
+						"name": "values",
+						"type": "uint256[]"
+					},
+					{
+						"internalType": "string[]",
+						"name": "signatures",
+						"type": "string[]"
+					},
+					{
+						"internalType": "bytes[]",
+						"name": "calldatas",
+						"type": "bytes[]"
+					},
+					{
+						"internalType": "uint256",
+						"name": "startBlock",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "endBlock",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "forVotes",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "againstVotes",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "abstainVotes",
+						"type": "uint256"
+					},
+					{
+						"internalType": "bool",
+						"name": "canceled",
+						"type": "bool"
+					},
+					{
+						"internalType": "bool",
+						"name": "executed",
+						"type": "bool"
+					}
+				],
+				"internalType": "struct RifiLens.GovBravoProposal[]",
+				"name": "",
+				"type": "tuple[]"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "contract GovernorBravoInterface",
+				"name": "governor",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "voter",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256[]",
+				"name": "proposalIds",
+				"type": "uint256[]"
+			}
+		],
+		"name": "getGovBravoReceipts",
+		"outputs": [
+			{
+				"components": [
+					{
+						"internalType": "uint256",
+						"name": "proposalId",
+						"type": "uint256"
+					},
+					{
+						"internalType": "bool",
+						"name": "hasVoted",
+						"type": "bool"
+					},
+					{
+						"internalType": "uint8",
+						"name": "support",
+						"type": "uint8"
+					},
+					{
+						"internalType": "uint96",
+						"name": "votes",
+						"type": "uint96"
+					}
+				],
+				"internalType": "struct RifiLens.GovBravoReceipt[]",
+				"name": "",
+				"type": "tuple[]"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "contract GovernorAlpha",
+				"name": "governor",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256[]",
+				"name": "proposalIds",
+				"type": "uint256[]"
+			}
+		],
+		"name": "getGovProposals",
+		"outputs": [
+			{
+				"components": [
+					{
+						"internalType": "uint256",
+						"name": "proposalId",
+						"type": "uint256"
+					},
+					{
+						"internalType": "address",
+						"name": "proposer",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "eta",
+						"type": "uint256"
+					},
+					{
+						"internalType": "address[]",
+						"name": "targets",
+						"type": "address[]"
+					},
+					{
+						"internalType": "uint256[]",
+						"name": "values",
+						"type": "uint256[]"
+					},
+					{
+						"internalType": "string[]",
+						"name": "signatures",
+						"type": "string[]"
+					},
+					{
+						"internalType": "bytes[]",
+						"name": "calldatas",
+						"type": "bytes[]"
+					},
+					{
+						"internalType": "uint256",
+						"name": "startBlock",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "endBlock",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "forVotes",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "againstVotes",
+						"type": "uint256"
+					},
+					{
+						"internalType": "bool",
+						"name": "canceled",
+						"type": "bool"
+					},
+					{
+						"internalType": "bool",
+						"name": "executed",
+						"type": "bool"
+					}
+				],
+				"internalType": "struct RifiLens.GovProposal[]",
+				"name": "",
+				"type": "tuple[]"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "contract GovernorAlpha",
+				"name": "governor",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "voter",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256[]",
+				"name": "proposalIds",
+				"type": "uint256[]"
+			}
+		],
+		"name": "getGovReceipts",
+		"outputs": [
+			{
+				"components": [
+					{
+						"internalType": "uint256",
+						"name": "proposalId",
+						"type": "uint256"
+					},
+					{
+						"internalType": "bool",
+						"name": "hasVoted",
+						"type": "bool"
+					},
+					{
+						"internalType": "bool",
+						"name": "support",
+						"type": "bool"
+					},
+					{
+						"internalType": "uint96",
+						"name": "votes",
+						"type": "uint96"
+					}
+				],
+				"internalType": "struct RifiLens.GovReceipt[]",
+				"name": "",
+				"type": "tuple[]"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "contract Rifi",
+				"name": "rifi",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "account",
+				"type": "address"
+			}
+		],
+		"name": "getRifiBalanceMetadata",
+		"outputs": [
+			{
+				"components": [
+					{
+						"internalType": "uint256",
+						"name": "balance",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "votes",
+						"type": "uint256"
+					},
+					{
+						"internalType": "address",
+						"name": "delegate",
+						"type": "address"
+					}
+				],
+				"internalType": "struct RifiLens.RifiBalanceMetadata",
+				"name": "",
+				"type": "tuple"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "contract Rifi",
+				"name": "rifi",
+				"type": "address"
+			},
+			{
+				"internalType": "contract CointrollerLensInterface",
+				"name": "cointroller",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "account",
+				"type": "address"
+			}
+		],
+		"name": "getRifiBalanceMetadataExt",
+		"outputs": [
+			{
+				"components": [
+					{
+						"internalType": "uint256",
+						"name": "balance",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "votes",
+						"type": "uint256"
+					},
+					{
+						"internalType": "address",
+						"name": "delegate",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "allocated",
+						"type": "uint256"
+					}
+				],
+				"internalType": "struct RifiLens.RifiBalanceMetadataExt",
+				"name": "",
+				"type": "tuple"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "contract Rifi",
+				"name": "rifi",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "account",
+				"type": "address"
+			},
+			{
+				"internalType": "uint32[]",
+				"name": "blockNumbers",
+				"type": "uint32[]"
+			}
+		],
+		"name": "getRifiVotes",
+		"outputs": [
+			{
+				"components": [
+					{
+						"internalType": "uint256",
+						"name": "blockNumber",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "votes",
+						"type": "uint256"
+					}
+				],
+				"internalType": "struct RifiLens.RifiVotes[]",
+				"name": "",
+				"type": "tuple[]"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "contract RToken",
+				"name": "rToken",
+				"type": "address"
+			},
+			{
+				"internalType": "address payable",
+				"name": "account",
+				"type": "address"
+			}
+		],
+		"name": "rTokenBalances",
+		"outputs": [
+			{
+				"components": [
+					{
+						"internalType": "address",
+						"name": "rToken",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "balanceOf",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "borrowBalanceCurrent",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "balanceOfUnderlying",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "tokenBalance",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "tokenAllowance",
+						"type": "uint256"
+					}
+				],
+				"internalType": "struct RifiLens.RTokenBalances",
+				"name": "",
+				"type": "tuple"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "contract RToken[]",
+				"name": "rTokens",
+				"type": "address[]"
+			},
+			{
+				"internalType": "address payable",
+				"name": "account",
+				"type": "address"
+			}
+		],
+		"name": "rTokenBalancesAll",
+		"outputs": [
+			{
+				"components": [
+					{
+						"internalType": "address",
+						"name": "rToken",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "balanceOf",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "borrowBalanceCurrent",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "balanceOfUnderlying",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "tokenBalance",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "tokenAllowance",
+						"type": "uint256"
+					}
+				],
+				"internalType": "struct RifiLens.RTokenBalances[]",
+				"name": "",
+				"type": "tuple[]"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "contract RToken",
+				"name": "rToken",
+				"type": "address"
+			}
+		],
+		"name": "rTokenMetadata",
+		"outputs": [
+			{
+				"components": [
+					{
+						"internalType": "address",
+						"name": "rToken",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "exchangeRateCurrent",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "supplyRatePerBlock",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "borrowRatePerBlock",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "reserveFactorMantissa",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "totalBorrows",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "totalReserves",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "totalSupply",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "totalCash",
+						"type": "uint256"
+					},
+					{
+						"internalType": "bool",
+						"name": "isListed",
+						"type": "bool"
+					},
+					{
+						"internalType": "uint256",
+						"name": "collateralFactorMantissa",
+						"type": "uint256"
+					},
+					{
+						"internalType": "address",
+						"name": "underlyingAssetAddress",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "rTokenDecimals",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "underlyingDecimals",
+						"type": "uint256"
+					}
+				],
+				"internalType": "struct RifiLens.RTokenMetadata",
+				"name": "",
+				"type": "tuple"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "contract RToken[]",
+				"name": "rTokens",
+				"type": "address[]"
+			}
+		],
+		"name": "rTokenMetadataAll",
+		"outputs": [
+			{
+				"components": [
+					{
+						"components": [
+							{
+								"internalType": "address",
+								"name": "rToken",
+								"type": "address"
+							},
+							{
+								"internalType": "uint256",
+								"name": "exchangeRateCurrent",
+								"type": "uint256"
+							},
+							{
+								"internalType": "uint256",
+								"name": "supplyRatePerBlock",
+								"type": "uint256"
+							},
+							{
+								"internalType": "uint256",
+								"name": "borrowRatePerBlock",
+								"type": "uint256"
+							},
+							{
+								"internalType": "uint256",
+								"name": "reserveFactorMantissa",
+								"type": "uint256"
+							},
+							{
+								"internalType": "uint256",
+								"name": "totalBorrows",
+								"type": "uint256"
+							},
+							{
+								"internalType": "uint256",
+								"name": "totalReserves",
+								"type": "uint256"
+							},
+							{
+								"internalType": "uint256",
+								"name": "totalSupply",
+								"type": "uint256"
+							},
+							{
+								"internalType": "uint256",
+								"name": "totalCash",
+								"type": "uint256"
+							},
+							{
+								"internalType": "bool",
+								"name": "isListed",
+								"type": "bool"
+							},
+							{
+								"internalType": "uint256",
+								"name": "collateralFactorMantissa",
+								"type": "uint256"
+							},
+							{
+								"internalType": "address",
+								"name": "underlyingAssetAddress",
+								"type": "address"
+							},
+							{
+								"internalType": "uint256",
+								"name": "rTokenDecimals",
+								"type": "uint256"
+							},
+							{
+								"internalType": "uint256",
+								"name": "underlyingDecimals",
+								"type": "uint256"
+							}
+						],
+						"internalType": "struct RifiLens.RTokenMetadata[]",
+						"name": "rTokens",
+						"type": "tuple[]"
+					},
+					{
+						"internalType": "uint256",
+						"name": "blockNumber",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "blockTimestamp",
+						"type": "uint256"
+					}
+				],
+				"internalType": "struct RifiLens.RTokenMetadataAll",
+				"name": "",
+				"type": "tuple"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "contract RToken",
+				"name": "rToken",
+				"type": "address"
+			}
+		],
+		"name": "rTokenUnderlyingPrice",
+		"outputs": [
+			{
+				"components": [
+					{
+						"internalType": "address",
+						"name": "rToken",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "underlyingPrice",
+						"type": "uint256"
+					}
+				],
+				"internalType": "struct RifiLens.RTokenUnderlyingPrice",
+				"name": "",
+				"type": "tuple"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "contract RToken[]",
+				"name": "rTokens",
+				"type": "address[]"
+			}
+		],
+		"name": "rTokenUnderlyingPriceAll",
+		"outputs": [
+			{
+				"components": [
+					{
+						"internalType": "address",
+						"name": "rToken",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "underlyingPrice",
+						"type": "uint256"
+					}
+				],
+				"internalType": "struct RifiLens.RTokenUnderlyingPrice[]",
+				"name": "",
+				"type": "tuple[]"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	}
+]
