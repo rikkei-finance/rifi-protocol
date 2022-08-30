@@ -1,8 +1,8 @@
 {
   "RIFI": "0x3816b86AbED8B7F69d8AB4b7a9B5eB866c0b0F18",
   "rNative": {
-    "name": "Rifi Native",
-    "symbol": "rNative",
+    "name": "Rifi Binance",
+    "symbol": "rBNB",
     "decimals": 8,
     "underlying": {
       "symbol": "BNB",
@@ -35,7 +35,7 @@
       "underlying": {
         "symbol": "BUSD",
         "decimals": 18,
-        "address": ""
+        "address": "0x88DFbF8ca8F6937818DA9C3A09bE152E3b221E9a"
       },
       "interestRateModel": {
         "address": "0xFBaf041Da9871D81eCD000d12ce63475993aA0A6",
@@ -61,7 +61,33 @@
       "underlying": {
         "symbol": "USDC",
         "decimals": "18",
-        "address": ""
+        "address": "0xFE16F4D3A17EafA7C7842aE8b0b3C51Ec6dc64d6"
+      },
+      "interestRateModel": {
+        "address": "0xbABD8daBf74c460AA82a810c8BfF007B22b90415",
+        "model": "JumpRateModel",
+        "params": {
+          "baseRatePerYear": "0.02",
+          "lowerBaseRatePerYear": "0.01",
+          "multiplierPerYear": "4",
+          "jumpMultiplierPerYear": "1.09",
+          "kink_": "0.8",
+          "lowerKink_": "0.4"
+        }
+      },
+      "initialExchangeRateMantissa": "200000000",
+      "collateralFactor": "0.6",
+      "rifiSupplySpeed": "0.00000000645",
+      "rifiBorrowSpeed": "0.00000000645"
+    },
+    "rBTC": {
+      "name": "Rifi BTC",
+      "symbol": "rBTC",
+      "decimals": 8,
+      "underlying": {
+        "symbol": "BTC",
+        "decimals": "18",
+        "address": "0xC21025e87367d9018f4c5A53c6d15116d0785a3f"
       },
       "interestRateModel": {
         "address": "0xbABD8daBf74c460AA82a810c8BfF007B22b90415",
@@ -82,5 +108,13 @@
     }
   },
   "closeFactor": "0.25",
-  "liquidationIncentive": "1.08"
+  "liquidationIncentive": "1.08",
+  "exchange": "0x9Ac64Cc6e4415144C455BD8E4837Fea55603e5c3",
+  "WBNB": "0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd",
+  "liquidity": {
+    "WBNB": "0xbE7E69Be74C9692170453300310e690B8C809483",
+    "USDC": "0xc69226AA74574A60917833ba5DbF574BbAfB1cD4",
+    "BUSD": "0xD3005915368751E7974f3CD12367D5fB23159EA7",
+    "BTC": "0x947894Bde2BbAE0301062EaEfA9B7fb36780F4CC"
+  }
 }
