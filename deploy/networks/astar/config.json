@@ -109,5 +109,8 @@
     }
   },
   "closeFactor": "0.25",
-  "liquidationIncentive": "1.08"
+  "liquidationIncentive": "1.08",
+  "exchange": "0xE915D2393a08a00c5A463053edD31bAe2199b9e7",
+  "lendingPoolProvider": "0x4c37A76Bf49c01f91E275d5257a228dad1b74EF9",
+  "WASTR": "0xAeaaf0e2c81Af264101B9129C00F4440cCF0F720"
 }

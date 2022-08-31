@@ -23,5 +23,6 @@
   "rNative: unitroller._supportMarket": false,
   "rNative: priceOracle.setOracleData": false,
   "rNative: unitroller._setCollateralFactor": false,
-  "rNative: unitroller._setRifiSpeeds": false
+  "rNative: unitroller._setRifiSpeeds": false,
+  "Liquidate": true
 }
