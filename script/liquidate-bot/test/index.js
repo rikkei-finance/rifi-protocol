@@ -1,8 +1,9 @@
-const { checkBorrower } = require("../index");
+const Factory = require("../index");
 
 async function main() {
- const tx = await checkBorrower("0x13c817485b00e319eA9e9722BDd682425224A5dF");
- console.log(tx)
+  const checker = Factory.create(592);
+  const tx = await checker.checkBorrower("0xbb61B7e4Ca4d4deeBf57Db43B49cC5ed1892c8EE");
+  console.log(tx)
 }
 
 main()

@@ -1,10 +1,22 @@
-const { rifi_lens_address } = require("../config/config");
-const rifi_lens_abi = require('../abis/rifilens.json');
-const { createContract } = require('../web3Service');
-const rifiLensContract = createContract(rifi_lens_abi, rifi_lens_address);
+const { env } = require("../config/config");
+const rifi_lens_abi = require("../abis/rifilens.json");
+const Web3Service = require("../web3Service");
 
-async function getRTokenMetadataAll(rTokensAddress) {
-  const { rTokens } = await rifiLensContract.methods.rTokenMetadataAll(rTokensAddress).call();
+class RifiLenService {
+  rifiLensContract;
+  web3Service;
+  /**
+   * 
+   * @param {Web3Service} web3Service 
+   */
+  constructor(web3Service) {
+    this.web3Service = web3Service;
+    const config = env[web3Service.chainId];
+    this.rifiLensContract = web3Service.createContract(rifi_lens_abi, config.rifi_lens_address);
+  }
+  
+async getRTokenMetadataAll(rTokensAddress) {
+  const { rTokens } = await this.rifiLensContract.methods.rTokenMetadataAll(rTokensAddress).call();
   const result = [];
   for (let i = 0; i < rTokens.length; ++i) {
     const data = rTokens[i];
@@ -22,8 +34,8 @@ async function getRTokenMetadataAll(rTokensAddress) {
   return result;
 }
 
-async function getRTokenBalancesAll(rTokensAddress, user) {
-  const rTokens = await rifiLensContract.methods.rTokenBalancesAll(rTokensAddress, user).call();
+async getRTokenBalancesAll(rTokensAddress, user) {
+  const rTokens = await this.rifiLensContract.methods.rTokenBalancesAll(rTokensAddress, user).call();
   const result = [];
   for (let i = 0; i < rTokens.length; ++i) {
     const data = rTokens[i];
@@ -33,8 +45,8 @@ async function getRTokenBalancesAll(rTokensAddress, user) {
   return result;
 }
 
-async function getRTokenUnderlyingPriceAll(rTokensAddress) {
-  const rTokens = await rifiLensContract.methods.rTokenUnderlyingPriceAll(rTokensAddress).call();
+async getRTokenUnderlyingPriceAll(rTokensAddress) {
+  const rTokens = await this.rifiLensContract.methods.rTokenUnderlyingPriceAll(rTokensAddress).call();
   const result = [];
   for (let i = 0; i < rTokens.length; ++i) {
     const data = rTokens[i];
@@ -43,5 +55,7 @@ async function getRTokenUnderlyingPriceAll(rTokensAddress) {
   }
   return result;
 }
+}
 
-module.exports = { getRTokenMetadataAll, getRTokenBalancesAll, getRTokenUnderlyingPriceAll };
+
+module.exports = RifiLenService;

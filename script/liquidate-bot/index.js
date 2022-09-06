@@ -1,3 +1,3 @@
-const { checkBorrower } = require("./main");
+const Factory = require("./factory");
 
-module.exports = { checkBorrower };
+module.exports = Factory;
