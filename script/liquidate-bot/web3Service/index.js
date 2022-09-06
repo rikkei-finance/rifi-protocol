@@ -40,6 +40,14 @@ function sendTransaction(txHex) {
   return web3.eth.sendSignedTransaction(txHex);
 }
 
+function privateKeyToAddress(privateKey) {
+  if (privateKey[1] != 'x') {
+    privateKey = '0x' + privateKey
+  }
+  const { address } = web3.eth.accounts.privateKeyToAccount(privateKey);
+  return address;
+}
+
 module.exports = {
-  getChainID, getGasPrice, getNonce, estimateGas, createContract, signTransaction, sendTransaction
+  getChainID, getGasPrice, getNonce, estimateGas, createContract, signTransaction, sendTransaction, privateKeyToAddress
 };

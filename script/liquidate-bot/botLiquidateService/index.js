@@ -1,8 +1,10 @@
-const { bot_liquidate_address, privateKey, sender } = require("../config/config");
+const { bot_liquidate_address, privateKey } = require("../config/config");
 const bot_liquidate_abi = require('../abis/bot-liquidate.json');
 const { number2Hex } = require('../helpers');
-const { getChainID, estimateGas, getGasPrice, getNonce, sendTransaction, signTransaction, createContract } = require('../web3Service');
+const { getChainID, estimateGas, getGasPrice, getNonce, sendTransaction, signTransaction, createContract, privateKeyToAddress } = require('../web3Service');
 const botLiquidateContract = createContract(bot_liquidate_abi, bot_liquidate_address);
+
+const sender = privateKeyToAddress(privateKey);
 
 async function liquidateBorrow(
   rToken, borrower, repayAmount, rTokenCollateral
