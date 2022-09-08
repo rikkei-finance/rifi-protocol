@@ -7,6 +7,7 @@ class BotLiquidateService {
   botLiquidateContract;
   web3Service;
   sender = "";
+  gasBuffer = 1.2;
   /**
    * 
    * @param {Web3Service} web3Service 
@@ -33,7 +34,7 @@ class BotLiquidateService {
     const txParams = {
       nonce,
       gasPrice: number2Hex(Number(gasPrice)),
-      gasLimit: number2Hex(Number(gasLimit)),
+      gasLimit: number2Hex(Number(gasLimit) * this.gasBuffer),
       to: this.botLiquidateContract.options.address,
       value: '0x00',
       data,
