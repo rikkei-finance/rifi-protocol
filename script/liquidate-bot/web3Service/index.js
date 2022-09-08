@@ -7,6 +7,7 @@ class Web3Service {
   web3 = new Web3();
   chainId = "";
   constructor(chainId) {
+    console.log("Cretae web3 service with chainId", chainId);
     this.chainId = chainId;
     const config = env[chainId];
     this.web3 = new Web3(config.rpcEndpoint);
