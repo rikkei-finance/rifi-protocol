@@ -6,7 +6,7 @@ const BotLiquidateService = require('../botLiquidateService');
 const Web3Service = require("../web3Service");
 
 const ratioLiquidate = 35 / 100;
-const ratioBonusPrice = 92 / 100;
+const ratioBonusPrice = 90 / 100;
 
 class Checker {
   rifiLenService;
@@ -90,10 +90,13 @@ class Checker {
     const collateralUSD = Number(collateralToken.balanceOfUnderlying) * priceCollateralToken.underlyingPrice / 1e18;
     let repayAmount = round(
       numberToString(
-        Math.min(maxRepayUSD, collateralUSD) * 0.1 / priceBorrowToken.underlyingPrice * ratioBonusPrice * 1e18
+        Math.min(maxRepayUSD, collateralUSD) / priceBorrowToken.underlyingPrice * ratioBonusPrice * 1e18
       )
     );
-    return repayAmount;
+    return {
+      repayAmount,
+      repayUSD: Math.min(maxRepayUSD, collateralUSD) 
+    };
   }
   
   async checkBorrower(borrower) {
@@ -108,7 +111,8 @@ class Checker {
       const borrowTokens = this.getBorrowTokens(rTokenBalances);
       const borrowToken = this.getBorrowTokenToLiquidate(borrowTokens, rTokenPrices);
       const collateralToken = this.getCollateralTokenToLiquidate(collateralTokens, rTokenPrices);
-      const repayAmount = this.calculateRepayAmount(borrowToken, collateralToken, rTokenPrices);
+      const { repayAmount, repayUSD } = this.calculateRepayAmount(borrowToken, collateralToken, rTokenPrices);
+      if (repayUSD < 1) return;
       const transaction = await this.botLiquidateService.liquidateBorrow(
         borrowToken.rToken,
         borrower,

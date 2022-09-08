@@ -14,10 +14,8 @@ class Web3Service {
   }
 
   async getGasPrice() {
+    if (chainId === 592) return '10000000000';
     let gasPrice = await this.web3.eth.getGasPrice();
-    if (Number(gasPrice) < 10000000000) {
-      gasPrice = '10000000000';
-    }
     return gasPrice
   }
 
