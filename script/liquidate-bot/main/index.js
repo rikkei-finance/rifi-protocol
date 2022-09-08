@@ -24,7 +24,11 @@ class Checker {
 
   getUSDValue(underlyingValue, rTokenPrice) {
     const { underlyingPrice } = rTokenPrice;
-    return underlyingValue * underlyingPrice / 10 ** 26
+    if (this.web3Service.chainId === 56 | this.web3Service.chainId === 97) {
+      return underlyingValue * underlyingPrice / 10 ** 35
+    } else {
+      return underlyingValue * underlyingPrice / 10 ** 26
+    }
   }
   
   getCollateralTokens(rTokenBalances) {
@@ -95,7 +99,7 @@ class Checker {
     );
     return {
       repayAmount,
-      repayUSD: Math.min(maxRepayUSD, collateralUSD) 
+      repayUSD: this.getUSDValue(repayAmount, priceBorrowToken)
     };
   }
   
@@ -112,6 +116,7 @@ class Checker {
       const borrowToken = this.getBorrowTokenToLiquidate(borrowTokens, rTokenPrices);
       const collateralToken = this.getCollateralTokenToLiquidate(collateralTokens, rTokenPrices);
       const { repayAmount, repayUSD } = this.calculateRepayAmount(borrowToken, collateralToken, rTokenPrices);
+      console.log({ repayAmount, repayUSD })
       if (repayUSD < 1) return;
       const transaction = await this.botLiquidateService.liquidateBorrow(
         borrowToken.rToken,
