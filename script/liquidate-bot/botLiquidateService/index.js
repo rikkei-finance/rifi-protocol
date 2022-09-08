@@ -1,6 +1,6 @@
 const { env } = require("../config/config");
 const bot_liquidate_abi = require('../abis/bot-liquidate.json');
-const { number2Hex } = require('../helpers');
+const { number2Hex, round } = require('../helpers');
 const Web3Service = require('../web3Service');
 
 class BotLiquidateService {
@@ -34,7 +34,7 @@ class BotLiquidateService {
     const txParams = {
       nonce,
       gasPrice: number2Hex(Number(gasPrice)),
-      gasLimit: number2Hex(Number(gasLimit) * this.gasBuffer),
+      gasLimit: number2Hex(Math.round(Number(gasLimit) * this.gasBuffer)),
       to: this.botLiquidateContract.options.address,
       value: '0x00',
       data,
