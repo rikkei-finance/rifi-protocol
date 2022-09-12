@@ -5,8 +5,9 @@ const RifiLensService = require('../rifiLensService');
 const BotLiquidateService = require('../botLiquidateService');
 const Web3Service = require("../web3Service");
 
-const ratioLiquidate = 35 / 100;
-const ratioBonusPrice = 90 / 100;
+const ratioLiquidate = 25 / 100;
+const ratioBonusPrice = 92 / 100;
+const minRepayUSD = 1; // only liquidate with repayAmount >= 1 USD
 
 class Checker {
   rifiLenService;
@@ -25,9 +26,18 @@ class Checker {
   getUSDValue(underlyingValue, rTokenPrice) {
     const { underlyingPrice } = rTokenPrice;
     if (this.web3Service.chainId === 56 | this.web3Service.chainId === 97) {
-      return underlyingValue * underlyingPrice / 10 ** 35
+      return underlyingValue * underlyingPrice / 10 ** 36
     } else {
       return underlyingValue * underlyingPrice / 10 ** 26
+    }
+  }
+
+  getValueFromUSD(usd, rTokenPrice) {
+    const { underlyingPrice } = rTokenPrice;
+    if (this.web3Service.chainId === 56 | this.web3Service.chainId === 97) {
+      return usd * 10 ** 35 / underlyingPrice;
+    } else {
+      return usd * 10 ** 26 / underlyingPrice
     }
   }
   
@@ -90,11 +100,11 @@ class Checker {
     const priceBorrowToken = rTokenPrices.find(rTokenPrice => rTokenPrice.rToken === borrowToken.rToken);
     const priceCollateralToken = rTokenPrices.find(rTokenPrice => rTokenPrice.rToken === collateralToken.rToken)
   
-    const maxRepayUSD = borrowToken.borrowBalanceCurrent * ratioLiquidate;
-    const collateralUSD = Number(collateralToken.balanceOfUnderlying) * priceCollateralToken.underlyingPrice / 1e18;
+    const maxRepayUSD = this.getUSDValue(borrowToken.borrowBalanceCurrent, priceBorrowToken) * ratioLiquidate;
+    const collateralUSD = this.getUSDValue(Number(collateralToken.balanceOfUnderlying), priceCollateralToken) * ratioBonusPrice;
     let repayAmount = round(
       numberToString(
-        Math.min(maxRepayUSD, collateralUSD) / priceBorrowToken.underlyingPrice * ratioBonusPrice * 1e18
+        this.getValueFromUSD(Math.min(maxRepayUSD, collateralUSD), priceBorrowToken)
       )
     );
     return {
@@ -116,8 +126,7 @@ class Checker {
       const borrowToken = this.getBorrowTokenToLiquidate(borrowTokens, rTokenPrices);
       const collateralToken = this.getCollateralTokenToLiquidate(collateralTokens, rTokenPrices);
       const { repayAmount, repayUSD } = this.calculateRepayAmount(borrowToken, collateralToken, rTokenPrices);
-      console.log({ repayAmount, repayUSD })
-      if (repayUSD < 1) return;
+      if (repayUSD < minRepayUSD) return;
       const transaction = await this.botLiquidateService.liquidateBorrow(
         borrowToken.rToken,
         borrower,
