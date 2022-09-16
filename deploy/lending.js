@@ -21,6 +21,8 @@ const explorers = {
   ropsten: "https://ropsten.etherscan.io",
   rinkeby: "https://rinkeby.etherscan.io",
   kovan: "https://kovan.etherscan.io",
+  shibuya: "https://blockscout.com/shibuya/",
+  astar: "https://blockscout.com/astar/",
 };
 
 async function main() {
@@ -45,7 +47,7 @@ async function main() {
     RErc20Delegate,
     RErc20Delegator,
     SimplePriceOracle,
-    RNative,
+    RETH,
     RifiLens,
   ] = await Promise.all([
     ethers.getContractFactory("Unitroller"),
@@ -55,7 +57,7 @@ async function main() {
     ethers.getContractFactory("RErc20Delegate"),
     ethers.getContractFactory("RErc20Delegator"),
     ethers.getContractFactory("SimplePriceOracle"),
-    ethers.getContractFactory("RNative"),
+    ethers.getContractFactory("RETH"),
     ethers.getContractFactory("RifiLens"),
   ]);
 
@@ -210,7 +212,6 @@ async function main() {
       console.log(`unitroller.initialize transaction: ${explorer}/tx/${transaction.tx}`);
     });
 
-
     await runWithProgressCheck("SimplePriceOracle", async () => {
       const priceOracle = await SimplePriceOracle.deploy();
       await priceOracle.deployed();
@@ -246,9 +247,9 @@ async function main() {
 
     await saveAddresses();
 
-    if (config.rNative) {
+    if (config.rETH) {
       const {
-        rNative: {
+        rETH: {
           name,
           symbol,
           decimals,
@@ -258,18 +259,22 @@ async function main() {
         },
       } = config;
 
-      await runWithProgressCheck("rNative", async () => {
+      await runWithProgressCheck("rETH", async () => {
         let modelAddress = address;
         if (!modelAddress) {
           const interestRateModel = await deployJumpRateModel(params);
           console.log(
-            `rNative InterestRateModel address at: ${explorer}/address/${interestRateModel.address}`
+            `rETH InterestRateModel address at: ${explorer}/address/${interestRateModel.address}`
           );
           modelAddress = interestRateModel.address;
-          config.rNative.interestRateModel.address = modelAddress;
+          config.rETH.interestRateModel.address = modelAddress;
         }
 
-        const rNative = await RNative.deploy(
+        if (!underlying || !underlying.decimals) {
+          throw new Error(`undefined decimals of Native`);
+        }
+
+        const rETH = await RETH.deploy(
           addresses.Cointroller,
           modelAddress,
           web3.utils.toWei(initialExchangeRateMantissa, "ether"),
@@ -278,14 +283,14 @@ async function main() {
           decimals,
           governance
         );
-        await rNative.deployed();
+        await rETH.deployed();
 
-        console.log(`rNative address at: ${explorer}/address/${rNative.address}`);
+        console.log(`rETH address at: ${explorer}/address/${rETH.address}`);
 
-        addresses[symbol] = rNative.address;
+        addresses[symbol] = rETH.address;
 
         await hre.run("verify:verify", {
-          address: rNative.address,
+          address: rETH.address,
           constructorArguments: [
             addresses.Cointroller,
             modelAddress,
@@ -298,38 +303,38 @@ async function main() {
         }).catch(err => console.log(err.message));
       });
 
-      await runWithProgressCheck("rNative: unitroller._supportMarket", async () => {
+      await runWithProgressCheck("rETH: unitroller._supportMarket", async () => {
         let transaction = await unitroller._supportMarket(addresses[symbol]);
         console.log(
-          `rNative Unitroller._supportMarket transaction: ${explorer}/tx/${transaction.tx}`
+          `rETH Unitroller._supportMarket transaction: ${explorer}/tx/${transaction.tx}`
         );
       });
 
-      await runWithProgressCheck("rNative: priceOracle.setOracleData", async () => {
+      await runWithProgressCheck("rETH: priceOracle.setOracleData", async () => {
         transaction = await priceOracle.setOracleData(
           addresses[symbol],
           chainlink[underlying.symbol].address
         );
-        console.log(`rBNB priceOracle.setOracleData transaction: ${explorer}/tx/${transaction.tx}`);
+        console.log(`rETH priceOracle.setOracleData transaction: ${explorer}/tx/${transaction.tx}`);
       });
 
-      await runWithProgressCheck("rNative: unitroller._setCollateralFactor", async () => {
+      await runWithProgressCheck("rETH: unitroller._setCollateralFactor", async () => {
         transaction = await unitroller._setCollateralFactor(
           addresses[symbol],
-          web3.utils.toWei(config.rNative.collateralFactor, "ether")
+          web3.utils.toWei(config.rETH.collateralFactor, "ether")
         );
         console.log(
-          `rNative Unitroller._setCollateralFactor transaction: ${explorer}/tx/${transaction.tx}`
+          `rETH Unitroller._setCollateralFactor transaction: ${explorer}/tx/${transaction.tx}`
         );
       });
 
-      await runWithProgressCheck("rNative: unitroller._setRifiSpeeds", async () => {
+      await runWithProgressCheck("rETH: unitroller._setRifiSpeeds", async () => {
         transaction = await unitroller._setRifiSpeeds(
           [addresses[symbol]],
-          [web3.utils.toWei(config.rNative.rifiSupplySpeed, "ether")],
-          [web3.utils.toWei(config.rNative.rifiBorrowSpeed, "ether")]
+          [web3.utils.toWei(config.rETH.rifiSupplySpeed, "ether")],
+          [web3.utils.toWei(config.rETH.rifiBorrowSpeed, "ether")]
         );
-        console.log(`rBNB Unitroller._setRifiSpeeds transaction: ${explorer}/tx/${transaction.tx}`);
+        console.log(`rETH Unitroller._setRifiSpeeds transaction: ${explorer}/tx/${transaction.tx}`);
       });
 
       tokenDecimals[symbol] = parseInt(decimals);
@@ -339,7 +344,7 @@ async function main() {
 
       await saveAddresses();
     } else {
-      console.log("rNative is not configured.");
+      console.log("rETH is not configured.");
     }
 
     if (!addresses.rErc20Delegate) {
@@ -386,11 +391,7 @@ async function main() {
 
           let underlyingAddress = underlying.address || addresses[underlying.symbol];
           if (!underlyingAddress) {
-            const faucetToken = await deployFaucetToken(underlying);
-            console.log(
-              `${underlying.symbol} address at: ${explorer}/address/${faucetToken.address}`
-            );
-            underlyingAddress = faucetToken.address;
+            throw new Error(`undefined address of ${underlying.symbol}`);
           }
 
           addresses[underlying.symbol] = underlyingAddress;
@@ -490,8 +491,8 @@ async function main() {
         .catch((e) => console.log(e.message));
     });
 
-    if (!addresses.Maximillion && config.rNative) {
-      const maximillion = await Maximillion.deploy(addresses[config.rNative.symbol]);
+    if (!addresses.Maximillion && config.rETH) {
+      const maximillion = await Maximillion.deploy(addresses[config.rETH.symbol]);
       await maximillion.deployed();
       console.log(`Maximillion address at: ${explorer}/address/${maximillion.address}`);
       addresses.Maximillion = maximillion.address;
@@ -499,7 +500,7 @@ async function main() {
       await hre
         .run("verify:verify", {
           address: maximillion.address,
-          constructorArguments: [addresses[config.rNative.symbol]],
+          constructorArguments: [addresses[config.rETH.symbol]],
         })
         .catch((e) => console.log(e.message));
     }

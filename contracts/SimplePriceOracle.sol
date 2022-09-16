@@ -51,7 +51,7 @@ contract SimplePriceOracle is PriceOracle, CointrollerErrorReporter {
     }
 
     function getUnderlyingDecimals(RToken rToken) internal view returns (uint256 decimals) {
-        if (compareStrings(rToken.symbol(), "rNative")) {
+        if (compareStrings(rToken.symbol(), "rETH")) {
             decimals = 18;
         } else {
             decimals = EIP20Interface(RErc20(address(rToken)).underlying()).decimals();

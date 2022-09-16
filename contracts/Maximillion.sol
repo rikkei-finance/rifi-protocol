@@ -1,6 +1,6 @@
 pragma solidity ^0.8.10;
 
-import "./RNative.sol";
+import "./RETH.sol";
 
 /**
  * @title Rifi's Maximillion Contract
@@ -8,40 +8,40 @@ import "./RNative.sol";
  */
 contract Maximillion {
     /**
-     * @notice The default rNative market to repay in
+     * @notice The default rETH market to repay in
      */
-    RNative public rNative;
+    RETH public rETH;
 
     /**
-     * @notice Construct a Maximillion to repay max in a RNative market
+     * @notice Construct a Maximillion to repay max in a RETH market
      */
-    constructor(RNative rNative_) public {
-        rNative = rNative_;
+    constructor(RETH rETH_) public {
+        rETH = rETH_;
     }
 
     /**
-     * @notice msg.sender sends Native token to repay an account's borrow in the rNative market
+     * @notice msg.sender sends Native token to repay an account's borrow in the rETH market
      * @dev The provided Native token is applied towards the borrow balance, any excess is refunded
      * @param borrower The address of the borrower account to repay on behalf of
      */
     function repayBehalf(address borrower) public payable {
-        repayBehalfExplicit(borrower, rNative);
+        repayBehalfExplicit(borrower, rETH);
     }
 
     /**
-     * @notice msg.sender sends Native token to repay an account's borrow in a rNative market
+     * @notice msg.sender sends Native token to repay an account's borrow in a rETH market
      * @dev The provided Native token is applied towards the borrow balance, any excess is refunded
      * @param borrower The address of the borrower account to repay on behalf of
-     * @param rNative_ The address of the rNative contract to repay in
+     * @param rETH_ The address of the rETH contract to repay in
      */
-    function repayBehalfExplicit(address borrower, RNative rNative_) public payable {
+    function repayBehalfExplicit(address borrower, RETH rETH_) public payable {
         uint received = msg.value;
-        uint borrows = rNative_.borrowBalanceCurrent(borrower);
+        uint borrows = rETH_.borrowBalanceCurrent(borrower);
         if (received > borrows) {
-            rNative_.repayBorrowBehalf{value: borrows}(borrower);
+            rETH_.repayBorrowBehalf{value: borrows}(borrower);
             payable(msg.sender).transfer(received - borrows);
         } else {
-            rNative_.repayBorrowBehalf{value: received}(borrower);
+            rETH_.repayBorrowBehalf{value: received}(borrower);
         }
     }
 }

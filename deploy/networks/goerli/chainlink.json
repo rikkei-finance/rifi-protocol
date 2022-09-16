@@ -1,0 +1,30 @@
+{
+  "BTC": {
+    "decimals": "8",
+    "address": "0xA39434A63A52E749F02807ae27335515BA4b07F7"
+  },
+  "DAI": {
+    "decimals": "8",
+    "address": "0x0d79df66BE487753B02D015Fb622DED7f0E9798d"
+  },
+  "ETH": {
+    "decimals": "8",
+    "address": "0xD4a33860578De61DBAbDc8BFdb98FD742fA7028e"
+  },
+  "FORTH": {
+    "decimals": "8",
+    "address": "0x7A65Cf6C2ACE993f09231EC1Ea7363fb29C13f2F"
+  },
+  "BUSD": {
+    "decimals": "8",
+    "address": "0x9331b55D9830EF609A2aBCfAc0FBCE050A52fdEa"
+  },
+  "LINK": {
+    "decimals": "8",
+    "address": "0x48731cF7e84dc94C5f84577882c14Be11a5B7456"
+  },
+  "USDC": {
+    "decimals": "8",
+    "address": "0xAb5c49580294Aff77670F839ea425f5b78ab3Ae7"
+  }
+}
