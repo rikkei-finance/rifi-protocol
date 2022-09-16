@@ -4,7 +4,6 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./PancakeswapFlashloan.sol";
 import "../RTokenInterfaces.sol";
-import "../RNative.sol";
 import "../RNativeInterface.sol";
 import "./interfaces/WBNBInterface.sol";
 import "./interfaces/IPancakeRouter02.sol";
