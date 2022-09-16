@@ -1,5 +1,32 @@
 {
-  "RIFI": "0xd2B9d016fcE1179A4d85Da1a48dD85e796611d34",
+  "RIFI": "0x0000000000000000000000000000000000000000",
+  "rETH": {
+    "name": "Rifi ETH",
+    "symbol": "rETH",
+    "decimals": 8,
+    "underlying": {
+      "symbol": "ETH",
+      "decimals": 18,
+      "address": ""
+    },
+    "interestRateModel": {
+      "address": "",
+      "model": "JumpRateModel",
+      "params": {
+        "baseRatePerYear": "0.02",
+        "lowerBaseRatePerYear": "0.01",
+        "multiplierPerYear": "0.04",
+        "jumpMultiplierPerYear": "1.09",
+        "kink_": "0.8",
+        "lowerKink_": "0.4"
+      }
+    },
+    "initialExchangeRateMantissa": "200000000",
+    "collateralFactor": "0.7",
+    "reserveFactor": "0.1",
+    "rifiSupplySpeed": "0.04",
+    "rifiBorrowSpeed": "0.04"
+  },
   "rTokens": {
     "rUSDT": {
       "name": "Rifi USDT",
@@ -11,7 +38,7 @@
         "address": "0xdac17f958d2ee523a2206206994597c13d831ec7"
       },
       "interestRateModel": {
-        "address": "0x3CCE44a9caFd55245d751d113B6711629370Da78",
+        "address": "",
         "model": "JumpRateModel",
         "params": {
           "baseRatePerYear": "0.02",
@@ -26,17 +53,17 @@
       "collateralFactor": "0.6",
       "rifiSpeed": "0.00000000645"
     },
-    "rDAI": {
-      "name": "Rifi DAI",
-      "symbol": "rDAI",
+    "rUSDC": {
+      "name": "Rifi USDC",
+      "symbol": "rUSDC",
       "decimals": 8,
       "underlying": {
-        "symbol": "DAI",
-        "decimals": "18",
-        "address": "0x6b175474e89094c44da98b954eedeac495271d0f"
+        "symbol": "USDC",
+        "decimals": "6",
+        "address": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
       },
       "interestRateModel": {
-        "address": "0xFe908A160AFb71dF1C1d9466CDa63B83b149D015",
+        "address": "",
         "model": "JumpRateModel",
         "params": {
           "baseRatePerYear": "0.02",

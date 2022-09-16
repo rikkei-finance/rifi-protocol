@@ -131,7 +131,6 @@ module.exports = {
       accounts: [`0x${MAINNET_KEY}`],
       network_id: 1,
       confirmations: 2,
-      gasPrice: 50000000000, // 50 gwei
       timeoutBlocks: 200000000,
       skipDryRun: true,
     },
