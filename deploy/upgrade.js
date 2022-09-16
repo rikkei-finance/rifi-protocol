@@ -21,6 +21,7 @@ const explorers = {
   ropsten: "https://ropsten.etherscan.io",
   rinkeby: "https://rinkeby.etherscan.io",
   kovan: "https://kovan.etherscan.io",
+  mumbai: "https://mumbai.polygonscan.com"
 };
 
 async function main() {

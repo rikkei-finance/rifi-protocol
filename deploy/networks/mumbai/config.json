@@ -1,0 +1,142 @@
+{
+  "RIFI": "0x57652320b35BE7a8eBce05bb6EDE94d8d1863AeF",
+  "rMatic": {
+    "name": "Rifi MATIC",
+    "symbol": "rMATIC",
+    "decimals": 8,
+    "underlying": {
+      "symbol": "MATIC",
+      "decimals": 18,
+      "address": ""
+    },
+    "interestRateModel": {
+      "address": "0x29700ebB504593C70b437d682B75F8EE9B8A4317",
+      "model": "JumpRateModel",
+      "params": {
+        "baseRatePerYear": "0.02",
+        "lowerBaseRatePerYear": "0.01",
+        "multiplierPerYear": "0.04",
+        "jumpMultiplierPerYear": "1.09",
+        "kink_": "0.8",
+        "lowerKink_": "0.4"
+      }
+    },
+    "initialExchangeRateMantissa": "200000000",
+    "collateralFactor": "0.7",
+    "reserveFactor": "0.1",
+    "rifiSupplySpeed": "0.04",
+    "rifiBorrowSpeed": "0.04"
+  },
+  "rTokens": {
+    "rDAI": {
+      "name": "Rifi DAI",
+      "symbol": "rDAI",
+      "decimals": 8,
+      "underlying": {
+        "symbol": "DAI",
+        "decimals": "18",
+        "address": "0x99dC6ffA2664f7a2F086acC5A012FECd982C4c83"
+      },
+      "interestRateModel": {
+        "address": "0x1f9C31ce5BfaB5f416aB1d0c3C44FbA431A578FC",
+        "model": "JumpRateModel",
+        "params": {
+          "baseRatePerYear": "0.02",
+          "lowerBaseRatePerYear": "0.01",
+          "multiplierPerYear": "0.04",
+          "jumpMultiplierPerYear": "1.09",
+          "kink_": "0.8",
+          "lowerKink_": "0.4"
+        }
+      },
+      "initialExchangeRateMantissa": "200000000",
+      "collateralFactor": "0.7",
+      "reserveFactor": "0.1",
+      "rifiSupplySpeed": "0.04",
+      "rifiBorrowSpeed": "0.04"
+    },
+    "rUSDC": {
+      "name": "Rifi USDC",
+      "symbol": "rUSDC",
+      "decimals": 8,
+      "underlying": {
+        "symbol": "USDC",
+        "decimals": "6",
+        "address": "0xC9Bd1F272871e21Ad8C860992A5da3026DCcA26a"
+      },
+      "interestRateModel": {
+        "address": "0x991ff1c330ddd92bBC615cfD79972c88bA6c7b69",
+        "model": "JumpRateModel",
+        "params": {
+          "baseRatePerYear": "0.02",
+          "lowerBaseRatePerYear": "0.01",
+          "multiplierPerYear": "0.04",
+          "jumpMultiplierPerYear": "1.09",
+          "kink_": "0.8",
+          "lowerKink_": "0.4"
+        }
+      },
+      "initialExchangeRateMantissa": "200000000",
+      "collateralFactor": "0.7",
+      "reserveFactor": "0.1",
+      "rifiSupplySpeed": "0.04",
+      "rifiBorrowSpeed": "0.04"
+    },
+    "rBTC": {
+      "name": "Rifi Bitcoin",
+      "symbol": "rBTC",
+      "decimals": 8,
+      "underlying": {
+        "symbol": "BTC",
+        "decimals": "8",
+        "address": "0x4CA940aab724da955347F53CEB3D8Fb398aEcc46"
+      },
+      "interestRateModel": {
+        "address": "0x003a81ad88fa486C6F8DF1447971d558525530A0",
+        "model": "JumpRateModel",
+        "params": {
+          "baseRatePerYear": "0.02",
+          "lowerBaseRatePerYear": "0.01",
+          "multiplierPerYear": "0.04",
+          "jumpMultiplierPerYear": "1.09",
+          "kink_": "0.8",
+          "lowerKink_": "0.4"
+        }
+      },
+      "initialExchangeRateMantissa": "200000000",
+      "collateralFactor": "0.7",
+      "reserveFactor": "0.1",
+      "rifiSupplySpeed": "0.04",
+      "rifiBorrowSpeed": "0.04"
+    },
+    "rETH": {
+      "name": "Rifi Ethereum",
+      "symbol": "rETH",
+      "decimals": 8,
+      "underlying": {
+        "symbol": "ETH",
+        "decimals": "18",
+        "address": "0x4b46526118462cf70699B44201DBeaD5F60e8074"
+      },
+      "interestRateModel": {
+        "address": "0xf971F29cfD1B56D87e8c210558C6dE8cDcb9f5e6",
+        "model": "JumpRateModel",
+        "params": {
+          "baseRatePerYear": "0.02",
+          "lowerBaseRatePerYear": "0.01",
+          "multiplierPerYear": "0.04",
+          "jumpMultiplierPerYear": "1.09",
+          "kink_": "0.8",
+          "lowerKink_": "0.4"
+        }
+      },
+      "initialExchangeRateMantissa": "200000000",
+      "collateralFactor": "0.7",
+      "reserveFactor": "0.1",
+      "rifiSupplySpeed": "0.04",
+      "rifiBorrowSpeed": "0.04"
+    }
+  },
+  "closeFactor": "0.25",
+  "liquidationIncentive": "1.08"
+}

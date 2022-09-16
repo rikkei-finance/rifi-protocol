@@ -12,6 +12,8 @@ const {
   BSC_API_KEY,
   MOONBEAM_API_KEY,
   HARDHAT_NETWORK,
+  POLYGONSCAN_API_KEY,
+  ALCHEMY_PROJECT_ID
 } = process.env;
 
 const API_KEYS = {
@@ -21,7 +23,9 @@ const API_KEYS = {
   ropsten: ETHER_API_KEY,
   rinkeby: ETHER_API_KEY,
   kovan: ETHER_API_KEY,
+  goerli: ETHER_API_KEY,
   moonbase: MOONBEAM_API_KEY,
+  mumbai: POLYGONSCAN_API_KEY
 };
 
 /**
@@ -74,8 +78,8 @@ module.exports = {
 
       // // polygon
       // polygon: "YOUR_POLYGONSCAN_API_KEY",
-      // polygonMumbai: "YOUR_POLYGONSCAN_API_KEY",
-
+      polygonMumbai: POLYGONSCAN_API_KEY,
+    
       // // arbitrum
       // arbitrumOne: "YOUR_ARBISCAN_API_KEY",
       // arbitrumTestnet: "YOUR_ARBISCAN_API_KEY",
@@ -161,6 +165,15 @@ module.exports = {
       timeoutBlocks: 200000000, // # of blocks before a deployment times out  (minimum/default: 50)
       skipDryRun: true, // Skip dry run before migrations? (default: false for public nets )
     },
+    goerli: {
+      url: `https://goerli.infura.io/v3/${INFURA_PROJECT_ID}`,
+      accounts: [`0x${TESTNET_KEY}`],
+      network_id: 5, // Goerli's id
+      gas: 7000000, // Goerli has a lower block limit than mainnet
+      confirmations: 2, // # of confs to wait between deployments. (default: 0)
+      timeoutBlocks: 200000000, // # of blocks before a deployment times out  (minimum/default: 50)
+      skipDryRun: true, // Skip dry run before migrations? (default: false for public nets )
+    },
     moonbase: {
       url: `https://rpc.testnet.moonbeam.network`,
       accounts: [`0x${TESTNET_KEY}`],
@@ -179,6 +192,15 @@ module.exports = {
       timeoutBlocks: 200000000, // # of blocks before a deployment times out  (minimum/default: 50)
       skipDryRun: true, // Skip dry run before migrations? (default: false for public nets )
     },
+    mumbai: {
+      url: `https://polygon-mumbai.g.alchemy.com/v2/${ALCHEMY_PROJECT_ID}`,
+      accounts: [`0x${TESTNET_KEY}`],
+      network_id: 80001, // Mumbai's id
+      gas: 7000000, // Mumbai has a lower block limit than mainnet
+      confirmations: 2, // # of confs to wait between deployments. (default: 0)
+      timeoutBlocks: 200000000, // # of blocks before a deployment times out  (minimum/default: 50)
+      skipDryRun: true, // Skip dry run before migrations? (default: false for public nets )
+    }
   },
   paths: {
     sources: "./contracts",

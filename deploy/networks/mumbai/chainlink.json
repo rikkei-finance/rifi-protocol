@@ -1,0 +1,34 @@
+{
+  "BTC": {
+    "decimals": "8",
+    "address": "0x007A22900a3B98143368Bd5906f8E17e9867581b"
+  },
+  "DAI": {
+    "decimals": "8",
+    "address": "0x0FCAa9c899EC5A91eBc3D5Dd869De833b06fB046"
+  },
+  "ETH": {
+    "decimals": "8",
+    "address": "0x0715A7794a1dc8e42615F059dD6e406A6594651A"
+  },
+  "EUR": {
+    "decimals": "8",
+    "address": " 0x7d7356bF6Ee5CDeC22B216581E48eCC700D0497A"
+  },
+  "MATIC": {
+    "decimals": "8",
+    "address": "0xd0D5e3DB44DE05E9F294BB0a3bEEaF030DE24Ada"
+  },
+  "SAND": {
+    "decimals": "8",
+    "address": "0x9dd18534b8f456557d11B9DDB14dA89b2e52e308"
+  },
+  "USDC": {
+    "decimals": "8",
+    "address": "0x572dDec9087154dC5dfBB1546Bb62713147e0Ab0"
+  },
+  "USDT": {
+    "decimals": "8",
+    "address": "0x92C09849638959196E976289418e5973CC96d645"
+  }
+}

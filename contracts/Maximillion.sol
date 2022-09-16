@@ -1,6 +1,6 @@
 pragma solidity ^0.8.10;
 
-import "./RNative.sol";
+import "./RMatic.sol";
 
 /**
  * @title Rifi's Maximillion Contract
@@ -8,40 +8,40 @@ import "./RNative.sol";
  */
 contract Maximillion {
     /**
-     * @notice The default rNative market to repay in
+     * @notice The default rMatic market to repay in
      */
-    RNative public rNative;
+    RMatic public rMatic;
 
     /**
-     * @notice Construct a Maximillion to repay max in a RNative market
+     * @notice Construct a Maximillion to repay max in a RMatic market
      */
-    constructor(RNative rNative_) public {
-        rNative = rNative_;
+    constructor(RMatic rMatic_) public {
+        rMatic = rMatic_;
     }
 
     /**
-     * @notice msg.sender sends Native token to repay an account's borrow in the rNative market
-     * @dev The provided Native token is applied towards the borrow balance, any excess is refunded
+     * @notice msg.sender sends Matic token to repay an account's borrow in the rMatic market
+     * @dev The provided Matic token is applied towards the borrow balance, any excess is refunded
      * @param borrower The address of the borrower account to repay on behalf of
      */
     function repayBehalf(address borrower) public payable {
-        repayBehalfExplicit(borrower, rNative);
+        repayBehalfExplicit(borrower, rMatic);
     }
 
     /**
-     * @notice msg.sender sends Native token to repay an account's borrow in a rNative market
-     * @dev The provided Native token is applied towards the borrow balance, any excess is refunded
+     * @notice msg.sender sends Matic token to repay an account's borrow in a rMatic market
+     * @dev The provided Matic token is applied towards the borrow balance, any excess is refunded
      * @param borrower The address of the borrower account to repay on behalf of
-     * @param rNative_ The address of the rNative contract to repay in
+     * @param rMatic_ The address of the rMatic contract to repay in
      */
-    function repayBehalfExplicit(address borrower, RNative rNative_) public payable {
+    function repayBehalfExplicit(address borrower, RMatic rMatic_) public payable {
         uint received = msg.value;
-        uint borrows = rNative_.borrowBalanceCurrent(borrower);
+        uint borrows = rMatic_.borrowBalanceCurrent(borrower);
         if (received > borrows) {
-            rNative_.repayBorrowBehalf{value: borrows}(borrower);
+            rMatic_.repayBorrowBehalf{value: borrows}(borrower);
             payable(msg.sender).transfer(received - borrows);
         } else {
-            rNative_.repayBorrowBehalf{value: received}(borrower);
+            rMatic_.repayBorrowBehalf{value: received}(borrower);
         }
     }
 }
