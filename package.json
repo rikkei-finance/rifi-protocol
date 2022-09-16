@@ -4,7 +4,7 @@
   "description": "Rikkei Finance Market",
   "main": "index.js",
   "scripts": {
-    "compile": "./script/compile",
+    "compile": "npx hardhat compile",
     "console": "if node -v | grep -E \"v(12|13)\" > /dev/null; then flags=\"-n --experimental-repl-await\"; fi; npx $flags saddle console",
     "coverage": "./script/coverage",
     "deploy": "./scenario/script/repl -s ./script/scen/deploy.scen",

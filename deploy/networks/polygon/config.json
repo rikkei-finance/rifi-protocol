@@ -28,33 +28,6 @@
     "rifiBorrowSpeed": "0.04"
   },
   "rTokens": {
-    "rDAI": {
-      "name": "Rifi DAI",
-      "symbol": "rDAI",
-      "decimals": 8,
-      "underlying": {
-        "symbol": "DAI",
-        "decimals": "18",
-        "address": "0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063"
-      },
-      "interestRateModel": {
-        "address": "",
-        "model": "JumpRateModel",
-        "params": {
-          "baseRatePerYear": "0.02",
-          "lowerBaseRatePerYear": "0.01",
-          "multiplierPerYear": "0.04",
-          "jumpMultiplierPerYear": "1.09",
-          "kink_": "0.8",
-          "lowerKink_": "0.4"
-        }
-      },
-      "initialExchangeRateMantissa": "200000000",
-      "collateralFactor": "0.7",
-      "reserveFactor": "0.1",
-      "rifiSupplySpeed": "0.04",
-      "rifiBorrowSpeed": "0.04"
-    },
     "rUSDC": {
       "name": "Rifi USDC",
       "symbol": "rUSDC",
@@ -63,33 +36,6 @@
         "symbol": "USDC",
         "decimals": "6",
         "address": "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174"
-      },
-      "interestRateModel": {
-        "address": "",
-        "model": "JumpRateModel",
-        "params": {
-          "baseRatePerYear": "0.02",
-          "lowerBaseRatePerYear": "0.01",
-          "multiplierPerYear": "0.04",
-          "jumpMultiplierPerYear": "1.09",
-          "kink_": "0.8",
-          "lowerKink_": "0.4"
-        }
-      },
-      "initialExchangeRateMantissa": "200000000",
-      "collateralFactor": "0.7",
-      "reserveFactor": "0.1",
-      "rifiSupplySpeed": "0.04",
-      "rifiBorrowSpeed": "0.04"
-    },
-    "rBTC": {
-      "name": "Rifi Bitcoin",
-      "symbol": "rBTC",
-      "decimals": 8,
-      "underlying": {
-        "symbol": "WBTC",
-        "decimals": "8",
-        "address": "0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6"
       },
       "interestRateModel": {
         "address": "",
