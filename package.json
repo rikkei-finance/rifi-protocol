@@ -19,6 +19,7 @@
     "migrate:moonbase": "npx hardhat run --network moonbase ./deploy/lending.js",
     "migrate:localhost": "npx hardhat run --network localhost ./deploy/lending.js",
     "migrate:mumbai": "npx hardhat run --network mumbai ./deploy/lending.js",
+    "migrate:polygon": "npx hardhat run --network polygon ./deploy/lending.js",
     "upgrade:bsc_testnet": "npx hardhat run --network bsc_testnet ./deploy/upgrade.js",
     "upgrade:moonbase": "npx hardhat run --network moonbase ./deploy/upgrade.js"
   },
