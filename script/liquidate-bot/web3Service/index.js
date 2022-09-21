@@ -1,4 +1,5 @@
 const { env } = require("../config/config");
+const LogService = require('../log');
 const Web3 = require('web3');
 const TransactionFactory = require('@ethereumjs/tx').TransactionFactory;
 const Common = require('@ethereumjs/common').default;
@@ -7,7 +8,7 @@ class Web3Service {
   web3 = new Web3();
   chainId = "";
   constructor(chainId) {
-    console.log("Cretae web3 service with chainId", chainId);
+    LogService.log("Create web3 service with chainId", chainId);
     this.chainId = chainId;
     const config = env[chainId];
     this.web3 = new Web3(config.rpcEndpoint);

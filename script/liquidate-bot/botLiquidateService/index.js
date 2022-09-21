@@ -1,7 +1,8 @@
 const { env } = require("../config/config");
 const bot_liquidate_abi = require('../abis/bot-liquidate.json');
-const { number2Hex, round } = require('../helpers');
+const { number2Hex } = require('../helpers');
 const Web3Service = require('../web3Service');
+const LogService = require('../log');
 
 class BotLiquidateService {
   botLiquidateContract;
@@ -41,6 +42,23 @@ class BotLiquidateService {
     }
     const signed = this.web3Service.signTransaction(txParams, this.web3Service.chainId, env.privateKey);
     return this.web3Service.sendTransaction('0x' + signed);
+  }
+
+  async estimateFeeForLiquidate(
+    rToken, borrower, repayAmount, rTokenCollateral
+  ) {
+    const data = this.botLiquidateContract.methods.liquidateBorrow(
+      rToken, borrower, repayAmount, rTokenCollateral
+    ).encodeABI();
+
+    const gas = await this.web3Service.estimateGas({to: this.botLiquidateContract.options.address,data}).catch(error => {
+      LogService.log("Estimate gas fail:", error);
+      return null;
+    });
+    if (!gas) return null;
+    const gasPrice = await this.web3Service.getGasPrice();
+    if (!gasPrice) return null;
+    return Number(gas) * Number(gasPrice);
   }
 }
 

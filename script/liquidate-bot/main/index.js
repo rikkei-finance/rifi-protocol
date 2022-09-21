@@ -1,13 +1,13 @@
 
-const { getListRToken } = require("../rToken");
+const { getListRToken, getRNative } = require("../rToken");
 const { numberToString, round } = require('../helpers');
 const RifiLensService = require('../rifiLensService');
 const BotLiquidateService = require('../botLiquidateService');
 const Web3Service = require("../web3Service");
+const LogService = require('../log');
 
 const ratioLiquidate = 25 / 100;
 const ratioBonusPrice = 92 / 100;
-const minRepayUSD = 1; // only liquidate with repayAmount >= 1 USD
 
 class Checker {
   rifiLenService;
@@ -96,12 +96,15 @@ class Checker {
     return maxCollateralToken;
   }
   
-  calculateRepayAmount(borrowToken, collateralToken, rTokenPrices) {
-    const priceBorrowToken = rTokenPrices.find(rTokenPrice => rTokenPrice.rToken === borrowToken.rToken);
-    const priceCollateralToken = rTokenPrices.find(rTokenPrice => rTokenPrice.rToken === collateralToken.rToken)
+  calculateRepayAmount(borrowToken, collateralToken, rTokensPrice, rTokensMetadata) {
+    const priceBorrowToken = rTokensPrice.find(rTokenPrice => rTokenPrice.rToken === borrowToken.rToken);
+    const priceCollateralToken = rTokensPrice.find(rTokenPrice => rTokenPrice.rToken === collateralToken.rToken);
+    const collateralMetadata = rTokensMetadata.find(rTokenMetadata => rTokenMetadata.rToken === collateralToken.rToken);
   
+    const collateralReserves = collateralMetadata.totalReserves;
+    const maxCollateral = Math.min(Number(collateralReserves), Number(collateralToken.balanceOfUnderlying));
     const maxRepayUSD = this.getUSDValue(borrowToken.borrowBalanceCurrent, priceBorrowToken) * ratioLiquidate;
-    const collateralUSD = this.getUSDValue(Number(collateralToken.balanceOfUnderlying), priceCollateralToken) * ratioBonusPrice;
+    const collateralUSD = this.getUSDValue(maxCollateral, priceCollateralToken) * ratioBonusPrice;
     let repayAmount = round(
       numberToString(
         this.getValueFromUSD(Math.min(maxRepayUSD, collateralUSD), priceBorrowToken)
@@ -112,21 +115,56 @@ class Checker {
       repayUSD: this.getUSDValue(repayAmount, priceBorrowToken)
     };
   }
-  
+
+  async checkFeeTransaction(borrowToken, borrower, repayAmount, collateralToken, repayUSD) {
+    const feeTransaction = await this.botLiquidateService.estimateFeeForLiquidate(
+      borrowToken.rToken,
+      borrower,
+      repayAmount,
+      collateralToken.rToken
+    );
+    if (!feeTransaction) return false;
+    const rNativePrice = rTokenPrices.find(rTokenPrice => rTokenPrice.rToken === getRNative(chainId));
+    if (!rNativePrice) {
+      LogService.log("Cannot find rNative to calculate fee");
+      return false;
+    }
+    const feeUSD = this.getUSDValue(feeTransaction, rNativePrice);
+    if (repayUSD * (1 - ratioBonusPrice) <= feeUSD) {
+      LogService.log(`Fee transaction is too high ($${feeUSD})`);
+      return false;
+    }
+    return true;
+  }
+
   async checkBorrower(borrower) {
     try {
+      // Fetch data
       const chainId = this.web3Service.chainId;
       const rTokens = getListRToken(chainId);
-      const [rTokenBalances, rTokenPrices] = await Promise.all([
+      const [rTokenBalances, rTokenPrices, rTokensMetadata] = await Promise.all([
         this.rifiLenService.getRTokenBalancesAll(rTokens, borrower),
-        this.rifiLenService.getRTokenUnderlyingPriceAll(rTokens)
+        this.rifiLenService.getRTokenUnderlyingPriceAll(rTokens),
+        this.rifiLenService.getRTokenMetadataAll(rTokens),
       ]);
+
+      // Find borrow token or collateral token to liquidate
       const collateralTokens = this.getCollateralTokens(rTokenBalances);
       const borrowTokens = this.getBorrowTokens(rTokenBalances);
       const borrowToken = this.getBorrowTokenToLiquidate(borrowTokens, rTokenPrices);
       const collateralToken = this.getCollateralTokenToLiquidate(collateralTokens, rTokenPrices);
-      const { repayAmount, repayUSD } = this.calculateRepayAmount(borrowToken, collateralToken, rTokenPrices);
-      if (repayUSD < minRepayUSD) return;
+      if (!borrowToken || !collateralToken) {
+        LogService.log("Cannot find borrow token or collateral token to liquidate");
+        return  null;
+      };
+
+      // Calculate repay amount to liquidate
+      const { repayAmount, repayUSD } = this.calculateRepayAmount(borrowToken, collateralToken, rTokenPrices, rTokensMetadata);
+      if (!(await this.checkFeeTransaction(borrowToken, borrower, repayAmount, collateralToken, repayUSD))) {
+        return null;
+      }
+
+      // Execute liquidate
       const transaction = await this.botLiquidateService.liquidateBorrow(
         borrowToken.rToken,
         borrower,
@@ -135,7 +173,7 @@ class Checker {
       );
       return transaction
     } catch(error) {
-      console.log(error)
+      LogService.log(error)
       return null
     }
   }

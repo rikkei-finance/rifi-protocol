@@ -22,9 +22,18 @@ const rTokens = {
   ]
 }
 
+function getRNative(chainId) {
+  switch (chainId) {
+    case 592: return "0xA3190dCed6Bf50cfD55799877d3f223Ce09062ed";
+    case 56: return "0x157822aC5fa0Efe98daa4b0A55450f4a182C10cA";
+    case 97: return "0xCcbE879f931D8d36370E0A684d53E38a4A01dbAb";
+    default: return null;
+  }
+}
+
 
 function getListRToken(chainId) {
   return rTokens[chainId] || [];
 }
 
-module.exports = { getListRToken };
+module.exports = { getListRToken, getRNative };

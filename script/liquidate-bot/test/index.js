@@ -1,14 +1,15 @@
 const Factory = require("../index");
+const LogService = require("../log");
 
 async function main() {
-  const chainId = 81;
+  const chainId = 592;
   const checker = Factory.create(chainId);
   if (!checker) {
-    console.log(`Network ${chainId} is not supported`);
+    LogService.log(`Network ${chainId} is not supported`);
     return;
   }
-  const tx = await checker.checkBorrower("0x97bb86B0bec77b6dd0e276509D0E1B8564f154C7", 1);
-  console.log(tx)
+  const tx = await checker.checkBorrower("0x7402fda5EE39B7aaf844d1133364f4Df96c09DD6");
+  LogService.log(tx)
 }
 
 main()
