@@ -116,7 +116,8 @@ class Checker {
     };
   }
 
-  async checkFeeTransaction(borrowToken, borrower, repayAmount, collateralToken, repayUSD) {
+  async checkFeeTransaction(borrowToken, borrower, repayAmount, collateralToken, repayUSD, rTokenPrices) {
+    const chainId = this.web3Service.chainId;
     const feeTransaction = await this.botLiquidateService.estimateFeeForLiquidate(
       borrowToken.rToken,
       borrower,
@@ -160,7 +161,8 @@ class Checker {
 
       // Calculate repay amount to liquidate
       const { repayAmount, repayUSD } = this.calculateRepayAmount(borrowToken, collateralToken, rTokenPrices, rTokensMetadata);
-      if (!(await this.checkFeeTransaction(borrowToken, borrower, repayAmount, collateralToken, repayUSD))) {
+      console.log({ borrowToken, collateralToken, repayAmount })
+      if (!(await this.checkFeeTransaction(borrowToken, borrower, repayAmount, collateralToken, repayUSD, rTokenPrices))) {
         return null;
       }
 
