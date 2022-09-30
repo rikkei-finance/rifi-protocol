@@ -2,14 +2,14 @@ pragma solidity ^0.8.10;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "./PancakeswapFlashloan.sol";
 import "../RTokenInterfaces.sol";
 import "../RNative.sol";
 import "../RNativeInterface.sol";
-import "./interfaces/WBNBInterface.sol";
-import "./interfaces/IPancakeRouter02.sol";
+import "../WETHInterface.sol";
+import "./interfaces/IV3SwapRouter.sol";
+import "./UniswapFlashloan.sol";
 
-contract Liquidate is PancakeswapFlashloan, AccessControl {
+ contract Liquidate is UniswapFlashloan, AccessControl {
 
   struct LiquidateData {
     address rToken;
@@ -17,44 +17,45 @@ contract Liquidate is PancakeswapFlashloan, AccessControl {
     address rTokenCollateral;
     uint repayAmount;
   }
+
   uint public constant NO_ERROR = 0;
   bytes32 public constant OPERATOR_ROLE = keccak256("OPERATOR");
-  IPancakeRouter02 public exchange;
-  address public wBNB;
-  address public rBNB;
+  IV3SwapRouter public exchange;
+  address public wETH;
+  address public rETH;
 
   receive() external payable {}
 
-  constructor(IPancakeRouter02 _exchange, address _wBNB, address _rBNB) {
+  constructor(IV3SwapRouter _exchange, address _wETH, address _rETH) {
     _grantRole(getRoleAdmin(OPERATOR_ROLE), _msgSender());
     exchange = _exchange;
-    wBNB = _wBNB;
-    rBNB = _rBNB;
+    wETH = _wETH;
+    rETH = _rETH;
   }
 
   // _______ADMIN FUNCTIONS_______
 
-  function setExchange(IPancakeRouter02 _exchange) external onlyRole(getRoleAdmin(OPERATOR_ROLE)) {
+  function setExchange(IV3SwapRouter _exchange) external onlyRole(getRoleAdmin(OPERATOR_ROLE)) {
     exchange = _exchange;
   }
 
-  function setRBNB(address _rBNB) external onlyRole(getRoleAdmin(OPERATOR_ROLE)) {
-    rBNB = _rBNB;
+  function setRETH(address _rETH) external onlyRole(getRoleAdmin(OPERATOR_ROLE)) {
+    rETH = _rETH;
   }
 
-  function setWBNB(address _wBNB) external onlyRole(getRoleAdmin(OPERATOR_ROLE)) {
-    wBNB = _wBNB;
+  function setWETH(address _wETH) external onlyRole(getRoleAdmin(OPERATOR_ROLE)) {
+    wETH = _wETH;
   }
 
-  function setPairs(address[] calldata tokens, IPancakeV2Pair[] calldata pairs) external override onlyRole(getRoleAdmin(OPERATOR_ROLE)) {
+  function setPairs(address[] calldata tokens, IUniswapV3Pool[] calldata pairs) external override onlyRole(getRoleAdmin(OPERATOR_ROLE)) {
     _setPairs(tokens, pairs);
   }
 
   /**
-  * @dev withdrawBNB withdraw BNB coin
+  * @dev withdrawETH withdraw ETH coin
   * @param _recipient address of recipient
   */
-  function withdrawBNB(address _recipient) external onlyRole(getRoleAdmin(OPERATOR_ROLE)) {
+  function withdrawETH(address _recipient) external onlyRole(getRoleAdmin(OPERATOR_ROLE)) {
       Address.sendValue(payable(_recipient), address(this).balance);
   }
 
@@ -80,8 +81,8 @@ contract Liquidate is PancakeswapFlashloan, AccessControl {
     bytes memory params = abi.encode(
       LiquidateData({ rToken: rToken, borrower: borrower, rTokenCollateral: rTokenCollateral, repayAmount: repayAmount })
     );
-    if (rToken == rBNB) {
-      _flashLoan(wBNB, repayAmount, params);
+    if (rToken == rETH) {
+      _flashLoan(wETH, repayAmount, params);
     } else {
       address token = RErc20Interface(rToken).underlying();
       _flashLoan(token, repayAmount, params);
@@ -92,23 +93,24 @@ contract Liquidate is PancakeswapFlashloan, AccessControl {
 
   function _handleFlashLoan(
     IERC20 token,
-    uint256 amount,
     uint256 fee,
     bytes calldata data
-  ) internal override {
+  ) internal override returns(uint amount){
     LiquidateData memory liquidateData = abi.decode(data, (LiquidateData));
-    require(RTokenInterface(liquidateData.rToken).isRToken() || address(token) == wBNB, "Wrong token");
+    amount = liquidateData.repayAmount;
+    require(RTokenInterface(liquidateData.rToken).isRToken() || address(token) == wETH, "Wrong token");
     require(token.balanceOf(address(this)) >= amount, "Not enough balance");
     token.approve(liquidateData.rToken, amount);
     _liquidateBorrow(liquidateData, amount);
     _redeem(liquidateData.rTokenCollateral);
     _swap(liquidateData, address(token), amount + fee);
     token.approve(msg.sender, amount + fee);
+    return amount;
   }
 
   function _liquidateBorrow(LiquidateData memory lqData, uint256 amount) internal {
-    if (lqData.rToken == rBNB) {
-      WBNBInterface(wBNB).withdraw(amount);
+    if (lqData.rToken == rETH) {
+      WETHInterface(wETH).withdraw(amount);
       RNativeInterface(lqData.rToken).liquidateBorrow{value: amount }(lqData.borrower, RToken(lqData.rTokenCollateral));
     } else {
       uint ERROR = RErc20Interface(lqData.rToken).liquidateBorrow(lqData.borrower, amount, RTokenInterface(lqData.rTokenCollateral));
@@ -117,22 +119,22 @@ contract Liquidate is PancakeswapFlashloan, AccessControl {
   }
 
   function _redeem(address rTokenCollateral) internal {
-    uint ERROR = rTokenCollateral == rBNB ?
+    uint ERROR = rTokenCollateral == rETH ?
       RNativeInterface(rTokenCollateral).redeem(RTokenInterface(rTokenCollateral).balanceOf(address(this)))
       :
       RErc20Interface(rTokenCollateral).redeem(RTokenInterface(rTokenCollateral).balanceOf(address(this)));
     require(ERROR == NO_ERROR, "redeem error");
-  }
+  } 
 
   function _swap(LiquidateData memory lqData, address tokenTo, uint256 amountOut) internal {
     if (lqData.rToken != lqData.rTokenCollateral){
-      if (lqData.rTokenCollateral == rBNB) {
-        _swapInternal(wBNB, address(tokenTo), amountOut);
+      if (lqData.rTokenCollateral == rETH) {
+        _swapInternal(wETH, address(tokenTo), amountOut);
       } else {
         _swapInternal(RErc20Interface(lqData.rTokenCollateral).underlying(), address(tokenTo), amountOut);
       }
-    } else if (lqData.rToken == rBNB) {
-      WBNBInterface(wBNB).deposit{value: amountOut}();
+    } else if (lqData.rToken == rETH) {
+      WETHInterface(wETH).deposit{value: amountOut}();
     } 
   }
 
@@ -140,13 +142,15 @@ contract Liquidate is PancakeswapFlashloan, AccessControl {
     address[] memory path = new address[](2);
     path[0] = tokenFrom;
     path[1] = tokenTo;
-    if (tokenFrom == wBNB) {
+    uint24 fee = 3000;
+
+    if (tokenFrom == wETH) {
       uint amountInMax = address(this).balance;
-      exchange.swapETHForExactTokens{value: amountInMax}(amountOut, path, address(this), block.timestamp + 20);
-    } else {
+      exchange.exactOutputSingle(IV3SwapRouter.ExactOutputSingleParams(tokenFrom, tokenTo, fee, address(this), amountOut, amountInMax, 0));
+    } else { 
       uint amountInMax = IERC20(tokenFrom).balanceOf(address(this));
       IERC20(tokenFrom).approve(address(exchange), amountInMax);
-      exchange.swapTokensForExactTokens(amountOut, amountInMax, path, address(this), block.timestamp + 20);
+      exchange.exactOutputSingle(IV3SwapRouter.ExactOutputSingleParams(tokenFrom, tokenTo, fee, address(this), amountOut, amountInMax, 0));
     }
   }
 }
