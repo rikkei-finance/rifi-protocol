@@ -390,6 +390,10 @@ async function main() {
           }
 
           let underlyingAddress = underlying.address || addresses[underlying.symbol];
+          const underlyingDecimals = underlying.decimals;
+          if (!underlyingDecimals) {
+            throw new Error(`undefined decimals of ${underlying.symbol}`);
+          }
           if (!underlyingAddress) {
             throw new Error(`undefined address of ${underlying.symbol}`);
           }
@@ -402,7 +406,7 @@ async function main() {
             underlyingAddress,
             addresses.Cointroller,
             modelAddress,
-            web3.utils.toWei(initialExchangeRateMantissa, "ether"),
+            ethers.utils.parseUnits(initialExchangeRateMantissa, underlyingDecimals),
             name,
             symbol,
             decimals,
@@ -421,7 +425,7 @@ async function main() {
                 underlyingAddress,
                 addresses.Cointroller,
                 modelAddress,
-                web3.utils.toWei(initialExchangeRateMantissa, "ether"),
+                ethers.utils.parseUnits(initialExchangeRateMantissa, underlyingDecimals),
                 name,
                 symbol,
                 decimals,
